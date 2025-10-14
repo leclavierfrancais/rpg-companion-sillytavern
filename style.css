@@ -2404,7 +2404,9 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 .rpg-manual-update-btn {
     width: 353px;
     height: 33px;
-    margin: 0;
+    margin: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
     padding: 0;
     background: linear-gradient(135deg, var(--rpg-highlight), var(--rpg-accent));
     border: 2px solid var(--rpg-highlight);

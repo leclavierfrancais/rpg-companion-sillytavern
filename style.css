@@ -1,5 +1,5 @@
 /* ============================================
-   RPG COMPANION - GAME-LIKE UI
+   RPG COMPANION - GAME-LIKE UI - RESPONSIVE
    ============================================ */
 
 /* CSS Variables for Theming - Default uses SillyTavern's variables */
@@ -14,14 +14,14 @@
     --rpg-shadow: rgba(0, 0, 0, 0.5);
 }
 
-/* Main Panel Container - Fixed height, no overflow */
+/* Main Panel Container - Flexible width, responsive */
 .rpg-panel {
     position: fixed;
     top: var(--topBarBlockSize);
     bottom: 0;
-    width: min(380px, 25vw);
-    max-width: 450px;
-    min-width: 300px;
+    width: 380px;
+    max-width: 30vw;
+    min-width: 280px;
     background: var(--rpg-bg);
     box-shadow: 0 0 20px var(--rpg-shadow);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -33,26 +33,18 @@
     overflow: hidden;
 }
 
-/* Right Position (Default) */
+/* Right Position (Default) - Panel overlays on the right */
 .rpg-panel.rpg-position-right {
     right: 0;
     border-left: 3px solid var(--rpg-border);
     box-shadow: -5px 0 20px var(--rpg-shadow);
 }
 
-body:has(.rpg-panel.rpg-position-right) #sheld {
-    margin-right: min(380px, 25vw);
-}
-
-/* Left Position */
+/* Left Position - Panel overlays on the left */
 .rpg-panel.rpg-position-left {
     left: 0;
     border-right: 3px solid var(--rpg-border);
     box-shadow: 5px 0 20px var(--rpg-shadow);
-}
-
-body:has(.rpg-panel.rpg-position-left) #sheld {
-    margin-left: min(380px, 25vw);
 }
 
 /* Top Position */
@@ -66,10 +58,6 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     max-height: 300px;
     border-bottom: 3px solid var(--rpg-border);
     box-shadow: 0 5px 20px var(--rpg-shadow);
-}
-
-body:has(.rpg-panel.rpg-position-top) #sheld {
-    margin-top: 0;
 }
 
 /* Top Position Layout Adjustments */
@@ -98,25 +86,47 @@ body:has(.rpg-panel.rpg-position-top) #sheld {
 
 .rpg-panel.rpg-position-top .rpg-stat-label {
     min-width: 90px;
-    font-size: 11px;
 }
 
 .rpg-panel.rpg-position-top .rpg-stat-bar {
-    height: 16px;
+    height: 18px;
 }
 
-.rpg-panel.rpg-position-top .rpg-stat-value {
-    font-size: 11px;
+/* Mobile Responsiveness */
+@media (max-width: 1024px) {
+    .rpg-panel {
+        width: 320px;
+        max-width: 35vw;
+        min-width: 260px;
+    }
 }
 
-.rpg-panel.rpg-position-top .rpg-section-title {
-    font-size: 14px;
-    padding: 8px 12px;
+@media (max-width: 768px) {
+    .rpg-panel {
+        width: 280px;
+        max-width: 40vw;
+        min-width: 240px;
+    }
+    
+    .rpg-section-title {
+        font-size: 1em;
+    }
 }
 
-.rpg-panel.rpg-position-top .rpg-user-portrait {
-    width: 40px;
-    height: 40px;
+@media (max-width: 480px) {
+    .rpg-panel.rpg-position-right,
+    .rpg-panel.rpg-position-left {
+        width: 100%;
+        max-width: 100%;
+        height: 50vh;
+        top: auto;
+        bottom: 0;
+    }
+    
+    .rpg-panel.rpg-position-top {
+        max-height: 40vh;
+    }
+}
 }
 
 .rpg-panel.rpg-position-top .rpg-stats-title {

@@ -1,6 +1,6 @@
 # RPG Companion Extension for SillyTavern
 
-An immersive RPG extension that tracks character stats, scene information, and character thoughts in a beautiful, customizable UI panel. All automated! Works with any preset. Choose between Together or Separate generation modes for context and generation control.
+An immersive RPG extension for browsers that tracks character stats, scene information, and character thoughts in a beautiful, customizable UI panel. All automated! Works with any preset. Choose between Together or Separate generation modes for context and generation control.
 
 [![My Discord](https://img.shields.io/badge/Discord-Join%20Server-7289da)](https://discord.com/invite/KdAkTg94ME)
 [![Support Me](https://img.shields.io/badge/Ko--fi-Support%20Creator-ff5e5b)](https://ko-fi.com/marinara_spaghetti)
@@ -15,7 +15,7 @@ An immersive RPG extension that tracks character stats, scene information, and c
 
 4. Copy-paste this link: https://github.com/SpicyMarinara/rpg-companion-sillytavern
 
-5. Press Install for all users/Install just for mme
+5. Press Install for all users/Install just for me
 
 ![png](https://i.imgur.com/DYuIMWt.png)
 
@@ -32,11 +32,13 @@ An immersive RPG extension that tracks character stats, scene information, and c
 - **💭 Character Thoughts**: Floating thought bubbles showing AI characters' internal monologue
 - **🎲 Classic RPG Stats**: STR, DEX, CON, INT, WIS, CHA attributes with dice roll support
 - **📦 Inventory System**: Track items your character is carrying
-- **📜 Immersive HTMML**: Enhance the immersion by including creative HTML/CSS/JS elements in your roleplay
+- **📜 Immersive HTML**: Enhance the immersion by including creative HTML/CSS/JS elements in your roleplay
 - **➡️ Plot Progression**: Progress the plot with randomized events or natural progression with a click of a button
 - **🎨 Multiple Themes**: Cyberpunk, Fantasy, Minimal, Dark, Light, and Custom themes
 - **✏️ Live Editing**: Edit stats, thoughts, weather, and more directly in the panels
 - **💾 Per-Swipe Data Storage**: Each swipe preserves its own tracker data
+
+***Currently, it doesn't work on mobile devices. If someone can fix it, that would be great, as I have no way to test it on mobile.***
 
 ### Smart Features
 
@@ -45,7 +47,6 @@ An immersive RPG extension that tracks character stats, scene information, and c
 - **🎭 Multiple Characters**: Tracks thoughts and relationships for all present characters
 - **📍 Thought Bubbles in Chat**: Optional floating thought bubbles positioned next to character avatars
 - **🌈 Customizable Colors**: Create your own theme with custom color schemes
-- **📱 Mobile Responsive**: Works beautifully on all devices
 
 ## ⚙️ Settings
 

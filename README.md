@@ -48,6 +48,12 @@ An immersive RPG extension for browsers that tracks character stats, scene infor
 - **📍 Thought Bubbles in Chat**: Optional floating thought bubbles positioned next to character avatars
 - **🌈 Customizable Colors**: Create your own theme with custom color schemes
 
+### To-Do
+
+1. Allow users to use a different model for the separate trackers generation
+2. Make all trackers and fields customizable
+3. ~~Kill myself~~
+
 ## ⚙️ Settings
 
 ### Main Panel Controls
@@ -233,7 +239,6 @@ If you enjoy this extension, consider supporting development:
 
 - Requires SillyTavern 1.11.0 or higher
 - Works with all AI backends (OpenAI, Claude, KoboldAI, etc.)
-- Mobile-responsive design
 
 ---
 

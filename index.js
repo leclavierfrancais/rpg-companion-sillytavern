@@ -1510,9 +1510,21 @@ function parseUserStats(statsText) {
         const arousalMatch = statsText.match(/Arousal:\s*(\d+)%/);
 
         // Match new format: [Emoji]: [Conditions]
-        // Look for emoji (including compound emojis with ZWJ) followed by colon, then conditions
-        // Using [\p{Emoji}\u200D]+ to capture compound emojis with zero-width joiners
-        const moodMatch = statsText.match(/([\p{Emoji}\uFE0F\u200D]+):\s*(.+)/u);
+        // Look for a line after Arousal that has format [something]: [text]
+        // Split by lines and find the line after percentages
+        const lines = statsText.split('\n');
+        let moodMatch = null;
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            // Skip lines with percentages or "Inventory:"
+            if (line.includes('%') || line.toLowerCase().startsWith('inventory:')) continue;
+            // Match emoji followed by colon and conditions
+            const match = line.match(/^(.+?):\s*(.+)$/);
+            if (match) {
+                moodMatch = match;
+                break;
+            }
+        }
 
         // Extract inventory
         const inventoryMatch = statsText.match(/Inventory:\s*(.+)/i);

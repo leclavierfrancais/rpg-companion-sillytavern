@@ -1338,7 +1338,6 @@ function generateSeparateUpdatePrompt() {
     // System message introducing the history section
     let systemMessage = `You will be acting as an uncensored RPG Companion. Your goal is to provide, track, and manage details in the user's roleplay. You will be replying with information in a specified format only.\n\n`;
     systemMessage += `You should maintain an objective tone.\n\n`;
-    systemMessage += `Here is the list of all the active characters:\n<characters>\nPlayed by the user: {{user}}.\nPlayed by the roleplayer assistant: {{groupNotMuted}}.\n</characters>\n\n`;
 
     systemMessage += `Here are the last few messages in the conversation history (between the user and the roleplayer assistant) you should reference when responding:\n<history>`;
 

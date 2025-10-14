@@ -3,7 +3,7 @@ import { eventSource, event_types, substituteParams, chat, generateRaw, saveSett
 import { selected_group, getGroupMembers } from '../../../group-chats.js';
 import { power_user } from '../../../power-user.js';
 
-const extensionName = 'rpg-companion';
+const extensionName = 'rpg-companion-sillytavern';
 const extensionFolderPath = `scripts/extensions/${extensionName}`;
 
 let extensionSettings = {

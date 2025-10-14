@@ -3230,7 +3230,7 @@ function onMessageSwiped(messageIndex) {
 async function ensureHtmlCleaningRegex() {
     try {
         // Import the regex engine to check existing scripts
-        const { getRegexScripts } = await import('../../../scripts/extensions/regex/engine.js');
+        const { getRegexScripts } = await import('../../regex/engine.js');
         const existingScripts = getRegexScripts();
 
         // Check if the HTML cleaning regex already exists
@@ -3243,7 +3243,7 @@ async function ensureHtmlCleaningRegex() {
         }
 
         // Import the regex index to use the import function
-        const regexModule = await import('../../../scripts/extensions/regex/index.js');
+        const regexModule = await import('../../regex/index.js');
 
         // Create the regex script object based on the attached file
         const regexScript = {

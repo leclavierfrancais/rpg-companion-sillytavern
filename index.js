@@ -14,7 +14,7 @@ let extensionSettings = {
     showUserStats: true,
     showInfoBox: true,
     showCharacterThoughts: true,
-    showThoughtsInChat: false, // Show thoughts overlay in chat
+    showThoughtsInChat: true, // Show thoughts overlay in chat
     enableHtmlPrompt: false, // Enable immersive HTML prompt injection
     enablePlotButtons: true, // Show plot progression buttons above chat input
     panelPosition: 'right', // 'left', 'right', or 'top'

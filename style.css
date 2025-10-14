@@ -375,7 +375,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     justify-content: space-between;
     align-items: center;
     margin: 0;
-    padding-bottom: 10px;
+    padding: 0;
     border-bottom: 2px solid var(--rpg-border);
     flex-shrink: 0;
 }
@@ -1014,7 +1014,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 .rpg-weather-forecast {
     font-size: 7px;
     text-align: center;
-    margin-top: 2px;
+    margin: 0;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.2px;
@@ -1022,6 +1022,10 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     line-height: 1;
     word-wrap: break-word;
     max-width: 100%;
+}
+
+.rpg-weather-forecast.rpg-editable {
+    margin-top: 0;
 }
 
 /* Temperature Widget - Thermometer */
@@ -1141,6 +1145,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 .rpg-map-bg {
     width: 100%;
     height: 30px;
+    margin: 0;
     background:
         linear-gradient(45deg, rgba(255,255,255,0.05) 25%, transparent 25%),
         linear-gradient(-45deg, rgba(255,255,255,0.05) 25%, transparent 25%),

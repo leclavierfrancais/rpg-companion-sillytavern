@@ -1510,8 +1510,9 @@ function parseUserStats(statsText) {
         const arousalMatch = statsText.match(/Arousal:\s*(\d+)%/);
 
         // Match new format: [Emoji]: [Conditions]
-        // Look for emoji followed by colon, then conditions
-        const moodMatch = statsText.match(/(\p{Emoji}):\s*(.+)/u);
+        // Look for emoji (including compound emojis with ZWJ) followed by colon, then conditions
+        // Using [\p{Emoji}\u200D]+ to capture compound emojis with zero-width joiners
+        const moodMatch = statsText.match(/([\p{Emoji}\uFE0F\u200D]+):\s*(.+)/u);
 
         // Extract inventory
         const inventoryMatch = statsText.match(/Inventory:\s*(.+)/i);

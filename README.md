@@ -1,19 +1,39 @@
 # RPG Companion Extension for SillyTavern
 
-An immersive RPG extension that tracks character stats, scene information, and character thoughts in a beautiful, customizable UI panel. All automated! Works with any preset. Choose between Together or Separate generation modes for context and generations control.
+An immersive RPG extension that tracks character stats, scene information, and character thoughts in a beautiful, customizable UI panel. All automated! Works with any preset. Choose between Together or Separate generation modes for context and generation control.
 
-[![Discord](https://img.shields.io/badge/Discord-Join%20Server-7289da)](https://discord.com/invite/KdAkTg94ME)
-[![Support](https://img.shields.io/badge/Ko--fi-Support%20Creator-ff5e5b)](https://ko-fi.com/marinara_spaghetti)
+[![My Discord](https://img.shields.io/badge/Discord-Join%20Server-7289da)](https://discord.com/invite/KdAkTg94ME)
+[![Support Me](https://img.shields.io/badge/Ko--fi-Support%20Creator-ff5e5b)](https://ko-fi.com/marinara_spaghetti)
+
+## 📥 Installation
+
+1. Open SillyTavern
+
+2. Go to the Extensions tab (cubes icon at the top)
+
+3. Go to Install extension
+
+4. Copy-paste this link: https://github.com/SpicyMarinara/rpg-companion-sillytavern
+
+5. Press Install for all users/Install just for mme
+
+![png](https://i.imgur.com/DYuIMWt.png)
+
+![png](https://i.imgur.com/IJyIEMF.png)
 
 ## ✨ Features
+
+![png](https://i.imgur.com/cVCAby0.png)
 
 ### Core Functionality
 
 - **📊 User Stats Tracker**: Visual progress bars for health, sustenance, energy, hygiene, arousal, mood, and conditions
-- **🌍 Info Box Dashboard**: Beautiful widgets displaying date, weather, temperature, time, and location
-- **💭 Character Thoughts**: Floating thought bubbles showing AI characters' internal monologue (editable in real-time!)
+- **🌍 Info Box Dashboard**: Beautiful widgets displaying date, weather, temperature, time, and location of the current scene
+- **💭 Character Thoughts**: Floating thought bubbles showing AI characters' internal monologue
 - **🎲 Classic RPG Stats**: STR, DEX, CON, INT, WIS, CHA attributes with dice roll support
 - **📦 Inventory System**: Track items your character is carrying
+- **📜 Immersive HTMML**: Enhance the immersion by including creative HTML/CSS/JS elements in your roleplay
+- **➡️ Plot Progression**: Progress the plot with randomized events or natural progression with a click of a button
 - **🎨 Multiple Themes**: Cyberpunk, Fantasy, Minimal, Dark, Light, and Custom themes
 - **✏️ Live Editing**: Edit stats, thoughts, weather, and more directly in the panels
 - **💾 Per-Swipe Data Storage**: Each swipe preserves its own tracker data
@@ -27,46 +47,14 @@ An immersive RPG extension that tracks character stats, scene information, and c
 - **🌈 Customizable Colors**: Create your own theme with custom color schemes
 - **📱 Mobile Responsive**: Works beautifully on all devices
 
-## 📥 Installation
-
-1. Download or clone this repository into your SillyTavern extensions folder:
-
-   SillyTavern/public/scripts/extensions/rpg-companion/
-
-2. Restart SillyTavern
-
-3. Go to Extensions tab → Find RPG Companion → Enable it
-
-4. Open the extension panel (appears on the right side by default)
-
-5. Configure your settings and start roleplaying!
-
-## 🎮 How It Works
-
-Instead of having the AI model generate RPG companion data in its main response, this extension:
-
-1. Lets you roleplay normally without RPG prompts cluttering the conversation
-2. After each AI response, automatically sends a separate request to the model
-3. Includes only the last few messages (configurable) for context
-4. Asks the model to generate ONLY the RPG companion data
-5. Displays the formatted data in a dedicated panel
-
-This approach:
-
-- ✅ Keeps your main roleplay clean and focused
-- ✅ Reduces token usage in the main conversation
-- ✅ Allows the model to focus on roleplay quality
-- ✅ Provides a better visual presentation of stats and info
-
 ## ⚙️ Settings
 
 ### Main Panel Controls
 
 - **Panel Position**: Left or Right side of the chat
 - **Theme**: Choose from 6 built-in themes or create custom
-- **Enable RPG Companion**: Turn the extension on/off
 - **Auto-update after messages**: Automatically refresh RPG data after each message
-- **Context Messages**: How many recent messages to include when generating updates (default: 4)
+- **Context Messages**: How many recent messages to include when generating updates (only for Separate generation mode)
 
 ### Display Options
 
@@ -83,7 +71,7 @@ Tracker data is generated within the main AI response and automatically extracte
 Example:
 User: walks into the tavern
 
-AI: Full roleplay response
+AI: Trackers + Full roleplay response
 
 ↓ Extension extracts tracker data from response
 
@@ -108,6 +96,8 @@ Example:
 User: walks into the tavern
 
 AI: Pure roleplay response - no tracker data
+
+AI: Separate call with just the tracker data
 
 ↓ Extension sends separate request with context
 
@@ -161,7 +151,7 @@ The extension fully supports swipes:
 
 ### Manual Update
 
-If auto-update is disabled, you can click the "Manual Update" button in the settings to refresh the RPG data at any time.
+You can click the "Refresh RPG Info" button in the settings to refresh the RPG data at any time.
 
 ## 🎨 Themes
 
@@ -176,48 +166,22 @@ Choose from 6 beautiful themes:
 
 ## 🛠️ Technical Details
 
-### Data Architecture
-
-The extension uses a two-variable system:
-
-- **lastGeneratedData**: Currently displayed tracker data (updates on generation, swipe, edit)
-- **committedTrackerData**: Data used for context generation (updates when user sends message)
-
-This separation ensures:
-- Edits are displayed immediately
-- Context uses the committed state from before edits
-- Swipes preserve their own data correctly
-
-### Swipe Detection
-
-The extension intelligently detects swipes:
-
-- MESSAGE_SENT event sets swipe flag to false
-- MESSAGE_SWIPED checks if swipe content exists
-- Only sets flag true for NEW generations (not navigation)
-- Flag resets in onMessageReceived after generation completes
-
-### Context Generation (Separate Mode)
-
-Weather detection uses an emoji array:
-🌤️ ☀️ ⛅ 🌦️ 🌧️ ⛈️ 🌩️ 🌨️ ❄️ 🌫️
-
-Parsing uses separate if statements (not else-if) for each Info Box field to ensure all data is captured correctly.
+If you ever have an awesome idea to do your own SillyTavern extension, don't.
 
 ## 🐛 Troubleshooting
 
 ### Extension doesn't appear
 
-- Make sure you've restarted SillyTavern after installation
-- Check browser console (F12) for errors
-- Verify all files are in the correct location
+- Refresh your browser
+- Restart SillyTavern
+- Ensure it's enabled in the Extensions tab
 
 ### Stats not updating
 
 - Check that "Auto-update" is enabled
 - Try clicking "Manual Update" to test
 - Verify your AI backend is responding correctly
-- Check browser console for error messages
+- Check console for error messages
 
 ### Display issues
 
@@ -237,7 +201,7 @@ This program is free software: you can redistribute it and/or modify it under th
 
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
 
-Copyright (C) 2024 Marysia (marinara_spaghetti)
+Copyright (C) 2024 marinara_spaghetti
 
 ## 💖 Support
 
@@ -248,7 +212,7 @@ If you enjoy this extension, consider supporting development:
 
 ## 🙏 Credits
 
-- Extension Development: Marysia with assistance from GitHub Copilot
+- Extension Development: Marinara with assistance from GitHub Copilot
 - Immersive HTML concept: Credit to u/melted_walrus
 - Info Box prompt inspiration: MidnightSleeper
 - Stats Tracker concept: Community feedback
@@ -256,12 +220,6 @@ If you enjoy this extension, consider supporting development:
 ## 🚀 Planned Features
 
 - Support for selecting a different model for RPG updates
-- Relationship/Standing system with characters
-- Random plot push integration
-- Export/import RPG data
-- Historical stats tracking
-- Custom stat categories
-- Integration with character cards
 
 ## 💡 Tips
 
@@ -277,4 +235,6 @@ If you enjoy this extension, consider supporting development:
 
 ---
 
-Made with ❤️ by Marysia
+Made with ❤️ by Marinara
+PS I'm looking for a job or a sponsor to fund my custom AI frontend, contact me if interested:
+mgrabower97@gmail.com

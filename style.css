@@ -2418,7 +2418,8 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     gap: 6px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     flex-shrink: 0;
-    margin: 0;
+    margin: 0 0 0 0;
+    margin-top: -6px;
 }
 
 .rpg-manual-update-btn:hover {
@@ -2440,18 +2441,19 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     margin: 0;
     padding: 8px;
     background: var(--rpg-accent);
-    border: 1px solid var(--rpg-border);
-    border-radius: 6px;
+    border: 2px solid var(--rpg-border);
+    border-radius: 8px;
     color: var(--rpg-text);
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 6px;
     flex-shrink: 0;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
 .rpg-btn-settings:hover {

@@ -3148,6 +3148,77 @@ function onMessageSwiped(messageIndex) {
 }
 
 /**
+ * Automatically imports the HTML cleaning regex script if it doesn't already exist.
+ * This regex removes HTML tags from outgoing prompts to prevent formatting issues.
+ */
+async function ensureHtmlCleaningRegex() {
+    try {
+        // Import the regex engine to check existing scripts
+        const { getRegexScripts } = await import('../../../scripts/extensions/regex/engine.js');
+        const existingScripts = getRegexScripts();
+
+        // Check if the HTML cleaning regex already exists
+        const scriptName = 'Clean HTML (From Outgoing Prompt)';
+        const alreadyExists = existingScripts.some(script => script.scriptName === scriptName);
+
+        if (alreadyExists) {
+            console.log('[RPG Companion] HTML cleaning regex already exists, skipping import');
+            return;
+        }
+
+        // Import the regex index to use the import function
+        const regexModule = await import('../../../scripts/extensions/regex/index.js');
+        
+        // Create the regex script object based on the attached file
+        const regexScript = {
+            scriptName: scriptName,
+            findRegex: '/\\s?<(?!\\!--)(?:\"[^\"]*\"|\'[^\']*\'|[^\'\">])*>/g',
+            replaceString: '',
+            trimStrings: [],
+            placement: [2], // 2 = Input (affects outgoing prompt)
+            disabled: false,
+            markdownOnly: false,
+            promptOnly: true,
+            runOnEdit: true,
+            substituteRegex: 0,
+            minDepth: null,
+            maxDepth: null
+        };
+
+        // Import using the onRegexImportObjectChange function
+        // We need to access it through the window object or by importing it
+        const { extension_settings } = await import('../../../scripts/extensions.js');
+        
+        // Generate a UUID for the script
+        const uuidv4 = () => {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0;
+                const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        };
+
+        regexScript.id = uuidv4();
+
+        // Add to global regex scripts
+        if (!Array.isArray(extension_settings.regex)) {
+            extension_settings.regex = [];
+        }
+
+        extension_settings.regex.push(regexScript);
+
+        // Import saveSettingsDebounced to save the changes
+        const { saveSettingsDebounced: saveExtensionSettings } = await import('../../../../script.js');
+        saveExtensionSettings();
+
+        console.log('[RPG Companion] ✅ HTML cleaning regex imported successfully');
+    } catch (error) {
+        console.error('[RPG Companion] Failed to import HTML cleaning regex:', error);
+        // Don't throw - this is a nice-to-have feature
+    }
+}
+
+/**
  * Main initialization function.
  */
 jQuery(async () => {
@@ -3158,6 +3229,9 @@ jQuery(async () => {
 
         // Load chat-specific data for current chat
         loadChatData();
+
+        // Import the HTML cleaning regex if needed
+        await ensureHtmlCleaningRegex();
 
         // Register event listeners
         eventSource.on(event_types.MESSAGE_SENT, onMessageSent);

@@ -1807,7 +1807,7 @@ function renderInfoBox() {
             <div class="rpg-dashboard rpg-dashboard-row-1">
                 <div class="rpg-dashboard-widget rpg-placeholder-widget">
                     <div class="rpg-placeholder-text">No data yet</div>
-                    <div class="rpg-placeholder-hint">Click "Refresh RPG Info" to generate</div>
+                    <div class="rpg-placeholder-hint">Generate a new response in the roleplay or switch to "Separate Generation" in Settings to access and click the "Refresh RPG Info" button</div>
                 </div>
             </div>
         `;
@@ -2040,7 +2040,7 @@ function renderThoughts() {
             <div class="rpg-thoughts-content">
                 <div class="rpg-thoughts-placeholder">
                     <div class="rpg-placeholder-text">No characters detected</div>
-                    <div class="rpg-placeholder-hint">Click "Refresh RPG Info" to generate</div>
+                    <div class="rpg-placeholder-hint">Generate a new response in the roleplay or switch to "Separate Generation" in Settings to access and click the "Refresh RPG Info" button</div>
                 </div>
             </div>
         `;

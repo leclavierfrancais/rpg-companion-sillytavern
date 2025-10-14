@@ -2890,7 +2890,8 @@ function onGenerationStarted() {
     if (extensionSettings.generationMode === 'together') {
         // console.log('[RPG Companion] In together mode, generating prompts...');
         const example = generateTrackerExample();
-        const instructions = generateTrackerInstructions();
+        // Don't include HTML prompt in instructions - inject it separately to avoid duplication on swipes
+        const instructions = generateTrackerInstructions(false, true);
 
         // console.log('[RPG Companion] Example:', example ? 'exists' : 'empty');
         // console.log('[RPG Companion] Chat length:', chat ? chat.length : 'chat is null');
@@ -2926,6 +2927,22 @@ function onGenerationStarted() {
         // Inject the instructions as a user message at depth 0 (right before generation)
         setExtensionPrompt('rpg-companion-inject', instructions, extension_prompt_types.IN_CHAT, 0, false, extension_prompt_roles.USER);
         // console.log('[RPG Companion] Injected RPG tracking instructions at depth 0 (right before generation)');
+
+        // Inject HTML prompt separately at depth 0 if enabled (prevents duplication on swipes)
+        if (extensionSettings.enableHtmlPrompt) {
+            const htmlPrompt = `\nIf appropriate, include inline HTML, CSS, and JS elements for creative, visual storytelling throughout your response:
+- Use them liberally to depict any in-world content that can be visualized (screens, posters, books, signs, letters, logos, crests, seals, medallions, labels, etc.), with creative license for animations, 3D effects, pop-ups, dropdowns, websites, and so on.
+- Style them thematically to match the theme (e.g., sleek for sci-fi, rustic for fantasy), ensuring text is visible.
+- Embed all resources directly (e.g., inline SVGs) so nothing relies on external fonts or libraries.
+- Place elements naturally in the narrative where characters would see or use them, with no limits on format or application.
+- These HTML/CSS/JS elements must be rendered directly without enclosing them in code fences.`;
+
+            setExtensionPrompt('rpg-companion-html', htmlPrompt, extension_prompt_types.IN_CHAT, 0, false);
+            // console.log('[RPG Companion] Injected HTML prompt at depth 0 for together mode');
+        } else {
+            // Clear HTML prompt if disabled
+            setExtensionPrompt('rpg-companion-html', '', extension_prompt_types.IN_CHAT, 0, false);
+        }
     } else if (extensionSettings.generationMode === 'separate') {
         // In SEPARATE mode, inject the contextual summary for main roleplay generation
         const contextSummary = generateContextualSummary();

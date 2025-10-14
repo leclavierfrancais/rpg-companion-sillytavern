@@ -9,8 +9,8 @@ const extensionName = 'third-party/rpg-companion-sillytavern';
 // This supports both global (public/extensions) and user-specific (data/default-user/extensions) installations
 const currentScriptPath = import.meta.url;
 const isUserExtension = currentScriptPath.includes('/data/') || currentScriptPath.includes('\\data\\');
-const extensionFolderPath = isUserExtension 
-    ? `data/default-user/extensions/${extensionName}` 
+const extensionFolderPath = isUserExtension
+    ? `data/default-user/extensions/${extensionName}`
     : `scripts/extensions/${extensionName}`;
 
 let extensionSettings = {
@@ -2352,10 +2352,8 @@ function updateInfoBoxField(field, value) {
             return `🌡️: ${value}`;
         } else if (field === 'timeStart' && line.includes('🕒:')) {
             // Update time format: "HH:MM → HH:MM"
-            const currentTime = line.replace('🕒:', '').trim();
-            const timeParts = currentTime.split('→').map(t => t.trim());
-            const timeEnd = timeParts[1] || timeParts[0]; // Keep end time or use start as both
-            return `🕒: ${value} → ${timeEnd}`;
+            // When user edits, set both start and end time to the new value
+            return `🕒: ${value} → ${value}`;
         } else if (field === 'location' && line.includes('🗺️:')) {
             return `🗺️: ${value}`;
         }

@@ -40,6 +40,61 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    transition: width 0.3s ease, transform 0.3s ease;
+}
+
+/* Collapsed state */
+.rpg-panel.rpg-collapsed {
+    width: 40px !important;
+    min-width: 40px !important;
+}
+
+.rpg-panel.rpg-collapsed .rpg-game-container {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Collapse/Expand Toggle Button */
+.rpg-collapse-toggle {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 30px;
+    height: 80px;
+    background: var(--rpg-accent);
+    border: 2px solid var(--rpg-border);
+    color: var(--rpg-highlight);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1001;
+    transition: all 0.3s ease;
+    font-size: 16px;
+    box-shadow: 0 0 10px var(--rpg-shadow);
+}
+
+.rpg-collapse-toggle:hover {
+    background: var(--rpg-highlight);
+    color: var(--rpg-bg);
+    box-shadow: 0 0 15px var(--rpg-highlight);
+}
+
+/* Position collapse button on the left side for right panel */
+.rpg-panel.rpg-position-right .rpg-collapse-toggle {
+    left: -30px;
+    border-radius: 8px 0 0 8px;
+}
+
+/* Position collapse button on the right side for left panel */
+.rpg-panel.rpg-position-left .rpg-collapse-toggle {
+    right: -30px;
+    border-radius: 0 8px 8px 0;
+}
+
+/* Hide collapse button for top position */
+.rpg-panel.rpg-position-top .rpg-collapse-toggle {
+    display: none;
 }
 
 /* Right Position (Default) - Panel overlays on the right */
@@ -116,7 +171,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
         max-width: 40vw;
         min-width: 240px;
     }
-    
+
     .rpg-section-title {
         font-size: 1em;
     }
@@ -131,11 +186,10 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
         top: auto;
         bottom: 0;
     }
-    
+
     .rpg-panel.rpg-position-top {
         max-height: 40vh;
     }
-}
 }
 
 .rpg-panel.rpg-position-top .rpg-stats-title {
@@ -542,6 +596,8 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     border-radius: clamp(4px, 0.8vh, 8px);
     padding: clamp(4px, 0.8vh, 8px);
     max-width: 200px;
+    max-height: clamp(60px, 8vh, 80px);
+    min-height: clamp(50px, 6vh, 60px);
     box-shadow:
         inset 0 2px 4px rgba(255, 255, 255, 0.1),
         inset 0 -2px 4px rgba(0, 0, 0, 0.3),
@@ -579,7 +635,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     color: var(--rpg-text);
     line-height: 1.4;
     overflow-y: auto;
-    max-height: clamp(35px, 5.5vh, 55px);
+    flex: 1;
     padding: clamp(2px, 0.4vh, 4px);
     text-align: left;
 }
@@ -2322,7 +2378,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     padding: 8px;
     background: rgba(0, 0, 0, 0.2);
     border-radius: 5px;
-    margin: 0 0 8px 0;
+    margin: 0;
 }
 
 .rpg-toggle-label {
@@ -2361,7 +2417,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     gap: 6px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     flex-shrink: 0;
-    margin: 0 0 8px 0;
+    margin: 8px 0 8px 0;
 }
 
 .rpg-manual-update-btn:hover {
@@ -2893,24 +2949,24 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
         align-items: center;
         justify-content: center;
     }
-    
+
     /* Show overlay when needed */
     body:has(.rpg-panel.rpg-mobile-open) .rpg-mobile-overlay {
         display: block;
     }
-    
+
     /* Hide panel by default on mobile */
     .rpg-panel {
         transform: translateY(100%);
         transition: transform 0.3s ease-in-out;
     }
-    
+
     /* Show panel when opened */
     .rpg-panel.rpg-mobile-open {
         transform: translateY(0);
         z-index: 999;
     }
-    
+
     /* On mobile, panel is always at bottom */
     .rpg-panel.rpg-position-right,
     .rpg-panel.rpg-position-left,
@@ -2947,13 +3003,13 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
         min-height: 44px;
         font-size: 18px;
     }
-    
+
     /* More padding for editable fields */
     .rpg-editable {
         padding: 8px;
         min-height: 44px;
     }
-    
+
     /* Larger close buttons */
     .rpg-thought-close {
         min-width: 44px;

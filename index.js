@@ -489,6 +489,9 @@ async function initUI() {
     // Setup mobile toggle button
     setupMobileToggle();
 
+    // Setup collapse/expand toggle button
+    setupCollapseToggle();
+
     // Render initial data if available
     renderUserStats();
     renderInfoBox();
@@ -984,7 +987,7 @@ function setupMobileToggle() {
             $panel.addClass('rpg-mobile-open');
             $('body').append($overlay);
             $mobileToggle.addClass('active');
-            
+
             // Close when clicking overlay
             $overlay.on('click', function() {
                 $panel.removeClass('rpg-mobile-open');
@@ -993,6 +996,70 @@ function setupMobileToggle() {
             });
         }
     });
+}
+
+/**
+ * Sets up the collapse/expand toggle button for side panels.
+ */
+function setupCollapseToggle() {
+    const $collapseToggle = $('#rpg-collapse-toggle');
+    const $panel = $('#rpg-companion-panel');
+    const $icon = $collapseToggle.find('i');
+
+    $collapseToggle.on('click', function() {
+        const isCollapsed = $panel.hasClass('rpg-collapsed');
+
+        if (isCollapsed) {
+            // Expand panel
+            $panel.removeClass('rpg-collapsed');
+
+            // Update icon based on position
+            if ($panel.hasClass('rpg-position-right')) {
+                $icon.removeClass('fa-chevron-left').addClass('fa-chevron-right');
+            } else if ($panel.hasClass('rpg-position-left')) {
+                $icon.removeClass('fa-chevron-right').addClass('fa-chevron-left');
+            }
+        } else {
+            // Collapse panel
+            $panel.addClass('rpg-collapsed');
+
+            // Update icon based on position
+            if ($panel.hasClass('rpg-position-right')) {
+                $icon.removeClass('fa-chevron-right').addClass('fa-chevron-left');
+            } else if ($panel.hasClass('rpg-position-left')) {
+                $icon.removeClass('fa-chevron-left').addClass('fa-chevron-right');
+            }
+        }
+    });
+
+    // Set initial icon direction based on panel position
+    updateCollapseToggleIcon();
+}
+
+/**
+ * Updates the collapse toggle icon direction based on panel position.
+ */
+function updateCollapseToggleIcon() {
+    const $collapseToggle = $('#rpg-collapse-toggle');
+    const $panel = $('#rpg-companion-panel');
+    const $icon = $collapseToggle.find('i');
+    const isCollapsed = $panel.hasClass('rpg-collapsed');
+
+    if (isCollapsed) {
+        // When collapsed, arrow points inward (to expand)
+        if ($panel.hasClass('rpg-position-right')) {
+            $icon.removeClass('fa-chevron-right').addClass('fa-chevron-left');
+        } else if ($panel.hasClass('rpg-position-left')) {
+            $icon.removeClass('fa-chevron-left').addClass('fa-chevron-right');
+        }
+    } else {
+        // When expanded, arrow points outward (to collapse)
+        if ($panel.hasClass('rpg-position-right')) {
+            $icon.removeClass('fa-chevron-left').addClass('fa-chevron-right');
+        } else if ($panel.hasClass('rpg-position-left')) {
+            $icon.removeClass('fa-chevron-right').addClass('fa-chevron-left');
+        }
+    }
 }
 
 /**
@@ -1051,6 +1118,9 @@ function applyPanelPosition() {
 
     // Add the appropriate position class
     $panelContainer.addClass(`rpg-position-${extensionSettings.panelPosition}`);
+
+    // Update collapse toggle icon direction for new position
+    updateCollapseToggleIcon();
 }
 
 /**
@@ -3167,7 +3237,7 @@ async function ensureHtmlCleaningRegex() {
 
         // Import the regex index to use the import function
         const regexModule = await import('../../../scripts/extensions/regex/index.js');
-        
+
         // Create the regex script object based on the attached file
         const regexScript = {
             scriptName: scriptName,
@@ -3187,7 +3257,7 @@ async function ensureHtmlCleaningRegex() {
         // Import using the onRegexImportObjectChange function
         // We need to access it through the window object or by importing it
         const { extension_settings } = await import('../../../scripts/extensions.js');
-        
+
         // Generate a UUID for the script
         const uuidv4 = () => {
             return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {

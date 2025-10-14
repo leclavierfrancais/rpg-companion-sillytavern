@@ -2916,28 +2916,20 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     .rpg-panel.rpg-position-left,
     .rpg-panel.rpg-position-top {
         position: fixed;
-        top: auto;
+        top: var(--topBarBlockSize);
         bottom: 0;
         left: 0;
         right: 0;
         width: 100%;
         max-width: 100%;
-        height: 70vh;
-        max-height: 70vh;
         border-radius: 20px 20px 0 0;
-        overflow-y: auto;
+        overflow-y: scroll;
+        -webkit-overflow-scrolling: touch;
     }
 }
 
-/* Extra small screens - more height */
+/* Extra small screens - adjust FAB position */
 @media (max-width: 480px) {
-    .rpg-panel.rpg-position-right,
-    .rpg-panel.rpg-position-left,
-    .rpg-panel.rpg-position-top {
-        height: 80vh;
-        max-height: 80vh;
-    }
-    
     .rpg-mobile-toggle {
         bottom: 70px;
         right: 15px;

@@ -299,14 +299,10 @@ async function initUI() {
     // Load the HTML template using SillyTavern's template system
     const templateHtml = await renderExtensionTemplateAsync(extensionName, 'template');
 
-    // Add to the appropriate container based on position
-    if (extensionSettings.panelPosition === 'right') {
-        // Add as a sidebar next to the chat area (sheld)
-        $('#sheld').after(templateHtml);
-    } else {
-        // Add above the chat area
-        $('#sheld').before(templateHtml);
-    }    // Cache UI elements
+    // Append panel to body - positioning handled by CSS
+    $('body').append(templateHtml);
+
+    // Cache UI elements
     $panelContainer = $('#rpg-companion-panel');
     $userStatsContainer = $('#rpg-user-stats');
     $infoBoxContainer = $('#rpg-info-box');
@@ -1105,7 +1101,7 @@ function generateTrackerInstructions(includeHtmlPrompt = true, includeContinuati
             instructions += '```\n';
             instructions += 'Present Characters\n';
             instructions += '---\n';
-            instructions += `[Present Character's Emoji (do not include ${userName}; state "Unavailable" if no NPCs are present in the scene)]: [Name, Visible Physical State (up to three traits), Observable Demeanor Cue (one trait)] | [Enemy/Neutral/Friend/Lover] | [Internal Monologue (in first person POV, up to three sentences long)]\n`;
+            instructions += `[Present Character's Emoji (do not include ${userName}; state "Unavailable" if no major characters are present in the scene)]: [Name, Visible Physical State (up to three traits), Observable Demeanor Cue (one trait)] | [Enemy/Neutral/Friend/Lover] | [Internal Monologue (in first person POV, up to three sentences long)]\n`;
             instructions += '```\n\n';
         }
 

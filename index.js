@@ -302,6 +302,14 @@ async function initUI() {
     // Append panel to body - positioning handled by CSS
     $('body').append(templateHtml);
 
+    // Add mobile toggle button (FAB - Floating Action Button)
+    const mobileToggleHtml = `
+        <button id="rpg-mobile-toggle" class="rpg-mobile-toggle" title="Toggle RPG Panel">
+            <i class="fa-solid fa-dice-d20"></i>
+        </button>
+    `;
+    $('body').append(mobileToggleHtml);
+
     // Cache UI elements
     $panelContainer = $('#rpg-companion-panel');
     $userStatsContainer = $('#rpg-user-stats');
@@ -477,6 +485,9 @@ async function initUI() {
     applyPanelPosition();
     toggleCustomColors();
     toggleAnimations();
+
+    // Setup mobile toggle button
+    setupMobileToggle();
 
     // Render initial data if available
     renderUserStats();
@@ -949,6 +960,37 @@ function setupSettingsPopup() {
 
             // console.log('[RPG Companion] Chat cache cleared');
             alert('Chat cache cleared successfully!');
+        }
+    });
+}
+
+/**
+ * Sets up the mobile toggle button (FAB).
+ */
+function setupMobileToggle() {
+    const $mobileToggle = $('#rpg-mobile-toggle');
+    const $panel = $('#rpg-companion-panel');
+    const $overlay = $('<div class="rpg-mobile-overlay"></div>');
+
+    // Toggle panel visibility on mobile
+    $mobileToggle.on('click', function() {
+        if ($panel.hasClass('rpg-mobile-open')) {
+            // Close panel
+            $panel.removeClass('rpg-mobile-open');
+            $overlay.remove();
+            $mobileToggle.removeClass('active');
+        } else {
+            // Open panel
+            $panel.addClass('rpg-mobile-open');
+            $('body').append($overlay);
+            $mobileToggle.addClass('active');
+            
+            // Close when clicking overlay
+            $overlay.on('click', function() {
+                $panel.removeClass('rpg-mobile-open');
+                $overlay.remove();
+                $mobileToggle.removeClass('active');
+            });
         }
     });
 }

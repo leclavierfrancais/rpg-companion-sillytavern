@@ -2834,3 +2834,138 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     }
 }
 
+
+/* ============================================
+   MOBILE TOGGLE BUTTON (FAB)
+   ============================================ */
+
+/* Hide mobile toggle on desktop, show on mobile */
+.rpg-mobile-toggle {
+    display: none;
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--rpg-accent, #2c3e50);
+    border: 3px solid var(--rpg-border, #34495e);
+    color: var(--rpg-text, #ecf0f1);
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 999;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+}
+
+.rpg-mobile-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.rpg-mobile-toggle:active {
+    transform: scale(0.95);
+}
+
+.rpg-mobile-toggle.active {
+    background: var(--rpg-highlight, #e74c3c);
+    transform: rotate(180deg);
+}
+
+/* Mobile overlay backdrop */
+.rpg-mobile-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 998;
+    backdrop-filter: blur(2px);
+}
+
+/* Mobile-specific panel behavior */
+@media (max-width: 768px) {
+    /* Show the FAB on mobile */
+    .rpg-mobile-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Show overlay when needed */
+    body:has(.rpg-panel.rpg-mobile-open) .rpg-mobile-overlay {
+        display: block;
+    }
+    
+    /* Hide panel by default on mobile */
+    .rpg-panel {
+        transform: translateY(100%);
+        transition: transform 0.3s ease-in-out;
+    }
+    
+    /* Show panel when opened */
+    .rpg-panel.rpg-mobile-open {
+        transform: translateY(0);
+        z-index: 999;
+    }
+    
+    /* On mobile, panel is always at bottom */
+    .rpg-panel.rpg-position-right,
+    .rpg-panel.rpg-position-left,
+    .rpg-panel.rpg-position-top {
+        position: fixed;
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        max-width: 100%;
+        height: 70vh;
+        max-height: 70vh;
+        border-radius: 20px 20px 0 0;
+        overflow-y: auto;
+    }
+}
+
+/* Extra small screens - more height */
+@media (max-width: 480px) {
+    .rpg-panel.rpg-position-right,
+    .rpg-panel.rpg-position-left,
+    .rpg-panel.rpg-position-top {
+        height: 80vh;
+        max-height: 80vh;
+    }
+    
+    .rpg-mobile-toggle {
+        bottom: 70px;
+        right: 15px;
+        width: 52px;
+        height: 52px;
+        font-size: 22px;
+    }
+}
+
+/* Touch-friendly improvements for mobile */
+@media (max-width: 768px) {
+    /* Larger touch targets for buttons */
+    .rpg-classic-stat-btn {
+        min-width: 44px;
+        min-height: 44px;
+        font-size: 18px;
+    }
+    
+    /* More padding for editable fields */
+    .rpg-editable {
+        padding: 8px;
+        min-height: 44px;
+    }
+    
+    /* Larger close buttons */
+    .rpg-thought-close {
+        min-width: 44px;
+        min-height: 44px;
+        font-size: 24px;
+    }
+}

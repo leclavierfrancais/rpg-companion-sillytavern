@@ -216,6 +216,7 @@ If you enjoy this extension, consider supporting development:
 - Immersive HTML concept: Credit to u/melted_walrus
 - Info Box prompt inspiration: MidnightSleeper
 - Stats Tracker concept: Community feedback
+- Special thanks to Quack for helping me with the CSS
 
 ## 🚀 Planned Features
 
@@ -236,5 +237,6 @@ If you enjoy this extension, consider supporting development:
 ---
 
 Made with ❤️ by Marinara
+
 PS I'm looking for a job or a sponsor to fund my custom AI frontend, contact me if interested:
 mgrabower97@gmail.com

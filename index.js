@@ -4,7 +4,14 @@ import { selected_group, getGroupMembers } from '../../../group-chats.js';
 import { power_user } from '../../../power-user.js';
 
 const extensionName = 'third-party/rpg-companion-sillytavern';
-const extensionFolderPath = `scripts/extensions/${extensionName}`;
+
+// Dynamically determine extension path based on current location
+// This supports both global (public/extensions) and user-specific (data/default-user/extensions) installations
+const currentScriptPath = import.meta.url;
+const isUserExtension = currentScriptPath.includes('/data/') || currentScriptPath.includes('\\data\\');
+const extensionFolderPath = isUserExtension 
+    ? `data/default-user/extensions/${extensionName}` 
+    : `scripts/extensions/${extensionName}`;
 
 let extensionSettings = {
     enabled: true,

@@ -3107,20 +3107,25 @@ function onMessageSwiped(messageIndex) {
  * Main initialization function.
  */
 jQuery(async () => {
-    loadSettings();
-    await addExtensionSettings();
-    await initUI();
+    try {
+        loadSettings();
+        await addExtensionSettings();
+        await initUI();
 
-    // Load chat-specific data for current chat
-    loadChatData();
+        // Load chat-specific data for current chat
+        loadChatData();
 
-    // Register event listeners
-    eventSource.on(event_types.MESSAGE_SENT, onMessageSent);
-    eventSource.on(event_types.GENERATION_STARTED, onGenerationStarted);
-    eventSource.on(event_types.MESSAGE_RECEIVED, onMessageReceived);
-    eventSource.on(event_types.CHARACTER_MESSAGE_RENDERED, onMessageReceived);
-    eventSource.on(event_types.CHAT_CHANGED, onCharacterChanged);
-    eventSource.on(event_types.MESSAGE_SWIPED, onMessageSwiped);
+        // Register event listeners
+        eventSource.on(event_types.MESSAGE_SENT, onMessageSent);
+        eventSource.on(event_types.GENERATION_STARTED, onGenerationStarted);
+        eventSource.on(event_types.MESSAGE_RECEIVED, onMessageReceived);
+        eventSource.on(event_types.CHARACTER_MESSAGE_RENDERED, onMessageReceived);
+        eventSource.on(event_types.CHAT_CHANGED, onCharacterChanged);
+        eventSource.on(event_types.MESSAGE_SWIPED, onMessageSwiped);
 
-    // console.log('[RPG Companion] Extension loaded successfully');
+        // console.log('[RPG Companion] Extension loaded successfully');
+    } catch (error) {
+        console.error('[RPG Companion] Failed to initialize:', error);
+        throw error;
+    }
 });

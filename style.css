@@ -39,7 +39,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     color: var(--rpg-text);
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow: visible;
     transition: width 0.3s ease, transform 0.3s ease;
 }
 
@@ -68,10 +68,11 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1001;
+    z-index: 10001;
     transition: all 0.3s ease;
     font-size: 16px;
     box-shadow: 0 0 10px var(--rpg-shadow);
+    pointer-events: auto;
 }
 
 .rpg-collapse-toggle:hover {
@@ -82,13 +83,13 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 
 /* Position collapse button on the left side for right panel */
 .rpg-panel.rpg-position-right .rpg-collapse-toggle {
-    left: -30px;
+    left: -32px;
     border-radius: 8px 0 0 8px;
 }
 
 /* Position collapse button on the right side for left panel */
 .rpg-panel.rpg-position-left .rpg-collapse-toggle {
-    right: -30px;
+    right: -32px;
     border-radius: 0 8px 8px 0;
 }
 
@@ -373,7 +374,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
+    margin: 0;
     padding-bottom: 10px;
     border-bottom: 2px solid var(--rpg-border);
     flex-shrink: 0;
@@ -553,7 +554,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     align-items: stretch;
     justify-content: space-between;
     gap: clamp(6px, 1.2vh, 12px);
-    margin-bottom: clamp(4px, 1vh, 8px);
+    margin: 0;
     flex-shrink: 0;
 }
 
@@ -742,7 +743,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 }
 
 .rpg-mood {
-    margin-top: 3px;
+    margin: 0;
     display: flex;
     align-items: center;
     gap: 6px;
@@ -2417,7 +2418,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     gap: 6px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     flex-shrink: 0;
-    margin: 8px 0 8px 0;
+    margin: 0;
 }
 
 .rpg-manual-update-btn:hover {

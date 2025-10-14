@@ -2402,8 +2402,10 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
    MANUAL UPDATE BUTTON
    ============================================ */
 .rpg-manual-update-btn {
-    width: 100%;
-    padding: 8px;
+    width: 353px;
+    height: 33px;
+    margin: 0;
+    padding: 0;
     background: linear-gradient(135deg, var(--rpg-highlight), var(--rpg-accent));
     border: 2px solid var(--rpg-highlight);
     border-radius: 8px;
@@ -2418,8 +2420,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     gap: 6px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     flex-shrink: 0;
-    margin: 0 0 0 0;
-    margin-top: -6px;
+    box-sizing: border-box;
 }
 
 .rpg-manual-update-btn:hover {
@@ -2437,9 +2438,10 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
    SETTINGS BUTTON
    ============================================ */
 .rpg-btn-settings {
-    width: 100%;
+    width: 353px;
+    height: 33px;
     margin: 0;
-    padding: 8px;
+    padding: 0;
     background: var(--rpg-accent);
     border: 2px solid var(--rpg-border);
     border-radius: 8px;
@@ -2454,6 +2456,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     gap: 6px;
     flex-shrink: 0;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    box-sizing: border-box;
 }
 
 .rpg-btn-settings:hover {

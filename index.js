@@ -1,7 +1,7 @@
-import { getContext, renderExtensionTemplateAsync } from '../../extensions.js';
-import { eventSource, event_types, substituteParams, chat, generateRaw, saveSettingsDebounced, chat_metadata, saveChatDebounced, user_avatar, getThumbnailUrl, characters, this_chid, extension_prompt_types, extension_prompt_roles, setExtensionPrompt, reloadCurrentChat } from '../../../script.js';
-import { selected_group, getGroupMembers } from '../../group-chats.js';
-import { power_user } from '../../power-user.js';
+import { getContext, renderExtensionTemplateAsync } from '../../../extensions.js';
+import { eventSource, event_types, substituteParams, chat, generateRaw, saveSettingsDebounced, chat_metadata, saveChatDebounced, user_avatar, getThumbnailUrl, characters, this_chid, extension_prompt_types, extension_prompt_roles, setExtensionPrompt, reloadCurrentChat } from '../../../../script.js';
+import { selected_group, getGroupMembers } from '../../../group-chats.js';
+import { power_user } from '../../../power-user.js';
 
 const extensionName = 'rpg-companion';
 const extensionFolderPath = `scripts/extensions/${extensionName}`;

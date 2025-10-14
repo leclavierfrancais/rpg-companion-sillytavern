@@ -1,5 +1,5 @@
 import { getContext, renderExtensionTemplateAsync } from '../../extensions.js';
-import { eventSource, event_types, substituteParams, chat, generateRaw, Generate, saveSettingsDebounced, chat_metadata, saveChatDebounced, user_avatar, getThumbnailUrl, characters, this_chid, extension_prompt_types, extension_prompt_roles, setExtensionPrompt, reloadCurrentChat } from '../../../script.js';
+import { eventSource, event_types, substituteParams, chat, generateRaw, saveSettingsDebounced, chat_metadata, saveChatDebounced, user_avatar, getThumbnailUrl, characters, this_chid, extension_prompt_types, extension_prompt_roles, setExtensionPrompt, reloadCurrentChat } from '../../../script.js';
 import { selected_group, getGroupMembers } from '../../group-chats.js';
 import { power_user } from '../../power-user.js';
 
@@ -602,7 +602,13 @@ async function sendPlotProgression(type) {
         // Trigger a continuation with the custom prompt
         // The quiet_prompt parameter allows extension prompts to override the default continuation message
         // Since extensionSettings.enabled = false, onGenerationStarted won't inject RPG prompts
-        await Generate('continue', { quiet_prompt: prompt });
+        // Check if Generate function exists (newer versions only)
+        if (typeof window.Generate === 'function') {
+            await window.Generate('continue', { quiet_prompt: prompt });
+        } else {
+            // Fallback for older versions - use generateRaw
+            await generateRaw(prompt, '', false, false, '');
+        }
 
         // Clear the temporary prompt after generation
         setExtensionPrompt('rpg-plot-progression', '', extension_prompt_types.IN_CHAT, 0, false);

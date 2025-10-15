@@ -1682,6 +1682,11 @@ function renderUserStats() {
     const stats = extensionSettings.userStats;
     const userName = getContext().name1;
 
+    // Initialize lastGeneratedData.userStats if it doesn't exist
+    if (!lastGeneratedData.userStats) {
+        lastGeneratedData.userStats = `Health: ${stats.health}%\nSustenance: ${stats.sustenance}%\nEnergy: ${stats.energy}%\nHygiene: ${stats.hygiene}%\nArousal: ${stats.arousal}%\n${stats.mood}: ${stats.conditions}\nInventory: ${stats.inventory}`;
+    }
+
     // Get user portrait
     const userPortrait = getThumbnailUrl('persona', user_avatar);
 
@@ -2149,21 +2154,9 @@ function renderThoughts() {
         $thoughtsContainer.addClass('rpg-content-updating');
     }
 
-    // If no data yet, show placeholder
+    // Initialize if no data yet
     if (!lastGeneratedData.characterThoughts) {
-        const placeholderHtml = `
-            <div class="rpg-thoughts-content">
-                <div class="rpg-thoughts-placeholder">
-                    <div class="rpg-placeholder-text">No characters detected</div>
-                    <div class="rpg-placeholder-hint">Generate a new response in the roleplay or switch to "Separate Generation" in Settings to access and click the "Refresh RPG Info" button</div>
-                </div>
-            </div>
-        `;
-        $thoughtsContainer.html(placeholderHtml);
-        if (extensionSettings.enableAnimations) {
-            setTimeout(() => $thoughtsContainer.removeClass('rpg-content-updating'), 600);
-        }
-        return;
+        lastGeneratedData.characterThoughts = '';
     }
 
     const lines = lastGeneratedData.characterThoughts.split('\n');
@@ -2222,8 +2215,36 @@ function renderThoughts() {
     // console.log('[RPG Companion] Total characters parsed:', presentCharacters.length);
     // console.log('[RPG Companion] Characters array:', presentCharacters);
 
+    // If no characters parsed, show a placeholder editable card
     if (presentCharacters.length === 0) {
-        html += '<div class="rpg-thoughts-content"><div class="rpg-thoughts-overlay"><span>Unavailable</span></div></div>';
+        // Get default character portrait (try to use the current character if in 1-on-1 chat)
+        let defaultPortrait = 'img/user-default.png';
+        let defaultName = 'Character';
+
+        if (this_chid !== undefined && characters[this_chid]) {
+            if (characters[this_chid].avatar && characters[this_chid].avatar !== 'none') {
+                defaultPortrait = getThumbnailUrl('avatar', characters[this_chid].avatar);
+            }
+            defaultName = characters[this_chid].name || 'Character';
+        }
+
+        html += '<div class="rpg-thoughts-content">';
+        html += `
+            <div class="rpg-character-card" data-character-name="${defaultName}">
+                <div class="rpg-character-avatar">
+                    <img src="${defaultPortrait}" alt="${defaultName}" onerror="this.src='img/user-default.png'" />
+                    <div class="rpg-relationship-badge rpg-editable" contenteditable="true" data-character="${defaultName}" data-field="relationship" title="Click to edit (use emoji: ⚔️ ⚖️ ⭐ ❤️)">⚖️</div>
+                </div>
+                <div class="rpg-character-info">
+                    <div class="rpg-character-header">
+                        <span class="rpg-character-emoji rpg-editable" contenteditable="true" data-character="${defaultName}" data-field="emoji" title="Click to edit emoji">😊</span>
+                        <span class="rpg-character-name rpg-editable" contenteditable="true" data-character="${defaultName}" data-field="name" title="Click to edit name">${defaultName}</span>
+                    </div>
+                    <div class="rpg-character-traits rpg-editable" contenteditable="true" data-character="${defaultName}" data-field="traits" title="Click to edit traits">Traits</div>
+                </div>
+            </div>
+        `;
+        html += '</div>';
     } else {
         html += '<div class="rpg-thoughts-content">';
         for (const char of presentCharacters) {
@@ -2409,7 +2430,7 @@ function updateInfoBoxField(field, value) {
                 break;
             }
         }
-        
+
         if (!weatherLineFound) {
             const dividerIndex = updatedLines.findIndex(line => line.includes('---'));
             if (dividerIndex >= 0) {
@@ -2516,10 +2537,18 @@ function updateCharacterField(characterName, field, value) {
     // console.log('[RPG Companion] 📝 updateCharacterField called - character:', characterName, 'field:', field, 'value:', value);
     // console.log('[RPG Companion] 📝 Current lastGeneratedData.characterThoughts:', lastGeneratedData.characterThoughts);
 
-    if (!lastGeneratedData.characterThoughts) return;    const lines = lastGeneratedData.characterThoughts.split('\n');
+    // Initialize if it doesn't exist
+    if (!lastGeneratedData.characterThoughts) {
+        lastGeneratedData.characterThoughts = 'Present Characters\n---\n';
+    }
+
+    const lines = lastGeneratedData.characterThoughts.split('\n');
+    let characterFound = false;
+
     const updatedLines = lines.map(line => {
         // Case-insensitive character name matching
         if (line.toLowerCase().includes(characterName.toLowerCase())) {
+            characterFound = true;
             const parts = line.split('|').map(p => p.trim());
             if (parts.length >= 2) {
                 const firstPart = parts[0];
@@ -2560,6 +2589,43 @@ function updateCharacterField(characterName, field, value) {
         }
         return line;
     });
+
+    // If character wasn't found, create a new character line
+    if (!characterFound) {
+        // Find the divider line
+        const dividerIndex = updatedLines.findIndex(line => line.includes('---'));
+        if (dividerIndex >= 0) {
+            // Create initial character line with the edited field
+            let emoji = '😊';
+            let name = characterName;
+            let traits = 'Traits';
+            let relationship = 'Neutral';
+            let thoughts = '';
+
+            // Apply the edited field
+            if (field === 'emoji') {
+                emoji = value;
+            } else if (field === 'name') {
+                name = value;
+            } else if (field === 'traits') {
+                traits = value;
+            } else if (field === 'thoughts') {
+                thoughts = value;
+            } else if (field === 'relationship') {
+                const emojiToRelationship = {
+                    '⚔️': 'Enemy',
+                    '⚖️': 'Neutral',
+                    '⭐': 'Friend',
+                    '❤️': 'Lover'
+                };
+                relationship = emojiToRelationship[value] || value;
+            }
+
+            const newCharacterLine = `${emoji}: ${name}, ${traits} | ${relationship} | ${thoughts}`;
+            // Insert after the divider
+            updatedLines.splice(dividerIndex + 1, 0, newCharacterLine);
+        }
+    }
 
     lastGeneratedData.characterThoughts = updatedLines.join('\n');
     // console.log('[RPG Companion] 💾 Updated lastGeneratedData.characterThoughts:', lastGeneratedData.characterThoughts);

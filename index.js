@@ -80,6 +80,9 @@ let isGenerating = false;
 // Tracks if we're currently doing a plot progression
 let isPlotProgression = false;
 
+// Temporary storage for pending dice roll (not saved until user clicks "Save Roll")
+let pendingDiceRoll = null;
+
 // UI Elements
 let $panelContainer = null;
 let $userStatsContainer = null;
@@ -655,6 +658,8 @@ function setupDiceRoller() {
 
     // Close popup
     $('#rpg-dice-popup-close, .rpg-dice-popup-overlay').on('click', function() {
+        // Discard pending roll without saving
+        pendingDiceRoll = null;
         closeDicePopup();
     });
 
@@ -663,8 +668,15 @@ function setupDiceRoller() {
         await rollDice();
     });
 
-    // Save roll button (closes popup)
+    // Save roll button (closes popup and saves the roll)
     $('#rpg-dice-save-btn').on('click', function() {
+        // Save the pending roll
+        if (pendingDiceRoll) {
+            extensionSettings.lastDiceRoll = pendingDiceRoll;
+            saveSettings();
+            updateDiceDisplay();
+            pendingDiceRoll = null;
+        }
         closeDicePopup();
     });
 
@@ -753,14 +765,13 @@ async function rollDice() {
     const total = rollResult.total || 0;
     const rolls = rollResult.rolls || [];
 
-    // Store result
-    extensionSettings.lastDiceRoll = {
+    // Store result temporarily (not saved until "Save Roll" is clicked)
+    pendingDiceRoll = {
         formula: `${count}d${sides}`,
         total: total,
         rolls: rolls,
         timestamp: Date.now()
     };
-    saveSettings();
 
     // Hide animation and show result
     $('#rpg-dice-animation').hide();
@@ -773,8 +784,7 @@ async function rollDice() {
         $('#rpg-dice-result-details').text('');
     }
 
-    // Update sidebar display
-    updateDiceDisplay();
+    // Don't update sidebar display yet - only update when user clicks "Save Roll"
 }
 
 /**

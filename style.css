@@ -2931,20 +2931,23 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 /* Hide mobile toggle on desktop, show on mobile */
 .rpg-mobile-toggle {
     display: none;
+    align-items: center;
+    justify-content: center;
     position: fixed;
-    bottom: 5rem;
-    right: 1.25rem;
-    width: 3.5rem;
-    height: 3.5rem;
+    /* Position set by JavaScript based on saved settings */
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
-    background: var(--rpg-accent, #2c3e50);
-    border: 3px solid var(--rpg-border, #34495e);
+    background: var(--SmartThemeBlurTintColor);
+    border: 2px solid var(--SmartThemeBorderColor);
     color: var(--rpg-text, #ecf0f1);
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     cursor: pointer;
-    z-index: 999;
+    z-index: 10002;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    transition: all 0.3s ease;
+    transition: opacity 0.3s ease, transform 0.2s ease;
+    user-select: none; /* Prevent text selection while dragging */
+    -webkit-user-select: none;
 }
 
 .rpg-mobile-toggle:hover {
@@ -2975,16 +2978,31 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 }
 
 /* Mobile-specific panel behavior - matches SillyTavern's 1000px breakpoint */
+/* CACHE BUST v2025-01-16 */
 @media (max-width: 1000px) {
     /* ========================================
        MOBILE PANEL FOUNDATION
        ======================================== */
 
-    /* Show the FAB on mobile */
+    /* Show the mobile FAB toggle button */
     .rpg-mobile-toggle {
         display: flex;
-        align-items: center;
-        justify-content: center;
+    }
+
+    /* Hide FAB when panel is open */
+    body:has(.rpg-panel.rpg-mobile-open) .rpg-mobile-toggle {
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    /* Hide internal collapse toggle when panel is closed on mobile */
+    .rpg-collapse-toggle {
+        display: none !important;
+    }
+
+    /* Show internal collapse toggle when panel is open on mobile */
+    .rpg-panel.rpg-mobile-open .rpg-collapse-toggle {
+        display: flex !important;
     }
 
     /* Show overlay when needed */
@@ -2998,36 +3016,37 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
         margin-left: 0 !important;
     }
 
-    /* CLEAN SLATE: Reset ALL desktop positioning */
+    /* Mobile panel - slide from right like desktop */
     .rpg-panel {
         position: fixed !important;
-        left: 0 !important;
+        top: var(--topBarBlockSize) !important;
         right: 0 !important;
-        top: auto !important;
-        width: 100dvw !important;
-        max-width: 100dvw !important;
-        min-width: unset !important;
+        bottom: 0 !important;
+        left: auto !important;
+
+        /* Mobile panel sizing */
+        width: 85dvw !important;
+        max-width: 400px !important;
         height: calc(100dvh - var(--topBarBlockSize)) !important;
-        max-height: calc(100dvh - var(--topBarBlockSize)) !important;
-        border-radius: 20px 20px 0 0;
-        overflow-y: auto;
+
+        /* Start off-screen to the right */
+        transform: translateX(100%) !important;
+        transition: transform 0.3s ease-in-out !important;
+
+        overflow-y: auto !important;
         -webkit-overflow-scrolling: touch;
-        box-shadow: 0 -5px 20px var(--rpg-shadow);
+
+        /* Styling */
+        border-radius: 20px 0 0 0;
         border-left: 1px solid var(--SmartThemeBorderColor);
-        border-right: 1px solid var(--SmartThemeBorderColor);
         border-top: 1px solid var(--SmartThemeBorderColor);
         backdrop-filter: blur(calc(var(--SmartThemeBlurStrength) * 2));
-
-        /* DRAWER POSITIONING: Starts below viewport */
-        bottom: calc(-100dvh + var(--topBarBlockSize));
-
-        /* ONLY transition bottom property */
-        transition: bottom 0.3s ease-in-out;
+        box-shadow: -5px 0 20px var(--rpg-shadow);
     }
 
-    /* Show panel when opened - slides up */
+    /* Show panel when opened - slides in from right */
     .rpg-panel.rpg-mobile-open {
-        bottom: 0;
+        transform: translateX(0) !important;
         z-index: 50;
     }
 
@@ -3043,14 +3062,14 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
         pointer-events: auto !important;
     }
 
-    /* Reposition collapse toggle on mobile as close button inside panel */
+    /* Collapse toggle on mobile - right side, always visible */
     .rpg-collapse-toggle {
         display: flex !important;
         align-items: center;
         justify-content: center;
-        position: absolute;
-        top: 12px;
-        right: 12px;
+        position: fixed !important;
+        top: calc(var(--topBarBlockSize) + 60px) !important;
+        right: 12px !important;
         left: auto !important;
         width: 44px;
         height: 44px;
@@ -3059,9 +3078,11 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
         border-radius: 50%;
         background: var(--SmartThemeBlurTintColor);
         border: 2px solid var(--SmartThemeBorderColor);
-        z-index: 100;
+        z-index: 9999 !important;
         transition: all 0.2s ease;
         transform: none !important;
+        pointer-events: auto !important;
+        cursor: pointer !important;
     }
 
     .rpg-collapse-toggle:hover {
@@ -3073,13 +3094,9 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
         transform: scale(0.95) !important;
     }
 
-    /* Change icon to X on mobile */
+    /* Mobile icon styling - use chevrons for drawer UX */
     .rpg-collapse-toggle i {
         transform: none !important;
-    }
-
-    .rpg-collapse-toggle i::before {
-        content: "\f00d" !important; /* fa-times (X icon) */
         font-size: 20px;
     }
 
@@ -3380,7 +3397,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 /* Extra small screens - adjust FAB position */
 @media (max-width: 480px) {
     .rpg-mobile-toggle {
-        bottom: 4.375rem;
+        bottom: 6rem;
         right: 0.938rem;
         width: 3.25rem;
         height: 3.25rem;

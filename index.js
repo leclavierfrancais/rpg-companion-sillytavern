@@ -35,6 +35,10 @@ let extensionSettings = {
     statBarColorLow: '#cc3333', // Color for low stat values (red)
     statBarColorHigh: '#33cc66', // Color for high stat values (green)
     enableAnimations: true, // Enable smooth animations for stats and content updates
+    mobileFabPosition: {
+        top: 'calc(var(--topBarBlockSize) + 60px)',
+        right: '12px'
+    }, // Saved position for mobile FAB button
     userStats: {
         health: 100,
         sustenance: 100,
@@ -989,21 +993,323 @@ function setupMobileToggle() {
     const $panel = $('#rpg-companion-panel');
     const $overlay = $('<div class="rpg-mobile-overlay"></div>');
 
-    // Toggle panel visibility on mobile
-    $mobileToggle.on('click', function() {
+    // DIAGNOSTIC: Check if elements exist and log setup state
+    console.log('[RPG Mobile] ========================================');
+    console.log('[RPG Mobile] setupMobileToggle called');
+    console.log('[RPG Mobile] Button exists:', $mobileToggle.length > 0, 'jQuery object:', $mobileToggle);
+    console.log('[RPG Mobile] Panel exists:', $panel.length > 0);
+    console.log('[RPG Mobile] Window width:', window.innerWidth);
+    console.log('[RPG Mobile] Is mobile viewport (<=1000):', window.innerWidth <= 1000);
+    console.log('[RPG Mobile] ========================================');
+
+    if ($mobileToggle.length === 0) {
+        console.error('[RPG Mobile] ERROR: Mobile toggle button not found in DOM!');
+        console.error('[RPG Mobile] Cannot attach event handlers - button does not exist');
+        return; // Exit early if button doesn't exist
+    }
+
+    // Load and apply saved FAB position
+    if (extensionSettings.mobileFabPosition) {
+        const pos = extensionSettings.mobileFabPosition;
+        console.log('[RPG Mobile] Loading saved FAB position:', pos);
+
+        // Apply saved position
+        if (pos.top) $mobileToggle.css('top', pos.top);
+        if (pos.right) $mobileToggle.css('right', pos.right);
+        if (pos.bottom) $mobileToggle.css('bottom', pos.bottom);
+        if (pos.left) $mobileToggle.css('left', pos.left);
+    }
+
+    // Touch/drag state
+    let isDragging = false;
+    let touchStartTime = 0;
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let buttonStartX = 0;
+    let buttonStartY = 0;
+    const LONG_PRESS_DURATION = 200; // ms to hold before enabling drag
+    const MOVE_THRESHOLD = 10; // px to move before enabling drag
+
+    // Touch start - begin tracking
+    $mobileToggle.on('touchstart', function(e) {
+        console.log('[RPG Mobile] >>> TOUCHSTART EVENT FIRED <<<');
+
+        const touch = e.originalEvent.touches[0];
+
+        touchStartTime = Date.now();
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
+
+        const offset = $mobileToggle.offset();
+        buttonStartX = offset.left;
+        buttonStartY = offset.top;
+
+        isDragging = false;
+
+        console.log('[RPG Mobile] Touch start:', {
+            time: touchStartTime,
+            touchX: touchStartX,
+            touchY: touchStartY,
+            buttonX: buttonStartX,
+            buttonY: buttonStartY
+        });
+    });
+
+    // Touch move - check if should start dragging
+    $mobileToggle.on('touchmove', function(e) {
+        const touch = e.originalEvent.touches[0];
+        const deltaX = touch.clientX - touchStartX;
+        const deltaY = touch.clientY - touchStartY;
+        const timeSinceStart = Date.now() - touchStartTime;
+        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+        console.log('[RPG Mobile] >>> TOUCHMOVE EVENT FIRED <<<', {
+            distance: distance.toFixed(2),
+            timeSinceStart,
+            isDragging
+        });
+
+        // Start dragging if held long enough OR moved far enough
+        if (!isDragging && (timeSinceStart > LONG_PRESS_DURATION || distance > MOVE_THRESHOLD)) {
+            isDragging = true;
+            $mobileToggle.css('transition', 'none'); // Disable transitions while dragging
+            console.log('[RPG Mobile] Started dragging:', { timeSinceStart, distance });
+        }
+
+        if (isDragging) {
+            e.preventDefault(); // Prevent scrolling while dragging
+
+            // Calculate new position
+            let newX = buttonStartX + deltaX;
+            let newY = buttonStartY + deltaY;
+
+            // Get button dimensions
+            const buttonWidth = $mobileToggle.outerWidth();
+            const buttonHeight = $mobileToggle.outerHeight();
+
+            // Constrain to viewport with 10px padding
+            const minX = 10;
+            const maxX = window.innerWidth - buttonWidth - 10;
+            const minY = 10;
+            const maxY = window.innerHeight - buttonHeight - 10;
+
+            newX = Math.max(minX, Math.min(maxX, newX));
+            newY = Math.max(minY, Math.min(maxY, newY));
+
+            // Apply position
+            $mobileToggle.css({
+                left: newX + 'px',
+                top: newY + 'px',
+                right: 'auto',
+                bottom: 'auto'
+            });
+        }
+    });
+
+    // Mouse drag support for desktop
+    let mouseDown = false;
+
+    $mobileToggle.on('mousedown', function(e) {
+        console.log('[RPG Mobile] >>> MOUSEDOWN EVENT FIRED <<<');
+
+        // Prevent default to avoid text selection
+        e.preventDefault();
+
+        touchStartTime = Date.now();
+        touchStartX = e.clientX;
+        touchStartY = e.clientY;
+
+        const offset = $mobileToggle.offset();
+        buttonStartX = offset.left;
+        buttonStartY = offset.top;
+
+        isDragging = false;
+        mouseDown = true;
+
+        console.log('[RPG Mobile] Mouse down:', {
+            time: touchStartTime,
+            mouseX: touchStartX,
+            mouseY: touchStartY,
+            buttonX: buttonStartX,
+            buttonY: buttonStartY
+        });
+    });
+
+    // Mouse move - only track if mouse is down
+    $(document).on('mousemove', function(e) {
+        if (!mouseDown) return;
+
+        const deltaX = e.clientX - touchStartX;
+        const deltaY = e.clientY - touchStartY;
+        const timeSinceStart = Date.now() - touchStartTime;
+        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+        console.log('[RPG Mobile] >>> MOUSEMOVE EVENT FIRED <<<', {
+            distance: distance.toFixed(2),
+            timeSinceStart,
+            isDragging,
+            mouseDown
+        });
+
+        // Start dragging if held long enough OR moved far enough
+        if (!isDragging && (timeSinceStart > LONG_PRESS_DURATION || distance > MOVE_THRESHOLD)) {
+            isDragging = true;
+            $mobileToggle.css('transition', 'none');
+            console.log('[RPG Mobile] Started mouse dragging:', { timeSinceStart, distance });
+        }
+
+        if (isDragging) {
+            e.preventDefault();
+
+            // Calculate new position
+            let newX = buttonStartX + deltaX;
+            let newY = buttonStartY + deltaY;
+
+            // Get button dimensions
+            const buttonWidth = $mobileToggle.outerWidth();
+            const buttonHeight = $mobileToggle.outerHeight();
+
+            // Constrain to viewport with 10px padding
+            const minX = 10;
+            const maxX = window.innerWidth - buttonWidth - 10;
+            const minY = 10;
+            const maxY = window.innerHeight - buttonHeight - 10;
+
+            newX = Math.max(minX, Math.min(maxX, newX));
+            newY = Math.max(minY, Math.min(maxY, newY));
+
+            // Apply position
+            $mobileToggle.css({
+                left: newX + 'px',
+                top: newY + 'px',
+                right: 'auto',
+                bottom: 'auto'
+            });
+        }
+    });
+
+    // Mouse up - save position or let click handler toggle
+    $(document).on('mouseup', function(e) {
+        if (!mouseDown) return;
+
+        console.log('[RPG Mobile] >>> MOUSEUP EVENT FIRED <<<', { isDragging });
+
+        mouseDown = false;
+
+        if (isDragging) {
+            // Was dragging - save new position
+            const offset = $mobileToggle.offset();
+            const newPosition = {
+                left: offset.left + 'px',
+                top: offset.top + 'px'
+            };
+
+            extensionSettings.mobileFabPosition = newPosition;
+            saveSettings();
+
+            console.log('[RPG Mobile] Saved new FAB position (mouse):', newPosition);
+
+            // Re-enable transitions
+            setTimeout(() => {
+                $mobileToggle.css('transition', '');
+            }, 50);
+
+            isDragging = false;
+
+            // Prevent click from firing after drag
+            e.preventDefault();
+            e.stopPropagation();
+
+            // Add flag to prevent click handler from firing
+            $mobileToggle.data('just-dragged', true);
+            setTimeout(() => {
+                $mobileToggle.data('just-dragged', false);
+            }, 100);
+        }
+        // If not dragging, let the click handler toggle the panel
+    });
+
+    // Touch end - save position or toggle panel
+    $mobileToggle.on('touchend', function(e) {
+        console.log('[RPG Mobile] >>> TOUCHEND EVENT FIRED <<<', { isDragging });
+
+        // TEMPORARILY COMMENTED FOR DIAGNOSIS - might be blocking click fallback
+        // e.preventDefault();
+
+        console.log('[RPG Mobile] Touch end details:', { isDragging });
+
+        if (isDragging) {
+            // Was dragging - save new position
+            const offset = $mobileToggle.offset();
+            const newPosition = {
+                left: offset.left + 'px',
+                top: offset.top + 'px'
+            };
+
+            extensionSettings.mobileFabPosition = newPosition;
+            saveSettings();
+
+            console.log('[RPG Mobile] Saved new FAB position:', newPosition);
+
+            // Re-enable transitions
+            setTimeout(() => {
+                $mobileToggle.css('transition', '');
+            }, 50);
+
+            isDragging = false;
+        } else {
+            // Was a tap - toggle panel
+            console.log('[RPG Mobile] Quick tap detected - toggling panel');
+
+            if ($panel.hasClass('rpg-mobile-open')) {
+                // Close panel
+                $panel.removeClass('rpg-mobile-open');
+                $overlay.remove();
+                $mobileToggle.removeClass('active');
+            } else {
+                // Open panel
+                $panel.addClass('rpg-mobile-open');
+                $('body').append($overlay);
+                $mobileToggle.addClass('active');
+
+                // Close when clicking overlay
+                $overlay.on('click', function() {
+                    $panel.removeClass('rpg-mobile-open');
+                    $overlay.remove();
+                    $mobileToggle.removeClass('active');
+                });
+            }
+        }
+    });
+
+    // Click handler - works on both mobile and desktop
+    $mobileToggle.on('click', function(e) {
+        // Skip if we just finished dragging
+        if ($mobileToggle.data('just-dragged')) {
+            console.log('[RPG Mobile] Click blocked - just finished dragging');
+            return;
+        }
+
+        console.log('[RPG Mobile] >>> CLICK EVENT FIRED <<<', {
+            windowWidth: window.innerWidth,
+            isMobileViewport: window.innerWidth <= 1000,
+            panelOpen: $panel.hasClass('rpg-mobile-open')
+        });
+
+        // Work on both mobile and desktop (removed viewport check)
         if ($panel.hasClass('rpg-mobile-open')) {
-            // Close panel
+            console.log('[RPG Mobile] Click: Closing panel');
             $panel.removeClass('rpg-mobile-open');
             $overlay.remove();
             $mobileToggle.removeClass('active');
         } else {
-            // Open panel
+            console.log('[RPG Mobile] Click: Opening panel');
             $panel.addClass('rpg-mobile-open');
             $('body').append($overlay);
             $mobileToggle.addClass('active');
 
-            // Close when clicking overlay
             $overlay.on('click', function() {
+                console.log('[RPG Mobile] Overlay clicked - closing panel');
                 $panel.removeClass('rpg-mobile-open');
                 $overlay.remove();
                 $mobileToggle.removeClass('active');
@@ -1024,6 +1330,8 @@ function setupMobileToggle() {
 
         // Transitioning from desktop to mobile - handle immediately for smooth transition
         if (!wasMobile && isMobile) {
+            console.log('[RPG Mobile] Transitioning desktop -> mobile');
+
             // Remove desktop positioning classes
             $panel.removeClass('rpg-position-right rpg-position-left rpg-position-top');
 
@@ -1035,8 +1343,25 @@ function setupMobileToggle() {
             $mobileToggle.removeClass('active');
             $('.rpg-mobile-overlay').remove();
 
+            // Clear any inline styles that might be overriding CSS
+            $panel.attr('style', '');
+
+            console.log('[RPG Mobile] After cleanup:', {
+                panelClasses: $panel.attr('class'),
+                inlineStyles: $panel.attr('style'),
+                panelPosition: {
+                    top: $panel.css('top'),
+                    bottom: $panel.css('bottom'),
+                    transform: $panel.css('transform'),
+                    visibility: $panel.css('visibility')
+                }
+            });
+
             // Set up mobile tabs IMMEDIATELY (no debounce delay)
             setupMobileTabs();
+
+            // Update icon for mobile state
+            updateCollapseToggleIcon();
 
             wasMobile = isMobile;
             return;
@@ -1078,7 +1403,23 @@ function setupMobileToggle() {
     // Initialize mobile tabs if starting on mobile
     const isMobile = window.innerWidth <= 1000;
     if (isMobile) {
+        const $panel = $('#rpg-companion-panel');
+        // Clear any inline styles
+        $panel.attr('style', '');
+
+        console.log('[RPG Mobile] Initial load on mobile viewport:', {
+            panelClasses: $panel.attr('class'),
+            inlineStyles: $panel.attr('style'),
+            panelPosition: {
+                top: $panel.css('top'),
+                bottom: $panel.css('top'),
+                transform: $panel.css('transform'),
+                visibility: $panel.css('visibility')
+            }
+        });
         setupMobileTabs();
+        // Set initial icon for mobile
+        updateCollapseToggleIcon();
     }
 }
 
@@ -1225,14 +1566,78 @@ function setupCollapseToggle() {
     const $panel = $('#rpg-companion-panel');
     const $icon = $collapseToggle.find('i');
 
-    $collapseToggle.on('click', function() {
+    $collapseToggle.on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
         const isMobile = window.innerWidth <= 1000;
 
-        // On mobile: button acts as close button for mobile panel
+        // On mobile: button toggles panel open/closed (same as desktop behavior)
         if (isMobile) {
-            $panel.removeClass('rpg-mobile-open');
-            $('.rpg-mobile-overlay').remove();
-            $('#rpg-mobile-toggle').removeClass('active');
+            const isOpen = $panel.hasClass('rpg-mobile-open');
+            console.log('[RPG Mobile] Collapse toggle clicked. Current state:', {
+                isOpen,
+                panelClasses: $panel.attr('class'),
+                inlineStyles: $panel.attr('style'),
+                panelPosition: {
+                    top: $panel.css('top'),
+                    bottom: $panel.css('bottom'),
+                    transform: $panel.css('transform'),
+                    visibility: $panel.css('visibility')
+                }
+            });
+
+            if (isOpen) {
+                // Close panel
+                console.log('[RPG Mobile] Closing panel');
+                $panel.removeClass('rpg-mobile-open');
+                $('.rpg-mobile-overlay').remove();
+                $('#rpg-mobile-toggle').removeClass('active');
+            } else {
+                // Open panel
+                console.log('[RPG Mobile] Opening panel');
+                $panel.addClass('rpg-mobile-open');
+                const $overlay = $('<div class="rpg-mobile-overlay"></div>');
+                $('body').append($overlay);
+
+                // Debug: Check state after animation should complete
+                setTimeout(() => {
+                    console.log('[RPG Mobile] 500ms after opening:', {
+                        panelClasses: $panel.attr('class'),
+                        hasOpenClass: $panel.hasClass('rpg-mobile-open'),
+                        visibility: $panel.css('visibility'),
+                        transform: $panel.css('transform'),
+                        display: $panel.css('display'),
+                        opacity: $panel.css('opacity')
+                    });
+                }, 500);
+
+                // Close when clicking overlay
+                $overlay.on('click', function() {
+                    console.log('[RPG Mobile] Overlay clicked - closing panel');
+                    $panel.removeClass('rpg-mobile-open');
+                    $overlay.remove();
+                    updateCollapseToggleIcon();
+                });
+            }
+
+            // Update icon to reflect new state
+            updateCollapseToggleIcon();
+
+            console.log('[RPG Mobile] After toggle:', {
+                panelClasses: $panel.attr('class'),
+                inlineStyles: $panel.attr('style'),
+                panelPosition: {
+                    top: $panel.css('top'),
+                    bottom: $panel.css('bottom'),
+                    transform: $panel.css('transform'),
+                    visibility: $panel.css('visibility')
+                },
+                gameContainer: {
+                    opacity: $('.rpg-game-container').css('opacity'),
+                    visibility: $('.rpg-game-container').css('visibility')
+                }
+            });
             return;
         }
 
@@ -1273,21 +1678,41 @@ function updateCollapseToggleIcon() {
     const $collapseToggle = $('#rpg-collapse-toggle');
     const $panel = $('#rpg-companion-panel');
     const $icon = $collapseToggle.find('i');
-    const isCollapsed = $panel.hasClass('rpg-collapsed');
+    const isMobile = window.innerWidth <= 1000;
 
-    if (isCollapsed) {
-        // When collapsed, arrow points inward (to expand)
-        if ($panel.hasClass('rpg-position-right')) {
-            $icon.removeClass('fa-chevron-right').addClass('fa-chevron-left');
-        } else if ($panel.hasClass('rpg-position-left')) {
-            $icon.removeClass('fa-chevron-left').addClass('fa-chevron-right');
+    if (isMobile) {
+        // Mobile: slides from right, use same icon logic as desktop right panel
+        const isOpen = $panel.hasClass('rpg-mobile-open');
+        console.log('[RPG Mobile] updateCollapseToggleIcon:', {
+            isMobile: true,
+            isOpen,
+            settingIcon: isOpen ? 'chevron-right' : 'chevron-left'
+        });
+        if (isOpen) {
+            // Panel open - chevron points right (to close/slide right)
+            $icon.removeClass('fa-chevron-down fa-chevron-up fa-chevron-left').addClass('fa-chevron-right');
+        } else {
+            // Panel closed - chevron points left (to open/slide left)
+            $icon.removeClass('fa-chevron-down fa-chevron-up fa-chevron-right').addClass('fa-chevron-left');
         }
     } else {
-        // When expanded, arrow points outward (to collapse)
-        if ($panel.hasClass('rpg-position-right')) {
-            $icon.removeClass('fa-chevron-left').addClass('fa-chevron-right');
-        } else if ($panel.hasClass('rpg-position-left')) {
-            $icon.removeClass('fa-chevron-right').addClass('fa-chevron-left');
+        // Desktop: icon direction based on panel position and collapsed state
+        const isCollapsed = $panel.hasClass('rpg-collapsed');
+
+        if (isCollapsed) {
+            // When collapsed, arrow points inward (to expand)
+            if ($panel.hasClass('rpg-position-right')) {
+                $icon.removeClass('fa-chevron-right').addClass('fa-chevron-left');
+            } else if ($panel.hasClass('rpg-position-left')) {
+                $icon.removeClass('fa-chevron-left').addClass('fa-chevron-right');
+            }
+        } else {
+            // When expanded, arrow points outward (to collapse)
+            if ($panel.hasClass('rpg-position-right')) {
+                $icon.removeClass('fa-chevron-left').addClass('fa-chevron-right');
+            } else if ($panel.hasClass('rpg-position-left')) {
+                $icon.removeClass('fa-chevron-right').addClass('fa-chevron-left');
+            }
         }
     }
 }
@@ -1344,10 +1769,17 @@ function updateSectionVisibility() {
 function applyPanelPosition() {
     if (!$panelContainer) return;
 
+    const isMobile = window.innerWidth <= 1000;
+
     // Remove all position classes
     $panelContainer.removeClass('rpg-position-left rpg-position-right rpg-position-top');
 
-    // Add the appropriate position class
+    // On mobile, don't apply desktop position classes
+    if (isMobile) {
+        return;
+    }
+
+    // Desktop: Add the appropriate position class
     $panelContainer.addClass(`rpg-position-${extensionSettings.panelPosition}`);
 
     // Update collapse toggle icon direction for new position

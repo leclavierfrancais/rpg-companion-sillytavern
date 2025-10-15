@@ -105,18 +105,18 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     display: none;
 }
 
-/* Right Position (Default) - Panel fills right margin space */
+/* Right Position (Default) - Panel fills right margin space from chat edge to screen edge */
 .rpg-panel.rpg-position-right {
     right: 0;
-    left: calc(50% + var(--sheldWidth) / 2);
+    width: calc(50vw - var(--sheldWidth) / 2);
     border-left: 3px solid var(--rpg-border);
     box-shadow: -5px 0 20px var(--rpg-shadow);
 }
 
-/* Left Position - Panel fills left margin space */
+/* Left Position - Panel fills left margin space from screen edge to chat edge */
 .rpg-panel.rpg-position-left {
     left: 0;
-    right: calc(50% + var(--sheldWidth) / 2);
+    width: calc(50vw - var(--sheldWidth) / 2);
     border-right: 3px solid var(--rpg-border);
     box-shadow: 5px 0 20px var(--rpg-shadow);
 }

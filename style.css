@@ -37,12 +37,12 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     display: flex;
     flex-direction: column;
     overflow: visible;
-    transition: width 0.3s ease, transform 0.3s ease;
+    transition: width 0.3s ease, left 0.3s ease, right 0.3s ease, transform 0.3s ease;
 }
 
 /* Collapsed state - fixed width for collapse */
 .rpg-panel.rpg-collapsed {
-    width: 40px !important;
+    max-width: 40px !important;
     min-width: 40px !important;
     left: auto !important;
     right: auto !important;
@@ -54,6 +54,17 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 
 .rpg-panel.rpg-collapsed.rpg-position-left {
     left: 0 !important;
+}
+
+/* Fix positioning when collapsed - panel should stick to correct edge */
+.rpg-panel.rpg-position-right.rpg-collapsed {
+    left: calc(100vw - 40px);
+    right: 0;
+}
+
+.rpg-panel.rpg-position-left.rpg-collapsed {
+    right: calc(100vw - 40px);
+    left: 0;
 }
 
 .rpg-panel.rpg-collapsed .rpg-game-container {
@@ -360,6 +371,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     flex-direction: column;
     height: 100%;
     overflow: hidden;
+    transition: opacity 0.3s ease;
 }
 
 /* Panel Content - Main scrollable area */

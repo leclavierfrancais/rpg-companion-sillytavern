@@ -1,4 +1,4 @@
-import { getContext, renderExtensionTemplateAsync } from '../../../extensions.js';
+import { getContext, renderExtensionTemplateAsync, extension_settings as st_extension_settings } from '../../../extensions.js';
 import { eventSource, event_types, substituteParams, chat, generateRaw, saveSettingsDebounced, chat_metadata, saveChatDebounced, user_avatar, getThumbnailUrl, characters, this_chid, extension_prompt_types, extension_prompt_roles, setExtensionPrompt, reloadCurrentChat } from '../../../../script.js';
 import { selected_group, getGroupMembers } from '../../../group-chats.js';
 import { power_user } from '../../../power-user.js';
@@ -3444,21 +3444,15 @@ function onMessageSwiped(messageIndex) {
  */
 async function ensureHtmlCleaningRegex() {
     try {
-        // Import the regex engine to check existing scripts
-        const { getRegexScripts } = await import('../../regex/engine.js');
-        const existingScripts = getRegexScripts();
-
         // Check if the HTML cleaning regex already exists
         const scriptName = 'Clean HTML (From Outgoing Prompt)';
+        const existingScripts = st_extension_settings?.regex || [];
         const alreadyExists = existingScripts.some(script => script.scriptName === scriptName);
 
         if (alreadyExists) {
             console.log('[RPG Companion] HTML cleaning regex already exists, skipping import');
             return;
         }
-
-        // Import the regex index to use the import function
-        const regexModule = await import('../../regex/index.js');
 
         // Create the regex script object based on the attached file
         const regexScript = {
@@ -3476,10 +3470,6 @@ async function ensureHtmlCleaningRegex() {
             maxDepth: null
         };
 
-        // Import using the onRegexImportObjectChange function
-        // We need to access it through the window object or by importing it
-        const { extension_settings } = await import('../../../scripts/extensions.js');
-
         // Generate a UUID for the script
         const uuidv4 = () => {
             return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -3492,15 +3482,14 @@ async function ensureHtmlCleaningRegex() {
         regexScript.id = uuidv4();
 
         // Add to global regex scripts
-        if (!Array.isArray(extension_settings.regex)) {
-            extension_settings.regex = [];
+        if (!Array.isArray(st_extension_settings.regex)) {
+            st_extension_settings.regex = [];
         }
 
-        extension_settings.regex.push(regexScript);
+        st_extension_settings.regex.push(regexScript);
 
-        // Import saveSettingsDebounced to save the changes
-        const { saveSettingsDebounced: saveExtensionSettings } = await import('../../../../script.js');
-        saveExtensionSettings();
+        // Save the changes using the already-imported function
+        saveSettingsDebounced();
 
         console.log('[RPG Companion] ✅ HTML cleaning regex imported successfully');
     } catch (error) {

@@ -1709,20 +1709,16 @@ function renderUserStats() {
     const gradient = `linear-gradient(to right, ${extensionSettings.statBarColorLow}, ${extensionSettings.statBarColorHigh})`;
 
     const html = `
-        <div class="rpg-stats-header">
-            <div class="rpg-stats-header-left">
-                <img src="${userPortrait}" alt="${userName}" class="rpg-user-portrait" onerror="this.src='img/user-default.png'" />
-                <div class="rpg-stats-title">${userName}</div>
-            </div>
-            <div class="rpg-inventory-box">
-                <div class="rpg-inventory-items rpg-editable" contenteditable="true" data-field="inventory" title="Click to edit">
-                    ${stats.inventory || 'None'}
-                </div>
-            </div>
-        </div>
-
         <div class="rpg-stats-content">
             <div class="rpg-stats-left">
+                <div style="display: flex; gap: clamp(4px, 0.8vh, 8px); align-items: center; flex-shrink: 0;">
+                    <img src="${userPortrait}" alt="${userName}" class="rpg-user-portrait" onerror="this.src='img/user-default.png'" />
+                    <div class="rpg-inventory-box">
+                        <div class="rpg-inventory-items rpg-editable" contenteditable="true" data-field="inventory" title="Click to edit">
+                            ${stats.inventory || 'None'}
+                        </div>
+                    </div>
+                </div>
                 <div class="rpg-stats-grid">
                     <div class="rpg-stat-row">
                         <span class="rpg-stat-label">Health:</span>
@@ -1833,7 +1829,7 @@ function renderUserStats() {
     // Add event listeners for classic stat buttons
     $('.rpg-stat-increase').on('click', function() {
         const stat = $(this).data('stat');
-        if (extensionSettings.classicStats[stat] < 20) {
+        if (extensionSettings.classicStats[stat] < 100) {
             extensionSettings.classicStats[stat]++;
             saveSettings();
             saveChatData();

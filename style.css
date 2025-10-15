@@ -2974,8 +2974,12 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     backdrop-filter: blur(2px);
 }
 
-/* Mobile-specific panel behavior */
-@media (max-width: 768px) {
+/* Mobile-specific panel behavior - matches SillyTavern's 1000px breakpoint */
+@media (max-width: 1000px) {
+    /* ========================================
+       MOBILE PANEL FOUNDATION
+       ======================================== */
+
     /* Show the FAB on mobile */
     .rpg-mobile-toggle {
         display: flex;
@@ -2988,32 +2992,388 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
         display: block;
     }
 
-    /* Hide panel by default on mobile */
+    /* Remove margin adjustments on mobile - content takes full width */
+    body:has(.rpg-panel) #sheld {
+        margin-right: 0 !important;
+        margin-left: 0 !important;
+    }
+
+    /* CLEAN SLATE: Reset ALL desktop positioning */
     .rpg-panel {
-        transform: translateY(100%);
-        transition: transform 0.3s ease-in-out;
-    }
-
-    /* Show panel when opened */
-    .rpg-panel.rpg-mobile-open {
-        transform: translateY(0);
-        z-index: 999;
-    }
-
-    /* On mobile, panel is always at bottom */
-    .rpg-panel.rpg-position-right,
-    .rpg-panel.rpg-position-left,
-    .rpg-panel.rpg-position-top {
-        position: fixed;
-        top: var(--topBarBlockSize);
-        bottom: 0;
-        left: 0;
-        right: 0;
-        width: 100%;
-        max-width: 100%;
-        border-radius: 1.25em 1.25em 0 0;
-        overflow-y: scroll;
+        position: fixed !important;
+        left: 0 !important;
+        right: 0 !important;
+        top: auto !important;
+        width: 100dvw !important;
+        max-width: 100dvw !important;
+        min-width: unset !important;
+        height: calc(100dvh - var(--topBarBlockSize)) !important;
+        max-height: calc(100dvh - var(--topBarBlockSize)) !important;
+        border-radius: 20px 20px 0 0;
+        overflow-y: auto;
         -webkit-overflow-scrolling: touch;
+        box-shadow: 0 -5px 20px var(--rpg-shadow);
+        border-left: 1px solid var(--SmartThemeBorderColor);
+        border-right: 1px solid var(--SmartThemeBorderColor);
+        border-top: 1px solid var(--SmartThemeBorderColor);
+        backdrop-filter: blur(calc(var(--SmartThemeBlurStrength) * 2));
+
+        /* DRAWER POSITIONING: Starts below viewport */
+        bottom: calc(-100dvh + var(--topBarBlockSize));
+
+        /* ONLY transition bottom property */
+        transition: bottom 0.3s ease-in-out;
+    }
+
+    /* Show panel when opened - slides up */
+    .rpg-panel.rpg-mobile-open {
+        bottom: 0;
+        z-index: 50;
+    }
+
+    /* Disable collapsed state on mobile */
+    .rpg-panel.rpg-collapsed {
+        max-width: 100dvw !important;
+        min-width: unset !important;
+        width: 100dvw !important;
+    }
+
+    .rpg-panel.rpg-collapsed .rpg-game-container {
+        opacity: 1 !important;
+        pointer-events: auto !important;
+    }
+
+    /* Reposition collapse toggle on mobile as close button inside panel */
+    .rpg-collapse-toggle {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        left: auto !important;
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        min-height: 44px;
+        border-radius: 50%;
+        background: var(--SmartThemeBlurTintColor);
+        border: 2px solid var(--SmartThemeBorderColor);
+        z-index: 100;
+        transition: all 0.2s ease;
+        transform: none !important;
+    }
+
+    .rpg-collapse-toggle:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: scale(1.05) !important;
+    }
+
+    .rpg-collapse-toggle:active {
+        transform: scale(0.95) !important;
+    }
+
+    /* Change icon to X on mobile */
+    .rpg-collapse-toggle i {
+        transform: none !important;
+    }
+
+    .rpg-collapse-toggle i::before {
+        content: "\f00d" !important; /* fa-times (X icon) */
+        font-size: 20px;
+    }
+
+    /* ========================================
+       MOBILE TAB NAVIGATION
+       ======================================== */
+
+    /* Mobile tab container wrapper */
+    .rpg-mobile-container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        min-height: 0;
+        margin: -12px -12px 16px -12px;
+    }
+
+    /* Tab container at top of panel */
+    .rpg-mobile-tabs {
+        display: flex;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: var(--SmartThemeBlurTintColor);
+        backdrop-filter: blur(calc(var(--SmartThemeBlurStrength) * 1.5));
+        border-bottom: 2px solid var(--SmartThemeBorderColor);
+        margin: 0;
+        padding: 0;
+    }
+
+    .rpg-mobile-tab {
+        flex: 1;
+        height: 44px;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--SmartThemeBodyColor);
+        background: transparent;
+        border: none;
+        border-bottom: 3px solid transparent;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        padding: 0 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .rpg-mobile-tab:active {
+        transform: scale(0.97);
+    }
+
+    .rpg-mobile-tab.active {
+        color: var(--SmartThemeQuoteColor);
+        border-bottom-color: var(--SmartThemeQuoteColor);
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .rpg-mobile-tab i {
+        font-size: 16px;
+    }
+
+    /* Tab content sections */
+    .rpg-mobile-tab-content {
+        display: none;
+        animation: fadeIn 0.2s ease;
+    }
+
+    .rpg-mobile-tab-content.active {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+        padding: 12px;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Combined Info & Characters wrapper */
+    .rpg-mobile-combined-content {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        height: 100%;
+        min-height: 0;
+    }
+
+    /* Info Box takes fixed 50% of vertical space */
+    .rpg-mobile-combined-content > #rpg-info-box {
+        flex: 0 0 50%;
+        min-height: 0;
+        overflow-y: auto;
+        padding-bottom: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5em;
+    }
+
+    /* Characters section takes remaining 50% */
+    .rpg-mobile-combined-content > #rpg-thoughts {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        padding-bottom: 16px;
+    }
+
+    /* Add divider between Info and Characters */
+    .rpg-mobile-combined-content > .rpg-section:not(:last-child) {
+        border-bottom: 1px solid var(--SmartThemeBorderColor);
+        margin-bottom: 16px;
+    }
+
+    /* Hide dividers on mobile (tabs handle separation) */
+    .rpg-divider {
+        display: none;
+    }
+
+    /* ========================================
+       MOBILE INFO BOX IMPROVEMENTS
+       ======================================== */
+
+    /* Rows scale proportionally to fill Info Box */
+    .rpg-dashboard-row-1 {
+        flex: 1.2 !important;  /* Slightly more space for 4 widgets */
+        display: flex !important;
+        gap: 0.25em;
+    }
+
+    .rpg-dashboard-row-2 {
+        flex: 0.8 !important;  /* Less space for 1 widget */
+        display: flex !important;
+    }
+
+    /* Widgets fill their row height */
+    .rpg-dashboard-row-1 .rpg-dashboard-widget,
+    .rpg-dashboard-row-2 .rpg-dashboard-widget {
+        height: 100% !important;
+        flex: 1 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center;
+    }
+
+    /* ========================================
+       MOBILE STATS TAB LAYOUT IMPROVEMENTS
+       ======================================== */
+
+    /* Make the entire stats section a grid */
+    .rpg-stats-section {
+        display: grid !important;
+        grid-template-columns: 40% 60%; /* Left for inventory/mood, right for attributes */
+        grid-template-rows: auto auto auto auto; /* Portrait, stat bars, inventory, mood */
+        gap: 12px;
+        padding: 16px 12px;
+    }
+
+    /* Use display: contents so children participate in grid */
+    .rpg-stats-header,
+    .rpg-stats-content {
+        display: contents !important;
+    }
+
+    /* Portrait row - centered at top, full width */
+    .rpg-stats-header-left {
+        grid-column: 1 / 3;
+        grid-row: 1;
+        display: flex !important;
+        justify-content: center;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .rpg-user-portrait {
+        width: 64px;
+        height: 64px;
+    }
+
+    /* Hide stats title on mobile */
+    .rpg-stats-title {
+        display: none;
+    }
+
+    /* Stat bars row - full width */
+    .rpg-stats-left {
+        grid-column: 1 / 3;
+        grid-row: 2;
+        display: contents !important;
+    }
+
+    .rpg-stats-grid {
+        grid-column: 1 / 3;
+        grid-row: 2;
+    }
+
+    /* Inventory - bottom left */
+    .rpg-inventory-box {
+        grid-column: 1;
+        grid-row: 3;
+        margin: 0;
+        min-height: auto;
+        max-height: none;
+        max-width: 100%; /* Override 12.5rem restriction */
+    }
+
+    /* Mood - below inventory on left */
+    .rpg-mood {
+        grid-column: 1;
+        grid-row: 4;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 0;
+    }
+
+    /* Attributes - right side, spanning rows 3-4 */
+    .rpg-stats-right {
+        grid-column: 2;
+        grid-row: 3 / 5;
+        display: contents !important;
+    }
+
+    .rpg-classic-stats {
+        grid-column: 2;
+        grid-row: 3 / 5;
+    }
+
+    /* Attributes as vertical list instead of grid */
+    .rpg-classic-stats-grid {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 10px;
+        margin: 12px 0;
+        grid-template-columns: none !important;
+        grid-template-rows: none !important;
+    }
+
+    /* Each attribute as horizontal row */
+    .rpg-classic-stat {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+        gap: 12px;
+        min-height: auto;
+        height: auto;
+        background: var(--SmartThemeBlurTintColor);
+        border: 1px solid var(--SmartThemeBorderColor);
+        border-radius: 10px;
+    }
+
+    /* Label on left */
+    .rpg-classic-stat-label {
+        font-size: 14px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        min-width: 50px;
+        flex-shrink: 0;
+    }
+
+    /* Value in middle */
+    .rpg-classic-stat-value {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--SmartThemeQuoteColor);
+        flex: 1;
+        text-align: center;
+    }
+
+    /* Buttons on right */
+    .rpg-classic-stat-controls {
+        display: flex;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+
+    .rpg-classic-stat-btn {
+        min-width: 40px !important;
+        min-height: 40px !important;
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+        font-weight: 700;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
     }
 }
 

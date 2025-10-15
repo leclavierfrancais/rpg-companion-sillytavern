@@ -1010,6 +1010,211 @@ function setupMobileToggle() {
             });
         }
     });
+
+    // Handle viewport resize to manage desktop/mobile transitions
+    let wasMobile = window.innerWidth <= 1000;
+    let resizeTimer;
+
+    $(window).on('resize', function() {
+        clearTimeout(resizeTimer);
+
+        const isMobile = window.innerWidth <= 1000;
+        const $panel = $('#rpg-companion-panel');
+        const $mobileToggle = $('#rpg-mobile-toggle');
+
+        // Transitioning from desktop to mobile - handle immediately for smooth transition
+        if (!wasMobile && isMobile) {
+            // Remove desktop positioning classes
+            $panel.removeClass('rpg-position-right rpg-position-left rpg-position-top');
+
+            // Clear collapsed state - mobile doesn't use collapse
+            $panel.removeClass('rpg-collapsed');
+
+            // Close panel on mobile - CSS handles smooth transition
+            $panel.removeClass('rpg-mobile-open');
+            $mobileToggle.removeClass('active');
+            $('.rpg-mobile-overlay').remove();
+
+            // Set up mobile tabs IMMEDIATELY (no debounce delay)
+            setupMobileTabs();
+
+            wasMobile = isMobile;
+            return;
+        }
+
+        // For mobile to desktop transition, use debounce
+        resizeTimer = setTimeout(function() {
+            const isMobile = window.innerWidth <= 1000;
+
+            // Transitioning from mobile to desktop
+            if (wasMobile && !isMobile) {
+                // Disable transitions to prevent left→right slide animation
+                $panel.css('transition', 'none');
+
+                $panel.removeClass('rpg-mobile-open');
+                $mobileToggle.removeClass('active');
+                $('.rpg-mobile-overlay').remove();
+
+                // Restore desktop positioning class
+                const position = extensionSettings.panelPosition || 'right';
+                $panel.addClass('rpg-position-' + position);
+
+                // Remove mobile tabs structure
+                removeMobileTabs();
+
+                // Force reflow to apply position instantly
+                $panel[0].offsetHeight;
+
+                // Re-enable transitions after positioned
+                setTimeout(function() {
+                    $panel.css('transition', '');
+                }, 50);
+            }
+
+            wasMobile = isMobile;
+        }, 150); // Debounce only for mobile→desktop
+    });
+
+    // Initialize mobile tabs if starting on mobile
+    const isMobile = window.innerWidth <= 1000;
+    if (isMobile) {
+        setupMobileTabs();
+    }
+}
+
+/**
+ * Sets up mobile tab navigation for organizing content.
+ * Only runs on mobile viewports (<=1000px).
+ */
+function setupMobileTabs() {
+    const isMobile = window.innerWidth <= 1000;
+    if (!isMobile) return;
+
+    // Check if tabs already exist
+    if ($('.rpg-mobile-tabs').length > 0) return;
+
+    const $panel = $('#rpg-companion-panel');
+    const $contentBox = $panel.find('.rpg-content-box');
+
+    // Get existing sections
+    const $userStats = $('#rpg-user-stats');
+    const $infoBox = $('#rpg-info-box');
+    const $thoughts = $('#rpg-thoughts');
+
+    // If no sections exist, nothing to organize
+    if ($userStats.length === 0 && $infoBox.length === 0 && $thoughts.length === 0) {
+        return;
+    }
+
+    // Create tab navigation (only show tabs for sections that exist)
+    const tabs = [];
+    const hasInfoOrCharacters = $infoBox.length > 0 || $thoughts.length > 0;
+
+    if ($userStats.length > 0) {
+        tabs.push('<button class="rpg-mobile-tab active" data-tab="stats"><i class="fa-solid fa-chart-bar"></i><span>Stats</span></button>');
+    }
+    // Combine Info and Characters into one tab
+    if (hasInfoOrCharacters) {
+        tabs.push('<button class="rpg-mobile-tab ' + (tabs.length === 0 ? 'active' : '') + '" data-tab="info-characters"><i class="fa-solid fa-book"></i><span>Info & Characters</span></button>');
+    }
+
+    const $tabNav = $('<div class="rpg-mobile-tabs">' + tabs.join('') + '</div>');
+
+    // Determine which tab should be active
+    let firstTab = '';
+    if ($userStats.length > 0) firstTab = 'stats';
+    else if (hasInfoOrCharacters) firstTab = 'info-characters';
+
+    // Create tab content wrappers
+    const $statsTab = $('<div class="rpg-mobile-tab-content ' + (firstTab === 'stats' ? 'active' : '') + '" data-tab-content="stats"></div>');
+    const $infoCharactersTab = $('<div class="rpg-mobile-tab-content ' + (firstTab === 'info-characters' ? 'active' : '') + '" data-tab-content="info-characters"></div>');
+
+    // Create combined content wrapper for Info and Characters
+    const $combinedWrapper = $('<div class="rpg-mobile-combined-content"></div>');
+
+    // Move sections into their respective tabs (detach to preserve event handlers)
+    if ($userStats.length > 0) {
+        $statsTab.append($userStats.detach());
+        $userStats.show();
+    }
+    if ($infoBox.length > 0) {
+        $combinedWrapper.append($infoBox.detach());
+        $infoBox.show();
+    }
+    if ($thoughts.length > 0) {
+        $combinedWrapper.append($thoughts.detach());
+        $thoughts.show();
+    }
+
+    // Add combined wrapper to the info-characters tab
+    if (hasInfoOrCharacters) {
+        $infoCharactersTab.append($combinedWrapper);
+    }
+
+    // Hide dividers on mobile
+    $('.rpg-divider').hide();
+
+    // Build mobile tab structure
+    const $mobileContainer = $('<div class="rpg-mobile-container"></div>');
+    $mobileContainer.append($tabNav);
+
+    // Only append tab content wrappers that have content
+    if ($userStats.length > 0) $mobileContainer.append($statsTab);
+    if (hasInfoOrCharacters) $mobileContainer.append($infoCharactersTab);
+
+    // Insert mobile tab structure at the beginning of content box
+    $contentBox.prepend($mobileContainer);
+
+    // Handle tab switching
+    $tabNav.find('.rpg-mobile-tab').on('click', function() {
+        const tabName = $(this).data('tab');
+
+        // Update active tab button
+        $tabNav.find('.rpg-mobile-tab').removeClass('active');
+        $(this).addClass('active');
+
+        // Update active tab content
+        $mobileContainer.find('.rpg-mobile-tab-content').removeClass('active');
+        $mobileContainer.find('[data-tab-content="' + tabName + '"]').addClass('active');
+    });
+}
+
+/**
+ * Removes mobile tab navigation and restores desktop layout.
+ */
+function removeMobileTabs() {
+    // Get sections from tabs before removing
+    const $userStats = $('#rpg-user-stats').detach();
+    const $infoBox = $('#rpg-info-box').detach();
+    const $thoughts = $('#rpg-thoughts').detach();
+
+    // Remove mobile tab container
+    $('.rpg-mobile-container').remove();
+
+    // Get dividers
+    const $dividerStats = $('#rpg-divider-stats');
+    const $dividerInfo = $('#rpg-divider-info');
+
+    // Restore original sections to content box in correct order
+    const $contentBox = $('.rpg-content-box');
+
+    // Re-insert sections in original order
+    if ($dividerStats.length) {
+        $dividerStats.before($userStats);
+        $dividerInfo.before($infoBox);
+        $contentBox.append($thoughts);
+    } else {
+        // Fallback if dividers don't exist
+        $contentBox.prepend($thoughts);
+        $contentBox.prepend($infoBox);
+        $contentBox.prepend($userStats);
+    }
+
+    // Show sections and dividers
+    $userStats.show();
+    $infoBox.show();
+    $thoughts.show();
+    $('.rpg-divider').show();
 }
 
 /**
@@ -1021,6 +1226,17 @@ function setupCollapseToggle() {
     const $icon = $collapseToggle.find('i');
 
     $collapseToggle.on('click', function() {
+        const isMobile = window.innerWidth <= 1000;
+
+        // On mobile: button acts as close button for mobile panel
+        if (isMobile) {
+            $panel.removeClass('rpg-mobile-open');
+            $('.rpg-mobile-overlay').remove();
+            $('#rpg-mobile-toggle').removeClass('active');
+            return;
+        }
+
+        // Desktop behavior: collapse/expand side panel
         const isCollapsed = $panel.hasClass('rpg-collapsed');
 
         if (isCollapsed) {

@@ -2042,18 +2042,17 @@ function renderInfoBox() {
     // Row 1: Date, Weather, Temperature, Time widgets
     let html = '<div class="rpg-dashboard rpg-dashboard-row-1">';
 
-    // Calendar widget - actual visual calendar
-    if (data.date) {
-        const monthShort = data.month.substring(0, 3).toUpperCase();
-        const weekdayShort = data.weekday.substring(0, 3).toUpperCase();
-        html += `
-            <div class="rpg-dashboard-widget rpg-calendar-widget">
-                <div class="rpg-calendar-top rpg-editable" contenteditable="true" data-field="month" title="Click to edit">${monthShort}</div>
-                <div class="rpg-calendar-day rpg-editable" contenteditable="true" data-field="weekday" title="Click to edit">${weekdayShort}</div>
-                <div class="rpg-calendar-year rpg-editable" contenteditable="true" data-field="year" title="Click to edit">${data.year}</div>
-            </div>
-        `;
-    }
+    // Calendar widget - always show (editable even if empty)
+    const monthShort = data.month ? data.month.substring(0, 3).toUpperCase() : 'MON';
+    const weekdayShort = data.weekday ? data.weekday.substring(0, 3).toUpperCase() : 'DAY';
+    const yearDisplay = data.year || 'YEAR';
+    html += `
+        <div class="rpg-dashboard-widget rpg-calendar-widget">
+            <div class="rpg-calendar-top rpg-editable" contenteditable="true" data-field="month" title="Click to edit">${monthShort}</div>
+            <div class="rpg-calendar-day rpg-editable" contenteditable="true" data-field="weekday" title="Click to edit">${weekdayShort}</div>
+            <div class="rpg-calendar-year rpg-editable" contenteditable="true" data-field="year" title="Click to edit">${yearDisplay}</div>
+        </div>
+    `;
 
     // Weather widget - emoji with forecast text
     if (data.weatherEmoji) {
@@ -2311,30 +2310,53 @@ function renderThoughts() {
  * Updates a specific field in the Info Box data and re-renders.
  */
 function updateInfoBoxField(field, value) {
-    if (!lastGeneratedData.infoBox) return;
+    if (!lastGeneratedData.infoBox) {
+        // Initialize with empty info box if it doesn't exist
+        lastGeneratedData.infoBox = 'Info Box\n---\n';
+    }
 
     // Reconstruct the Info Box text with updated field
     const lines = lastGeneratedData.infoBox.split('\n');
-    const updatedLines = lines.map(line => {
+    let dateLineFound = false;
+    let dateLineIndex = -1;
+    
+    // Find the date line
+    for (let i = 0; i < lines.length; i++) {
+        if (lines[i].includes('🗓️:')) {
+            dateLineFound = true;
+            dateLineIndex = i;
+            break;
+        }
+    }
+    
+    const updatedLines = lines.map((line, index) => {
         if (field === 'month' && line.includes('🗓️:')) {
             const parts = line.split(',');
             if (parts.length >= 2) {
                 // parts[0] = "🗓️: Weekday", parts[1] = " Month", parts[2] = " Year"
                 parts[1] = ' ' + value;
                 return parts.join(',');
+            } else if (parts.length === 1) {
+                // No existing month/year, add them
+                return `${parts[0]}, ${value}, YEAR`;
             }
         } else if (field === 'weekday' && line.includes('🗓️:')) {
             const parts = line.split(',');
-            if (parts.length >= 1) {
-                // Keep the emoji, just update the weekday
-                parts[0] = '🗓️: ' + value;
-                return parts.join(',');
-            }
+            // Keep the emoji, just update the weekday
+            const month = parts[1] ? parts[1].trim() : 'Month';
+            const year = parts[2] ? parts[2].trim() : 'YEAR';
+            return `🗓️: ${value}, ${month}, ${year}`;
         } else if (field === 'year' && line.includes('🗓️:')) {
             const parts = line.split(',');
             if (parts.length >= 3) {
                 parts[2] = ' ' + value;
                 return parts.join(',');
+            } else if (parts.length === 2) {
+                // No existing year, add it
+                return `${parts[0]}, ${parts[1]}, ${value}`;
+            } else if (parts.length === 1) {
+                // No existing month/year, add them
+                return `${parts[0]}, Month, ${value}`;
             }
         } else if (field === 'weatherEmoji' && line.match(/^[^:]+:\s*.+$/) && !line.includes('🗓️') && !line.includes('🌡️') && !line.includes('🕒') && !line.includes('🗺️') && !line.includes('Info Box') && !line.includes('---')) {
             // This is the weather line
@@ -2359,6 +2381,25 @@ function updateInfoBoxField(field, value) {
         }
         return line;
     });
+
+    // If editing a date field but no date line exists, create one after the divider
+    if ((field === 'month' || field === 'weekday' || field === 'year') && !dateLineFound) {
+        // Find the divider line
+        const dividerIndex = updatedLines.findIndex(line => line.includes('---'));
+        if (dividerIndex >= 0) {
+            // Create initial date line with the edited field
+            let newDateLine = '';
+            if (field === 'weekday') {
+                newDateLine = `🗓️: ${value}, Month, YEAR`;
+            } else if (field === 'month') {
+                newDateLine = `🗓️: Weekday, ${value}, YEAR`;
+            } else if (field === 'year') {
+                newDateLine = `🗓️: Weekday, Month, ${value}`;
+            }
+            // Insert after the divider
+            updatedLines.splice(dividerIndex + 1, 0, newDateLine);
+        }
+    }
 
     lastGeneratedData.infoBox = updatedLines.join('\n');
 

@@ -1018,6 +1018,9 @@ function setupMobileToggle() {
         if (pos.right) $mobileToggle.css('right', pos.right);
         if (pos.bottom) $mobileToggle.css('bottom', pos.bottom);
         if (pos.left) $mobileToggle.css('left', pos.left);
+
+        // Constrain to viewport after position is applied
+        requestAnimationFrame(() => constrainFabToViewport());
     }
 
     // Touch/drag state
@@ -1032,8 +1035,6 @@ function setupMobileToggle() {
 
     // Touch start - begin tracking
     $mobileToggle.on('touchstart', function(e) {
-        console.log('[RPG Mobile] >>> TOUCHSTART EVENT FIRED <<<');
-
         const touch = e.originalEvent.touches[0];
 
         touchStartTime = Date.now();
@@ -1045,14 +1046,6 @@ function setupMobileToggle() {
         buttonStartY = offset.top;
 
         isDragging = false;
-
-        console.log('[RPG Mobile] Touch start:', {
-            time: touchStartTime,
-            touchX: touchStartX,
-            touchY: touchStartY,
-            buttonX: buttonStartX,
-            buttonY: buttonStartY
-        });
     });
 
     // Touch move - check if should start dragging
@@ -1063,17 +1056,10 @@ function setupMobileToggle() {
         const timeSinceStart = Date.now() - touchStartTime;
         const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
 
-        console.log('[RPG Mobile] >>> TOUCHMOVE EVENT FIRED <<<', {
-            distance: distance.toFixed(2),
-            timeSinceStart,
-            isDragging
-        });
-
         // Start dragging if held long enough OR moved far enough
         if (!isDragging && (timeSinceStart > LONG_PRESS_DURATION || distance > MOVE_THRESHOLD)) {
             isDragging = true;
             $mobileToggle.css('transition', 'none'); // Disable transitions while dragging
-            console.log('[RPG Mobile] Started dragging:', { timeSinceStart, distance });
         }
 
         if (isDragging) {
@@ -1110,8 +1096,6 @@ function setupMobileToggle() {
     let mouseDown = false;
 
     $mobileToggle.on('mousedown', function(e) {
-        console.log('[RPG Mobile] >>> MOUSEDOWN EVENT FIRED <<<');
-
         // Prevent default to avoid text selection
         e.preventDefault();
 
@@ -1125,14 +1109,6 @@ function setupMobileToggle() {
 
         isDragging = false;
         mouseDown = true;
-
-        console.log('[RPG Mobile] Mouse down:', {
-            time: touchStartTime,
-            mouseX: touchStartX,
-            mouseY: touchStartY,
-            buttonX: buttonStartX,
-            buttonY: buttonStartY
-        });
     });
 
     // Mouse move - only track if mouse is down
@@ -1144,18 +1120,10 @@ function setupMobileToggle() {
         const timeSinceStart = Date.now() - touchStartTime;
         const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
 
-        console.log('[RPG Mobile] >>> MOUSEMOVE EVENT FIRED <<<', {
-            distance: distance.toFixed(2),
-            timeSinceStart,
-            isDragging,
-            mouseDown
-        });
-
         // Start dragging if held long enough OR moved far enough
         if (!isDragging && (timeSinceStart > LONG_PRESS_DURATION || distance > MOVE_THRESHOLD)) {
             isDragging = true;
             $mobileToggle.css('transition', 'none');
-            console.log('[RPG Mobile] Started mouse dragging:', { timeSinceStart, distance });
         }
 
         if (isDragging) {
@@ -1192,8 +1160,6 @@ function setupMobileToggle() {
     $(document).on('mouseup', function(e) {
         if (!mouseDown) return;
 
-        console.log('[RPG Mobile] >>> MOUSEUP EVENT FIRED <<<', { isDragging });
-
         mouseDown = false;
 
         if (isDragging) {
@@ -1208,6 +1174,9 @@ function setupMobileToggle() {
             saveSettings();
 
             console.log('[RPG Mobile] Saved new FAB position (mouse):', newPosition);
+
+            // Constrain to viewport bounds (now that position is saved)
+            setTimeout(() => constrainFabToViewport(), 10);
 
             // Re-enable transitions
             setTimeout(() => {
@@ -1231,12 +1200,8 @@ function setupMobileToggle() {
 
     // Touch end - save position or toggle panel
     $mobileToggle.on('touchend', function(e) {
-        console.log('[RPG Mobile] >>> TOUCHEND EVENT FIRED <<<', { isDragging });
-
         // TEMPORARILY COMMENTED FOR DIAGNOSIS - might be blocking click fallback
         // e.preventDefault();
-
-        console.log('[RPG Mobile] Touch end details:', { isDragging });
 
         if (isDragging) {
             // Was dragging - save new position
@@ -1250,6 +1215,9 @@ function setupMobileToggle() {
             saveSettings();
 
             console.log('[RPG Mobile] Saved new FAB position:', newPosition);
+
+            // Constrain to viewport bounds (now that position is saved)
+            setTimeout(() => constrainFabToViewport(), 10);
 
             // Re-enable transitions
             setTimeout(() => {
@@ -1397,6 +1365,9 @@ function setupMobileToggle() {
             }
 
             wasMobile = isMobile;
+
+            // Constrain FAB to viewport after resize (only if user has positioned it)
+            constrainFabToViewport();
         }, 150); // Debounce only for mobile→desktop
     });
 
@@ -1420,6 +1391,77 @@ function setupMobileToggle() {
         setupMobileTabs();
         // Set initial icon for mobile
         updateCollapseToggleIcon();
+    }
+}
+
+/**
+ * Constrains the mobile FAB button to viewport bounds with top-bar awareness.
+ * Only runs when button is in user-controlled state (mobileFabPosition exists).
+ * Ensures button never goes behind the top bar or outside viewport edges.
+ */
+function constrainFabToViewport() {
+    // Only constrain if user has set a custom position
+    if (!extensionSettings.mobileFabPosition) {
+        console.log('[RPG Mobile] Skipping viewport constraint - using CSS defaults');
+        return;
+    }
+
+    const $mobileToggle = $('#rpg-mobile-toggle');
+    if ($mobileToggle.length === 0) return;
+
+    // Skip if button is not visible
+    if (!$mobileToggle.is(':visible')) {
+        console.log('[RPG Mobile] Skipping viewport constraint - button not visible');
+        return;
+    }
+
+    // Get current position
+    const offset = $mobileToggle.offset();
+    if (!offset) return;
+
+    let currentX = offset.left;
+    let currentY = offset.top;
+
+    const buttonWidth = $mobileToggle.outerWidth();
+    const buttonHeight = $mobileToggle.outerHeight();
+
+    // Get top bar height from CSS variable (fallback to 50px if not set)
+    const topBarHeight = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--topBarBlockSize')) || 50;
+
+    // Calculate viewport bounds with padding
+    // Use top bar height + extra padding for top bound
+    const minX = 10;
+    const maxX = window.innerWidth - buttonWidth - 10;
+    const minY = topBarHeight + 60; // Top bar + extra space for visibility
+    const maxY = window.innerHeight - buttonHeight - 10;
+
+    // Constrain to bounds
+    let newX = Math.max(minX, Math.min(maxX, currentX));
+    let newY = Math.max(minY, Math.min(maxY, currentY));
+
+    // Only update if position changed
+    if (newX !== currentX || newY !== currentY) {
+        console.log('[RPG Mobile] Constraining FAB to viewport:', {
+            old: { x: currentX, y: currentY },
+            new: { x: newX, y: newY },
+            viewport: { width: window.innerWidth, height: window.innerHeight },
+            topBarHeight
+        });
+
+        // Apply new position
+        $mobileToggle.css({
+            left: newX + 'px',
+            top: newY + 'px',
+            right: 'auto',
+            bottom: 'auto'
+        });
+
+        // Save corrected position
+        extensionSettings.mobileFabPosition = {
+            left: newX + 'px',
+            top: newY + 'px'
+        };
+        saveSettings();
     }
 }
 

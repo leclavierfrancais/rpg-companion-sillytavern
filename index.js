@@ -588,6 +588,7 @@ async function sendPlotProgression(type) {
     $('#rpg-plot-random, #rpg-plot-natural').prop('disabled', true).css('opacity', '0.5');
 
     // Store original enabled state and temporarily disable extension
+    // This prevents RPG tracker instructions from being injected during plot progression
     const wasEnabled = extensionSettings.enabled;
     extensionSettings.enabled = false;
 
@@ -612,23 +613,29 @@ async function sendPlotProgression(type) {
 - These HTML/CSS/JS elements must be rendered directly without enclosing them in code fences.`;
         }
 
-        // Inject the plot prompt as a quiet prompt
-        // This replaces the default continuation message
-        setExtensionPrompt('rpg-plot-progression', prompt, extension_prompt_types.IN_CHAT, 0, false, extension_prompt_roles.USER);
+        // Use extension prompt system to inject our plot progression instruction
+        // Since extensionSettings.enabled = false, onGenerationStarted won't inject RPG tracker prompts
+        setExtensionPrompt('rpg-plot-progression', prompt, extension_prompt_types.IN_CHAT, 0, false);
 
-        // Trigger a continuation with the custom prompt
-        // The quiet_prompt parameter allows extension prompts to override the default continuation message
-        // Since extensionSettings.enabled = false, onGenerationStarted won't inject RPG prompts
-        // Check if Generate function exists (newer versions only)
-        if (typeof window.Generate === 'function') {
-            await window.Generate('continue', { quiet_prompt: prompt });
+        // Trigger continuation by clicking the Continue button
+        // Find and click the actual continue button in SillyTavern's UI
+        const $continueButton = $('#option_continue');
+        if ($continueButton.length > 0) {
+            $continueButton.trigger('click');
         } else {
-            // Fallback for older versions - use generateRaw
-            await generateRaw(prompt, '', false, false, '');
+            // Fallback: try alternative continue button selectors
+            const $altContinueButton = $('.mes_continue');
+            if ($altContinueButton.length > 0) {
+                $altContinueButton.last().trigger('click');
+            } else {
+                console.warn('[RPG Companion] Could not find continue button');
+            }
         }
 
-        // Clear the temporary prompt after generation
-        setExtensionPrompt('rpg-plot-progression', '', extension_prompt_types.IN_CHAT, 0, false);
+        // Clear the extension prompt after a short delay to let generation start
+        setTimeout(() => {
+            setExtensionPrompt('rpg-plot-progression', '', extension_prompt_types.IN_CHAT, 0, false);
+        }, 500);
 
         // console.log('[RPG Companion] Plot progression generation triggered');
     } catch (error) {
@@ -636,15 +643,13 @@ async function sendPlotProgression(type) {
         // Clear the prompt in case of error
         setExtensionPrompt('rpg-plot-progression', '', extension_prompt_types.IN_CHAT, 0, false);
     } finally {
-        // Restore original enabled state
-        extensionSettings.enabled = wasEnabled;
-
-        // Re-enable buttons
-        $('#rpg-plot-random, #rpg-plot-natural').prop('disabled', false).css('opacity', '1');
+        // Restore original enabled state and re-enable buttons after a delay
+        setTimeout(() => {
+            extensionSettings.enabled = wasEnabled;
+            $('#rpg-plot-random, #rpg-plot-natural').prop('disabled', false).css('opacity', '1');
+        }, 1000);
     }
-}
-
-/**
+}/**
  * Sets up the dice roller functionality.
  */
 function setupDiceRoller() {
@@ -1579,7 +1584,7 @@ async function updateRPGData() {
                     (!committedTrackerData.infoBox || committedTrackerData.infoBox === 'Info Box\n---\n' || committedTrackerData.infoBox === '') &&
                     (!committedTrackerData.characterThoughts || committedTrackerData.characterThoughts === 'Present Characters\n---\n' || committedTrackerData.characterThoughts === '')
                 );
-                
+
                 if (hasNoRealData || hasOnlyPlaceholderData) {
                     committedTrackerData.userStats = parsedData.userStats;
                     committedTrackerData.infoBox = parsedData.infoBox;

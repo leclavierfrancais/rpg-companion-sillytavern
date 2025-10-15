@@ -903,74 +903,71 @@ function setupSettingsPopup() {
 
     // Clear cache button
     $('#rpg-clear-cache').on('click', function() {
-        if (confirm('Are you sure you want to clear all cached RPG data for this chat? This will reset Stats, Info Box, and Mind Reading.')) {
-            // Clear the data
-            lastGeneratedData.userStats = null;
-            lastGeneratedData.infoBox = null;
-            lastGeneratedData.characterThoughts = null;
+        // Clear the data
+        lastGeneratedData.userStats = null;
+        lastGeneratedData.infoBox = null;
+        lastGeneratedData.characterThoughts = null;
 
-            // Clear committed tracker data (used for generation context)
-            committedTrackerData.userStats = null;
-            committedTrackerData.infoBox = null;
-            committedTrackerData.characterThoughts = null;
+        // Clear committed tracker data (used for generation context)
+        committedTrackerData.userStats = null;
+        committedTrackerData.infoBox = null;
+        committedTrackerData.characterThoughts = null;
 
-            // Clear all message swipe data
-            const chat = getContext().chat;
-            if (chat && chat.length > 0) {
-                for (let i = 0; i < chat.length; i++) {
-                    const message = chat[i];
-                    if (message.extra && message.extra.rpg_companion_swipes) {
-                        delete message.extra.rpg_companion_swipes;
-                        // console.log('[RPG Companion] Cleared swipe data from message at index', i);
-                    }
+        // Clear all message swipe data
+        const chat = getContext().chat;
+        if (chat && chat.length > 0) {
+            for (let i = 0; i < chat.length; i++) {
+                const message = chat[i];
+                if (message.extra && message.extra.rpg_companion_swipes) {
+                    delete message.extra.rpg_companion_swipes;
+                    // console.log('[RPG Companion] Cleared swipe data from message at index', i);
                 }
             }
-
-            // Clear the UI
-            if ($infoBoxContainer) {
-                $infoBoxContainer.empty();
-            }
-            if ($thoughtsContainer) {
-                $thoughtsContainer.empty();
-            }
-
-            // Reset stats to defaults and re-render
-            extensionSettings.userStats = {
-                health: 100,
-                sustenance: 100,
-                energy: 100,
-                hygiene: 100,
-                arousal: 0,
-                mood: '😐',
-                conditions: 'None',
-                inventory: 'None'
-            };
-
-            // Reset classic stats (attributes) to defaults
-            extensionSettings.classicStats = {
-                str: 10,
-                dex: 10,
-                con: 10,
-                int: 10,
-                wis: 10,
-                cha: 10
-            };
-
-            // Clear dice roll
-            extensionSettings.lastDiceRoll = null;
-
-            // Save everything
-            saveChatData();
-            saveSettings();
-
-            // Re-render user stats and dice display
-            renderUserStats();
-            updateDiceDisplay();
-            updateChatThoughts(); // Clear the thought bubble in chat
-
-            // console.log('[RPG Companion] Chat cache cleared');
-            alert('Chat cache cleared successfully!');
         }
+
+        // Clear the UI
+        if ($infoBoxContainer) {
+            $infoBoxContainer.empty();
+        }
+        if ($thoughtsContainer) {
+            $thoughtsContainer.empty();
+        }
+
+        // Reset stats to defaults and re-render
+        extensionSettings.userStats = {
+            health: 100,
+            sustenance: 100,
+            energy: 100,
+            hygiene: 100,
+            arousal: 0,
+            mood: '😐',
+            conditions: 'None',
+            inventory: 'None'
+        };
+
+        // Reset classic stats (attributes) to defaults
+        extensionSettings.classicStats = {
+            str: 10,
+            dex: 10,
+            con: 10,
+            int: 10,
+            wis: 10,
+            cha: 10
+        };
+
+        // Clear dice roll
+        extensionSettings.lastDiceRoll = null;
+
+        // Save everything
+        saveChatData();
+        saveSettings();
+
+        // Re-render user stats and dice display
+        renderUserStats();
+        updateDiceDisplay();
+        updateChatThoughts(); // Clear the thought bubble in chat
+
+        // console.log('[RPG Companion] Chat cache cleared');
     });
 }
 
@@ -1575,8 +1572,15 @@ async function updateRPGData() {
                 //     characterThoughts: lastGeneratedData.characterThoughts ? 'exists' : 'null'
                 // });
 
-                // If there's no committed data yet (first time), commit immediately
-                if (!committedTrackerData.userStats && !committedTrackerData.infoBox && !committedTrackerData.characterThoughts) {
+                // If there's no committed data yet (first time) or only has placeholder data, commit immediately
+                const hasNoRealData = !committedTrackerData.userStats && !committedTrackerData.infoBox && !committedTrackerData.characterThoughts;
+                const hasOnlyPlaceholderData = (
+                    (!committedTrackerData.userStats || committedTrackerData.userStats === '') &&
+                    (!committedTrackerData.infoBox || committedTrackerData.infoBox === 'Info Box\n---\n' || committedTrackerData.infoBox === '') &&
+                    (!committedTrackerData.characterThoughts || committedTrackerData.characterThoughts === 'Present Characters\n---\n' || committedTrackerData.characterThoughts === '')
+                );
+                
+                if (hasNoRealData || hasOnlyPlaceholderData) {
                     committedTrackerData.userStats = parsedData.userStats;
                     committedTrackerData.infoBox = parsedData.infoBox;
                     committedTrackerData.characterThoughts = parsedData.characterThoughts;

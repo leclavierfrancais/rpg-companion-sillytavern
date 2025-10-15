@@ -77,6 +77,9 @@ let lastActionWasSwipe = false;
 
 let isGenerating = false;
 
+// Tracks if we're currently doing a plot progression
+let isPlotProgression = false;
+
 // UI Elements
 let $panelContainer = null;
 let $userStatsContainer = null;
@@ -613,35 +616,27 @@ async function sendPlotProgression(type) {
 - These HTML/CSS/JS elements must be rendered directly without enclosing them in code fences.`;
         }
 
-        // Set context.quietPrompt to add our instruction to the preset's continuation prompt
-        // This is the proper way to add additional instructions to a continuation
-        const context = getContext();
-        const originalQuietPrompt = context.quietPrompt || '';
-        
-        // Set the quiet prompt that will be appended to the continuation prompt
-        context.quietPrompt = prompt;
-        
-        console.log('[RPG Companion] Set quietPrompt:', context.quietPrompt);
+        // Set flag to indicate we're doing plot progression
+        // This will be used by onMessageReceived to clear the prompt after generation completes
+        isPlotProgression = true;
+
+        console.log('[RPG Companion] Calling Generate with continuation and plot prompt');
         console.log('[RPG Companion] Full prompt:', prompt);
 
-        // Small delay to ensure quietPrompt is set before triggering continuation
-        setTimeout(() => {
-            // Trigger continuation
-            $('#option_continue').trigger('click');
-            
-            // Restore the original quiet prompt after a delay
-            setTimeout(() => {
-                context.quietPrompt = originalQuietPrompt;
-                console.log('[RPG Companion] Restored original quietPrompt');
-            }, 500);
-        }, 50);
+        // Pass the prompt via options with the correct property name
+        // Based on /continue slash command implementation, it uses quiet_prompt (underscore, not camelCase)
+        const options = {
+            quiet_prompt: prompt,  // Use underscore notation, not camelCase
+            quietToLoud: true
+        };
+
+        // Call Generate with 'continue' type and our custom prompt
+        await Generate('continue', options);
 
         // console.log('[RPG Companion] Plot progression generation triggered');
     } catch (error) {
         console.error('[RPG Companion] Error sending plot progression:', error);
-        // Restore quiet prompt in case of error
-        const context = getContext();
-        context.quietPrompt = '';
+        isPlotProgression = false;
     } finally {
         // Restore original enabled state and re-enable buttons after a delay
         setTimeout(() => {
@@ -1092,6 +1087,7 @@ function clearExtensionPrompts() {
     setExtensionPrompt('rpg-companion-example', '', extension_prompt_types.IN_CHAT, 0, false);
     setExtensionPrompt('rpg-companion-html', '', extension_prompt_types.IN_CHAT, 0, false);
     setExtensionPrompt('rpg-companion-context', '', extension_prompt_types.IN_CHAT, 1, false);
+    // Note: rpg-companion-plot is not cleared here since it's passed via quiet_prompt option
     // console.log('[RPG Companion] Cleared all extension prompts');
 }
 
@@ -3339,6 +3335,13 @@ async function onMessageReceived(data) {
     if (lastActionWasSwipe) {
         // console.log('[RPG Companion] 🔄 Generation complete after swipe - resetting lastActionWasSwipe to false');
         lastActionWasSwipe = false;
+    }
+
+    // Clear plot progression flag if this was a plot progression generation
+    // Note: No need to clear extension prompt since we used quiet_prompt option
+    if (isPlotProgression) {
+        isPlotProgression = false;
+        console.log('[RPG Companion] Plot progression generation completed');
     }
 }
 

@@ -1686,14 +1686,14 @@ function updateCollapseToggleIcon() {
         console.log('[RPG Mobile] updateCollapseToggleIcon:', {
             isMobile: true,
             isOpen,
-            settingIcon: isOpen ? 'chevron-right' : 'chevron-left'
+            settingIcon: isOpen ? 'chevron-left' : 'chevron-right'
         });
         if (isOpen) {
-            // Panel open - chevron points right (to close/slide right)
-            $icon.removeClass('fa-chevron-down fa-chevron-up fa-chevron-left').addClass('fa-chevron-right');
-        } else {
-            // Panel closed - chevron points left (to open/slide left)
+            // Panel open - chevron points left (to close/slide back right)
             $icon.removeClass('fa-chevron-down fa-chevron-up fa-chevron-right').addClass('fa-chevron-left');
+        } else {
+            // Panel closed - chevron points right (to open/slide in from right)
+            $icon.removeClass('fa-chevron-down fa-chevron-up fa-chevron-left').addClass('fa-chevron-right');
         }
     } else {
         // Desktop: icon direction based on panel position and collapsed state

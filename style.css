@@ -3068,9 +3068,9 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
         align-items: center;
         justify-content: center;
         position: fixed !important;
-        top: calc(var(--topBarBlockSize) + 60px) !important;
-        right: 12px !important;
-        left: auto !important;
+        top: calc(var(--topBarBlockSize) + 120px) !important;
+        left: 12px !important;
+        right: auto !important;
         width: 44px;
         height: 44px;
         min-width: 44px;

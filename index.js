@@ -2054,74 +2054,72 @@ function renderInfoBox() {
         </div>
     `;
 
-    // Weather widget - emoji with forecast text
-    if (data.weatherEmoji) {
-        html += `
-            <div class="rpg-dashboard-widget rpg-weather-widget">
-                <div class="rpg-weather-icon rpg-editable" contenteditable="true" data-field="weatherEmoji" title="Click to edit emoji">${data.weatherEmoji}</div>
-                ${data.weatherForecast ? `<div class="rpg-weather-forecast rpg-editable" contenteditable="true" data-field="weatherForecast" title="Click to edit">${data.weatherForecast}</div>` : ''}
-            </div>
-        `;
-    }
+    // Weather widget - always show (editable even if empty)
+    const weatherEmoji = data.weatherEmoji || '🌤️';
+    const weatherForecast = data.weatherForecast || 'Weather';
+    html += `
+        <div class="rpg-dashboard-widget rpg-weather-widget">
+            <div class="rpg-weather-icon rpg-editable" contenteditable="true" data-field="weatherEmoji" title="Click to edit emoji">${weatherEmoji}</div>
+            <div class="rpg-weather-forecast rpg-editable" contenteditable="true" data-field="weatherForecast" title="Click to edit">${weatherForecast}</div>
+        </div>
+    `;
 
-    // Temperature widget - thermometer visual
-    if (data.temperature) {
-        const tempPercent = Math.min(100, Math.max(0, ((data.tempValue + 20) / 60) * 100));
-        const tempColor = data.tempValue < 10 ? '#4a90e2' : data.tempValue < 25 ? '#67c23a' : '#e94560';
-        html += `
-            <div class="rpg-dashboard-widget rpg-temp-widget">
-                <div class="rpg-thermometer">
-                    <div class="rpg-thermometer-bulb"></div>
-                    <div class="rpg-thermometer-tube">
-                        <div class="rpg-thermometer-fill" style="height: ${tempPercent}%; background: ${tempColor}"></div>
-                    </div>
+    // Temperature widget - always show (editable even if empty)
+    const tempDisplay = data.temperature || '20°C';
+    const tempValue = data.tempValue || 20;
+    const tempPercent = Math.min(100, Math.max(0, ((tempValue + 20) / 60) * 100));
+    const tempColor = tempValue < 10 ? '#4a90e2' : tempValue < 25 ? '#67c23a' : '#e94560';
+    html += `
+        <div class="rpg-dashboard-widget rpg-temp-widget">
+            <div class="rpg-thermometer">
+                <div class="rpg-thermometer-bulb"></div>
+                <div class="rpg-thermometer-tube">
+                    <div class="rpg-thermometer-fill" style="height: ${tempPercent}%; background: ${tempColor}"></div>
                 </div>
-                <div class="rpg-temp-value rpg-editable" contenteditable="true" data-field="temperature" title="Click to edit">${data.temperature}</div>
             </div>
-        `;
-    }
+            <div class="rpg-temp-value rpg-editable" contenteditable="true" data-field="temperature" title="Click to edit">${tempDisplay}</div>
+        </div>
+    `;
 
-    // Time widget - clock visual
-    if (data.timeStart) {
-        // Parse time for clock hands
-        const timeMatch = data.timeStart.match(/(\d+):(\d+)/);
-        let hourAngle = 0;
-        let minuteAngle = 0;
-        if (timeMatch) {
-            const hours = parseInt(timeMatch[1]);
-            const minutes = parseInt(timeMatch[2]);
-            hourAngle = (hours % 12) * 30 + minutes * 0.5; // 30° per hour + 0.5° per minute
-            minuteAngle = minutes * 6; // 6° per minute
-        }
-        html += `
-            <div class="rpg-dashboard-widget rpg-clock-widget">
-                <div class="rpg-clock">
-                    <div class="rpg-clock-face">
-                        <div class="rpg-clock-hour" style="transform: rotate(${hourAngle}deg)"></div>
-                        <div class="rpg-clock-minute" style="transform: rotate(${minuteAngle}deg)"></div>
-                        <div class="rpg-clock-center"></div>
-                    </div>
-                </div>
-                <div class="rpg-time-value rpg-editable" contenteditable="true" data-field="timeStart" title="Click to edit">${data.timeStart}</div>
-            </div>
-        `;
+    // Time widget - always show (editable even if empty)
+    const timeDisplay = data.timeStart || '12:00';
+    // Parse time for clock hands
+    const timeMatch = timeDisplay.match(/(\d+):(\d+)/);
+    let hourAngle = 0;
+    let minuteAngle = 0;
+    if (timeMatch) {
+        const hours = parseInt(timeMatch[1]);
+        const minutes = parseInt(timeMatch[2]);
+        hourAngle = (hours % 12) * 30 + minutes * 0.5; // 30° per hour + 0.5° per minute
+        minuteAngle = minutes * 6; // 6° per minute
     }
+    html += `
+        <div class="rpg-dashboard-widget rpg-clock-widget">
+            <div class="rpg-clock">
+                <div class="rpg-clock-face">
+                    <div class="rpg-clock-hour" style="transform: rotate(${hourAngle}deg)"></div>
+                    <div class="rpg-clock-minute" style="transform: rotate(${minuteAngle}deg)"></div>
+                    <div class="rpg-clock-center"></div>
+                </div>
+            </div>
+            <div class="rpg-time-value rpg-editable" contenteditable="true" data-field="timeStart" title="Click to edit">${timeDisplay}</div>
+        </div>
+    `;
 
     html += '</div>';
 
-    // Row 2: Location widget (full width)
-    if (data.location) {
-        html += `
-            <div class="rpg-dashboard rpg-dashboard-row-2">
-                <div class="rpg-dashboard-widget rpg-location-widget">
-                    <div class="rpg-map-bg">
-                        <div class="rpg-map-marker">📍</div>
-                    </div>
-                    <div class="rpg-location-text rpg-editable" contenteditable="true" data-field="location" title="Click to edit">${data.location}</div>
+    // Row 2: Location widget (full width) - always show (editable even if empty)
+    const locationDisplay = data.location || 'Location';
+    html += `
+        <div class="rpg-dashboard rpg-dashboard-row-2">
+            <div class="rpg-dashboard-widget rpg-location-widget">
+                <div class="rpg-map-bg">
+                    <div class="rpg-map-marker">📍</div>
                 </div>
+                <div class="rpg-location-text rpg-editable" contenteditable="true" data-field="location" title="Click to edit">${locationDisplay}</div>
             </div>
-        `;
-    }
+        </div>
+    `;
 
     $infoBoxContainer.html(html);
 
@@ -2319,7 +2317,7 @@ function updateInfoBoxField(field, value) {
     const lines = lastGeneratedData.infoBox.split('\n');
     let dateLineFound = false;
     let dateLineIndex = -1;
-    
+
     // Find the date line
     for (let i = 0; i < lines.length; i++) {
         if (lines[i].includes('🗓️:')) {
@@ -2328,7 +2326,7 @@ function updateInfoBoxField(field, value) {
             break;
         }
     }
-    
+
     const updatedLines = lines.map((line, index) => {
         if (field === 'month' && line.includes('🗓️:')) {
             const parts = line.split(',');
@@ -2398,6 +2396,92 @@ function updateInfoBoxField(field, value) {
             }
             // Insert after the divider
             updatedLines.splice(dividerIndex + 1, 0, newDateLine);
+        }
+    }
+
+    // If editing weather but no weather line exists, create one
+    if ((field === 'weatherEmoji' || field === 'weatherForecast')) {
+        let weatherLineFound = false;
+        for (const line of updatedLines) {
+            // Check if this is a weather line (has emoji and forecast, not one of the special fields)
+            if (line.match(/^[^:]+:\s*.+$/) && !line.includes('🗓️') && !line.includes('🌡️') && !line.includes('🕒') && !line.includes('🗺️') && !line.includes('Info Box') && !line.includes('---')) {
+                weatherLineFound = true;
+                break;
+            }
+        }
+        
+        if (!weatherLineFound) {
+            const dividerIndex = updatedLines.findIndex(line => line.includes('---'));
+            if (dividerIndex >= 0) {
+                let newWeatherLine = '';
+                if (field === 'weatherEmoji') {
+                    newWeatherLine = `${value}: Weather`;
+                } else if (field === 'weatherForecast') {
+                    newWeatherLine = `🌤️: ${value}`;
+                }
+                // Insert after date line if it exists, otherwise after divider
+                const dateIndex = updatedLines.findIndex(line => line.includes('🗓️:'));
+                const insertIndex = dateIndex >= 0 ? dateIndex + 1 : dividerIndex + 1;
+                updatedLines.splice(insertIndex, 0, newWeatherLine);
+            }
+        }
+    }
+
+    // If editing temperature but no temperature line exists, create one
+    if (field === 'temperature') {
+        const tempLineFound = updatedLines.some(line => line.includes('🌡️:'));
+        if (!tempLineFound) {
+            const dividerIndex = updatedLines.findIndex(line => line.includes('---'));
+            if (dividerIndex >= 0) {
+                const newTempLine = `🌡️: ${value}`;
+                // Find last non-empty line before creating position
+                let insertIndex = dividerIndex + 1;
+                for (let i = 0; i < updatedLines.length; i++) {
+                    if (updatedLines[i].includes('🗓️:') || updatedLines[i].match(/^[^:]+:\s*.+$/)) {
+                        insertIndex = i + 1;
+                    }
+                }
+                updatedLines.splice(insertIndex, 0, newTempLine);
+            }
+        }
+    }
+
+    // If editing time but no time line exists, create one
+    if (field === 'timeStart') {
+        const timeLineFound = updatedLines.some(line => line.includes('🕒:'));
+        if (!timeLineFound) {
+            const dividerIndex = updatedLines.findIndex(line => line.includes('---'));
+            if (dividerIndex >= 0) {
+                const newTimeLine = `🕒: ${value} → ${value}`;
+                // Find last non-empty line before creating position
+                let insertIndex = dividerIndex + 1;
+                for (let i = 0; i < updatedLines.length; i++) {
+                    if (updatedLines[i].includes('🗓️:') || updatedLines[i].includes('🌡️:') || updatedLines[i].match(/^[^:]+:\s*.+$/)) {
+                        insertIndex = i + 1;
+                    }
+                }
+                updatedLines.splice(insertIndex, 0, newTimeLine);
+            }
+        }
+    }
+
+    // If editing location but no location line exists, create one
+    if (field === 'location') {
+        const locationLineFound = updatedLines.some(line => line.includes('🗺️:'));
+        if (!locationLineFound) {
+            const dividerIndex = updatedLines.findIndex(line => line.includes('---'));
+            if (dividerIndex >= 0) {
+                const newLocationLine = `🗺️: ${value}`;
+                // Insert at the end (before any empty lines)
+                let insertIndex = updatedLines.length;
+                for (let i = updatedLines.length - 1; i >= 0; i--) {
+                    if (updatedLines[i].trim() !== '') {
+                        insertIndex = i + 1;
+                        break;
+                    }
+                }
+                updatedLines.splice(insertIndex, 0, newLocationLine);
+            }
         }
     }
 

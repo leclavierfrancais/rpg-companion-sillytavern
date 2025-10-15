@@ -617,16 +617,24 @@ async function sendPlotProgression(type) {
         // This is the proper way to add additional instructions to a continuation
         const context = getContext();
         const originalQuietPrompt = context.quietPrompt || '';
+        
+        // Set the quiet prompt that will be appended to the continuation prompt
         context.quietPrompt = prompt;
+        
+        console.log('[RPG Companion] Set quietPrompt:', context.quietPrompt);
+        console.log('[RPG Companion] Full prompt:', prompt);
 
-        // Trigger actual continuation by calling the continuation function directly
-        // Use Generate with empty string for 'normal' type, but set continue_type to true
-        $('#option_continue').trigger('click');
-
-        // Restore the original quiet prompt after generation starts
+        // Small delay to ensure quietPrompt is set before triggering continuation
         setTimeout(() => {
-            context.quietPrompt = originalQuietPrompt;
-        }, 500);
+            // Trigger continuation
+            $('#option_continue').trigger('click');
+            
+            // Restore the original quiet prompt after a delay
+            setTimeout(() => {
+                context.quietPrompt = originalQuietPrompt;
+                console.log('[RPG Companion] Restored original quietPrompt');
+            }, 500);
+        }, 50);
 
         // console.log('[RPG Companion] Plot progression generation triggered');
     } catch (error) {

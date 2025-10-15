@@ -620,8 +620,8 @@ async function sendPlotProgression(type) {
         // This will be used by onMessageReceived to clear the prompt after generation completes
         isPlotProgression = true;
 
-        console.log('[RPG Companion] Calling Generate with continuation and plot prompt');
-        console.log('[RPG Companion] Full prompt:', prompt);
+        // console.log('[RPG Companion] Calling Generate with continuation and plot prompt');
+        // console.log('[RPG Companion] Full prompt:', prompt);
 
         // Pass the prompt via options with the correct property name
         // Based on /continue slash command implementation, it uses quiet_prompt (underscore, not camelCase)
@@ -3457,8 +3457,18 @@ async function ensureHtmlCleaningRegex() {
             return;
         }
 
+        // Generate a UUID for the script
+        const uuidv4 = () => {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0;
+                const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        };
+
         // Create the regex script object based on the attached file
         const regexScript = {
+            id: uuidv4(),
             scriptName: scriptName,
             findRegex: '/\\s?<(?!\\!--)(?:\"[^\"]*\"|\'[^\']*\'|[^\'\">])*>/g',
             replaceString: '',
@@ -3472,17 +3482,6 @@ async function ensureHtmlCleaningRegex() {
             minDepth: null,
             maxDepth: null
         };
-
-        // Generate a UUID for the script
-        const uuidv4 = () => {
-            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-                const r = Math.random() * 16 | 0;
-                const v = c === 'x' ? r : (r & 0x3 | 0x8);
-                return v.toString(16);
-            });
-        };
-
-        regexScript.id = uuidv4();
 
         // Add to global regex scripts
         if (!Array.isArray(st_extension_settings.regex)) {

@@ -28,7 +28,6 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     position: fixed;
     top: var(--topBarBlockSize);
     bottom: 0;
-    width: auto;
     background: var(--rpg-bg);
     box-shadow: 0 0 20px var(--rpg-shadow);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -41,10 +40,20 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     transition: width 0.3s ease, transform 0.3s ease;
 }
 
-/* Collapsed state */
+/* Collapsed state - fixed width for collapse */
 .rpg-panel.rpg-collapsed {
     width: 40px !important;
     min-width: 40px !important;
+    left: auto !important;
+    right: auto !important;
+}
+
+.rpg-panel.rpg-collapsed.rpg-position-right {
+    right: 0 !important;
+}
+
+.rpg-panel.rpg-collapsed.rpg-position-left {
+    left: 0 !important;
 }
 
 .rpg-panel.rpg-collapsed .rpg-game-container {
@@ -96,20 +105,18 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     display: none;
 }
 
-/* Right Position (Default) - Panel fills right margin */
+/* Right Position (Default) - Panel fills right margin space */
 .rpg-panel.rpg-position-right {
     right: 0;
-    left: var(--sheldWidth, calc(100vw - 380px));
-    min-width: 280px;
+    left: calc(50% + var(--sheldWidth) / 2);
     border-left: 3px solid var(--rpg-border);
     box-shadow: -5px 0 20px var(--rpg-shadow);
 }
 
-/* Left Position - Panel fills left margin */
+/* Left Position - Panel fills left margin space */
 .rpg-panel.rpg-position-left {
     left: 0;
-    right: var(--sheldWidth, calc(100vw - 380px));
-    min-width: 280px;
+    right: calc(50% + var(--sheldWidth) / 2);
     border-right: 3px solid var(--rpg-border);
     box-shadow: 5px 0 20px var(--rpg-shadow);
 }
@@ -161,18 +168,14 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 
 /* Mobile Responsiveness */
 @media (max-width: 1024px) {
-    .rpg-panel.rpg-position-right,
-    .rpg-panel.rpg-position-left {
+    .rpg-panel {
+        width: 320px;
+        max-width: 35vw;
         min-width: 260px;
     }
 }
 
 @media (max-width: 768px) {
-    .rpg-panel.rpg-position-right,
-    .rpg-panel.rpg-position-left {
-        min-width: 240px;
-    }
-
     .rpg-section-title {
         font-size: 1em;
     }

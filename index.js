@@ -1,5 +1,5 @@
 import { getContext, renderExtensionTemplateAsync, extension_settings as st_extension_settings } from '../../../extensions.js';
-import { eventSource, event_types, substituteParams, chat, generateRaw, saveSettingsDebounced, chat_metadata, saveChatDebounced, user_avatar, getThumbnailUrl, characters, this_chid, extension_prompt_types, extension_prompt_roles, setExtensionPrompt, reloadCurrentChat } from '../../../../script.js';
+import { eventSource, event_types, substituteParams, chat, generateRaw, saveSettingsDebounced, chat_metadata, saveChatDebounced, user_avatar, getThumbnailUrl, characters, this_chid, extension_prompt_types, extension_prompt_roles, setExtensionPrompt, reloadCurrentChat, Generate } from '../../../../script.js';
 import { selected_group, getGroupMembers } from '../../../group-chats.js';
 import { power_user } from '../../../power-user.js';
 
@@ -613,35 +613,27 @@ async function sendPlotProgression(type) {
 - These HTML/CSS/JS elements must be rendered directly without enclosing them in code fences.`;
         }
 
-        // Use extension prompt system to inject our plot progression instruction
-        // Since extensionSettings.enabled = false, onGenerationStarted won't inject RPG tracker prompts
-        setExtensionPrompt('rpg-plot-progression', prompt, extension_prompt_types.IN_CHAT, 0, false);
+        // Set context.quietPrompt to add our instruction to the preset's continuation prompt
+        // This is the proper way to add additional instructions to a continuation
+        const context = getContext();
+        const originalQuietPrompt = context.quietPrompt || '';
+        context.quietPrompt = prompt;
 
-        // Trigger continuation by clicking the Continue button
-        // Find and click the actual continue button in SillyTavern's UI
-        const $continueButton = $('#option_continue');
-        if ($continueButton.length > 0) {
-            $continueButton.trigger('click');
-        } else {
-            // Fallback: try alternative continue button selectors
-            const $altContinueButton = $('.mes_continue');
-            if ($altContinueButton.length > 0) {
-                $altContinueButton.last().trigger('click');
-            } else {
-                console.warn('[RPG Companion] Could not find continue button');
-            }
-        }
+        // Trigger actual continuation by calling the continuation function directly
+        // Use Generate with empty string for 'normal' type, but set continue_type to true
+        $('#option_continue').trigger('click');
 
-        // Clear the extension prompt after a short delay to let generation start
+        // Restore the original quiet prompt after generation starts
         setTimeout(() => {
-            setExtensionPrompt('rpg-plot-progression', '', extension_prompt_types.IN_CHAT, 0, false);
+            context.quietPrompt = originalQuietPrompt;
         }, 500);
 
         // console.log('[RPG Companion] Plot progression generation triggered');
     } catch (error) {
         console.error('[RPG Companion] Error sending plot progression:', error);
-        // Clear the prompt in case of error
-        setExtensionPrompt('rpg-plot-progression', '', extension_prompt_types.IN_CHAT, 0, false);
+        // Restore quiet prompt in case of error
+        const context = getContext();
+        context.quietPrompt = '';
     } finally {
         // Restore original enabled state and re-enable buttons after a delay
         setTimeout(() => {

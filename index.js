@@ -87,6 +87,10 @@ let isPlotProgression = false;
 // Temporary storage for pending dice roll (not saved until user clicks "Save Roll")
 let pendingDiceRoll = null;
 
+// Fallback avatar image (base64-encoded SVG with "?" icon)
+// Using base64 to avoid quote-encoding issues in HTML attributes
+const FALLBACK_AVATAR_DATA_URI = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2NjY2NjYyIgb3BhY2l0eT0iMC4zIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIiBmaWxsPSIjNjY2IiBmb250LXNpemU9IjQwIj4/PC90ZXh0Pjwvc3ZnPg==';
+
 // UI Elements
 let $panelContainer = null;
 let $userStatsContainer = null;
@@ -2779,9 +2783,8 @@ function renderUserStats() {
     }
 
     // Get user portrait - handle both default-user and custom persona folders
-    // Use a transparent placeholder as fallback to avoid 400 errors
-    const transparentPixel = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect width="100" height="100" fill="%23cccccc" opacity="0.3"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23666" font-size="40"%3E%3F%3C/text%3E%3C/svg%3E';
-    let userPortrait = transparentPixel;
+    // Use a base64-encoded SVG placeholder as fallback to avoid 400 errors
+    let userPortrait = FALLBACK_AVATAR_DATA_URI;
 
     if (user_avatar) {
         // Try to get the thumbnail using our safe helper
@@ -3292,9 +3295,8 @@ function renderThoughts() {
     // If no characters parsed, show a placeholder editable card
     if (presentCharacters.length === 0) {
         // Get default character portrait (try to use the current character if in 1-on-1 chat)
-        // Use a transparent placeholder as fallback to avoid 400 errors
-        const transparentPixel = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect width="100" height="100" fill="%23cccccc" opacity="0.3"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23666" font-size="40"%3E%3F%3C/text%3E%3C/svg%3E';
-        let defaultPortrait = transparentPixel;
+        // Use a base64-encoded SVG placeholder as fallback to avoid 400 errors
+        let defaultPortrait = FALLBACK_AVATAR_DATA_URI;
         let defaultName = 'Character';
 
         if (this_chid !== undefined && characters[this_chid]) {
@@ -3328,9 +3330,8 @@ function renderThoughts() {
         html += '<div class="rpg-thoughts-content">';
         for (const char of presentCharacters) {
             // Find character portrait
-            // Use a transparent placeholder as fallback to avoid 400 errors
-            const transparentPixel = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect width="100" height="100" fill="%23cccccc" opacity="0.3"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23666" font-size="40"%3E%3F%3C/text%3E%3C/svg%3E';
-            let characterPortrait = transparentPixel;
+            // Use a base64-encoded SVG placeholder as fallback to avoid 400 errors
+            let characterPortrait = FALLBACK_AVATAR_DATA_URI;
 
             // console.log('[RPG Companion] Looking for avatar for:', char.name);
 
@@ -3350,7 +3351,7 @@ function renderThoughts() {
             }
 
             // For regular chats or if not found in group, search all characters
-            if (characterPortrait === transparentPixel && characters && characters.length > 0) {
+            if (characterPortrait === FALLBACK_AVATAR_DATA_URI && characters && characters.length > 0) {
                 const matchingCharacter = characters.find(c =>
                     c && c.name && c.name.toLowerCase() === char.name.toLowerCase()
                 );

@@ -3392,6 +3392,17 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
         justify-content: center;
         padding: 0;
     }
+
+    /* ========================================
+       MOBILE THOUGHT ICON POSITIONING
+       ======================================== */
+
+    /* Position thought icon above avatar on mobile to prevent off-screen clipping */
+    /* JavaScript will calculate position, but add transform to move it above and right */
+    #rpg-thought-icon {
+        /* Use transform to shift icon above and to the right of avatar */
+        transform: translate(50px, -45px) !important;
+    }
 }
 
 /* Extra small screens - adjust FAB position */

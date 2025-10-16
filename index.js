@@ -3554,7 +3554,32 @@ function createThoughtPanel($message, thoughtsArray) {
     let iconTop = avatarRect.top;
     let iconLeft;
 
-    if (panelPosition === 'left') {
+    // Detect mobile viewport (matches CSS breakpoint)
+    const isMobile = window.innerWidth <= 1000;
+
+    if (isMobile) {
+        // On mobile: position icon horizontally centered on avatar
+        // The CSS transform will shift it upward by 60px
+        iconTop = avatarRect.top; // Start at avatar top (CSS will move it up)
+        iconLeft = avatarRect.left + (avatarRect.width / 2) - 18; // Centered horizontally (18px = half of 36px icon width)
+
+        // Center the thought panel horizontally on mobile
+        left = window.innerWidth / 2 - panelWidth / 2;
+        top = avatarRect.top + avatarRect.height + 60; // Position below icon with spacing
+
+        // No side-specific classes on mobile
+        $thoughtPanel.removeClass('rpg-thought-panel-left rpg-thought-panel-right');
+        $thoughtIcon.removeClass('rpg-thought-icon-left rpg-thought-icon-right');
+
+        console.log('[RPG Companion] Mobile thought icon positioning:', {
+            isMobile,
+            windowWidth: window.innerWidth,
+            avatarLeft: avatarRect.left,
+            avatarWidth: avatarRect.width,
+            iconLeft,
+            iconTop
+        });
+    } else if (panelPosition === 'left') {
         // Main panel is on left, so thought bubble goes to RIGHT side
         // Mirror the left side positioning: bubble should be same distance from avatar
         // but on the opposite side, extending to the right

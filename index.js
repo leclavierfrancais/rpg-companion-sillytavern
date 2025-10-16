@@ -2275,7 +2275,7 @@ function generateTrackerInstructions(includeHtmlPrompt = true, includeContinuati
     // Only add tracker instructions if at least one tracker is enabled
     if (hasAnyTrackers) {
         // Universal instruction header
-        instructions += `\nYou must start your response with an appropriate update to the trackers in EXACTLY the same format as below, enclosed in separate Markdown code fences. Replace X with proper numbers and placeholders in [brackets] with in-world details ${userName} perceives about the current scene and the present characters. Consider the last trackers in the conversation (if they exist). Manage them accordingly and realistically; raise, lower, change, or keep the values unchanged based on the user's actions, the passage of time, and logical consequences:\n`;
+        instructions += `\nYou must start your response with an appropriate update to the trackers in EXACTLY the same format as below, enclosed in separate Markdown code fences. Replace X with proper numbers and placeholders in [brackets] (while removing the brackets themselves) with in-world details ${userName} perceives about the current scene and the present characters. Consider the last trackers in the conversation (if they exist). Manage them accordingly and realistically; raise, lower, change, or keep the values unchanged based on the user's actions, the passage of time, and logical consequences:\n`;
 
         // Add format specifications for each enabled tracker
         if (extensionSettings.showUserStats) {
@@ -4151,6 +4151,7 @@ function onGenerationStarted(type, data) {
     // console.log('[RPG Companion] enabled:', extensionSettings.enabled);
     // console.log('[RPG Companion] generationMode:', extensionSettings.generationMode);
     // console.log('[RPG Companion] ⚡ EVENT: onGenerationStarted - lastActionWasSwipe =', lastActionWasSwipe, '| isGenerating =', isGenerating);
+    // console.log('[RPG Companion] Committed Prompt:', committedTrackerData);
 
     // Skip tracker injection for image generation requests
     if (data?.quietImage) {
@@ -4215,7 +4216,7 @@ function onGenerationStarted(type, data) {
             committedTrackerData.infoBox = lastGeneratedData.infoBox;
             committedTrackerData.characterThoughts = lastGeneratedData.characterThoughts;
         } else {
-            // console.log('[RPG Companion] 🔄 TOGETHER MODE SWIPE: Using existing committedTrackerData (no commit)');
+            //console.log('[RPG Companion] 🔄 TOGETHER MODE SWIPE: Using existing committedTrackerData (no commit)');
         }
     }
 
@@ -4488,7 +4489,7 @@ async function onMessageReceived(data) {
     // Note: No need to clear extension prompt since we used quiet_prompt option
     if (isPlotProgression) {
         isPlotProgression = false;
-        console.log('[RPG Companion] Plot progression generation completed');
+        // console.log('[RPG Companion] Plot progression generation completed');
     }
 }
 
@@ -4653,7 +4654,7 @@ async function ensureHtmlCleaningRegex() {
 function updatePersonaAvatar() {
     const portraitImg = document.querySelector('.rpg-user-portrait');
     if (!portraitImg) {
-        console.log('[RPG Companion] Portrait image element not found in DOM');
+        // console.log('[RPG Companion] Portrait image element not found in DOM');
         return;
     }
 
@@ -4661,7 +4662,7 @@ function updatePersonaAvatar() {
     const context = getContext();
     const currentUserAvatar = context.user_avatar || user_avatar;
 
-    console.log('[RPG Companion] Attempting to update persona avatar:', currentUserAvatar);
+    // console.log('[RPG Companion] Attempting to update persona avatar:', currentUserAvatar);
 
     // Try to get a valid thumbnail URL using our safe helper
     if (currentUserAvatar) {
@@ -4670,14 +4671,14 @@ function updatePersonaAvatar() {
         if (thumbnailUrl) {
             // Only update the src if we got a valid URL
             portraitImg.src = thumbnailUrl;
-            console.log('[RPG Companion] Persona avatar updated successfully');
+            // console.log('[RPG Companion] Persona avatar updated successfully');
         } else {
             // Don't update the src if we couldn't get a valid URL
             // This prevents 400 errors and keeps the existing image
-            console.warn('[RPG Companion] Could not get valid thumbnail URL for persona avatar, keeping existing image');
+            // console.warn('[RPG Companion] Could not get valid thumbnail URL for persona avatar, keeping existing image');
         }
     } else {
-        console.log('[RPG Companion] No user avatar configured, keeping existing image');
+        // console.log('[RPG Companion] No user avatar configured, keeping existing image');
     }
 }
 

@@ -1032,6 +1032,24 @@ function setupMobileToggle() {
     let buttonStartY = 0;
     const LONG_PRESS_DURATION = 200; // ms to hold before enabling drag
     const MOVE_THRESHOLD = 10; // px to move before enabling drag
+    let rafId = null; // RequestAnimationFrame ID for smooth updates
+    let pendingX = null;
+    let pendingY = null;
+
+    // Update position using requestAnimationFrame for smooth rendering
+    function updateFabPosition() {
+        if (pendingX !== null && pendingY !== null) {
+            $mobileToggle.css({
+                left: pendingX + 'px',
+                top: pendingY + 'px',
+                right: 'auto',
+                bottom: 'auto'
+            });
+            pendingX = null;
+            pendingY = null;
+        }
+        rafId = null;
+    }
 
     // Touch start - begin tracking
     $mobileToggle.on('touchstart', function(e) {
@@ -1059,7 +1077,7 @@ function setupMobileToggle() {
         // Start dragging if held long enough OR moved far enough
         if (!isDragging && (timeSinceStart > LONG_PRESS_DURATION || distance > MOVE_THRESHOLD)) {
             isDragging = true;
-            $mobileToggle.css('transition', 'none'); // Disable transitions while dragging
+            $mobileToggle.addClass('dragging'); // Disable transitions while dragging
         }
 
         if (isDragging) {
@@ -1082,13 +1100,12 @@ function setupMobileToggle() {
             newX = Math.max(minX, Math.min(maxX, newX));
             newY = Math.max(minY, Math.min(maxY, newY));
 
-            // Apply position
-            $mobileToggle.css({
-                left: newX + 'px',
-                top: newY + 'px',
-                right: 'auto',
-                bottom: 'auto'
-            });
+            // Store pending position and request animation frame for smooth update
+            pendingX = newX;
+            pendingY = newY;
+            if (!rafId) {
+                rafId = requestAnimationFrame(updateFabPosition);
+            }
         }
     });
 
@@ -1123,7 +1140,7 @@ function setupMobileToggle() {
         // Start dragging if held long enough OR moved far enough
         if (!isDragging && (timeSinceStart > LONG_PRESS_DURATION || distance > MOVE_THRESHOLD)) {
             isDragging = true;
-            $mobileToggle.css('transition', 'none');
+            $mobileToggle.addClass('dragging'); // Disable transitions while dragging
         }
 
         if (isDragging) {
@@ -1146,13 +1163,12 @@ function setupMobileToggle() {
             newX = Math.max(minX, Math.min(maxX, newX));
             newY = Math.max(minY, Math.min(maxY, newY));
 
-            // Apply position
-            $mobileToggle.css({
-                left: newX + 'px',
-                top: newY + 'px',
-                right: 'auto',
-                bottom: 'auto'
-            });
+            // Store pending position and request animation frame for smooth update
+            pendingX = newX;
+            pendingY = newY;
+            if (!rafId) {
+                rafId = requestAnimationFrame(updateFabPosition);
+            }
         }
     });
 
@@ -1178,9 +1194,9 @@ function setupMobileToggle() {
             // Constrain to viewport bounds (now that position is saved)
             setTimeout(() => constrainFabToViewport(), 10);
 
-            // Re-enable transitions
+            // Re-enable transitions with smooth animation
             setTimeout(() => {
-                $mobileToggle.css('transition', '');
+                $mobileToggle.removeClass('dragging');
             }, 50);
 
             isDragging = false;
@@ -1219,9 +1235,9 @@ function setupMobileToggle() {
             // Constrain to viewport bounds (now that position is saved)
             setTimeout(() => constrainFabToViewport(), 10);
 
-            // Re-enable transitions
+            // Re-enable transitions with smooth animation
             setTimeout(() => {
-                $mobileToggle.css('transition', '');
+                $mobileToggle.removeClass('dragging');
             }, 50);
 
             isDragging = false;

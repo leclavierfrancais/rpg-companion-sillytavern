@@ -2942,12 +2942,19 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     border: 2px solid var(--SmartThemeBorderColor);
     color: var(--rpg-text, #ecf0f1);
     font-size: 1.25rem;
-    cursor: pointer;
+    cursor: grab;
     z-index: 10002;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    transition: opacity 0.3s ease, transform 0.2s ease;
+    transition: opacity 0.3s ease, transform 0.2s ease, top 0.3s ease, left 0.3s ease, right 0.3s ease, bottom 0.3s ease;
     user-select: none; /* Prevent text selection while dragging */
     -webkit-user-select: none;
+    will-change: top, left; /* Optimize for position changes */
+}
+
+/* Disable transitions while actively dragging */
+.rpg-mobile-toggle.dragging {
+    transition: none;
+    cursor: grabbing;
 }
 
 .rpg-mobile-toggle:hover {

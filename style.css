@@ -2175,47 +2175,299 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 .rpg-stat-row:nth-child(5) { animation-delay: 0.3s; }
 
 /* ============================================
-   DICE ROLL POPUP
+   DICE ROLL MODAL - MOBILE FIRST
    ============================================ */
+
+/* CSS Custom Properties for Responsive Scaling */
+.rpg-dice-popup {
+    /* Fluid spacing that scales with viewport */
+    --modal-padding: clamp(0.5rem, 2vw, 0.75rem);
+    --modal-gap: clamp(0.375rem, 1.5vw, 0.5rem);
+    --modal-border-width: 2px;
+
+    /* Fluid typography */
+    --modal-font-base: clamp(0.8rem, 3vw, 0.9rem);
+    --modal-font-small: clamp(0.7rem, 2.5vw, 0.8rem);
+    --modal-font-large: clamp(1.25rem, 6vw, 1.75rem);
+    --modal-font-huge: clamp(1.5rem, 8vw, 2.5rem);
+
+    /* Touch-friendly sizing */
+    --modal-button-height: 44px;
+    --modal-input-height: 44px;
+
+    /* Content constraints - MUCH more conservative */
+    --modal-max-width: min(90vw, 360px);
+    --modal-max-height: 70vh;
+}
+
+/* Modal Container - Hidden by default */
 .rpg-dice-popup {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    inset: 0;
     z-index: 10000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+}
+
+/* Open state - managed by JavaScript classList */
+.rpg-dice-popup.is-open {
+    display: flex;
+    animation: fadeIn 0.2s ease-out;
+}
+
+/* Closing state - allows exit animation */
+.rpg-dice-popup.is-closing {
+    display: flex;
+    animation: fadeOut 0.2s ease-in;
+}
+
+/* Backdrop overlay - using ::before pseudo-element */
+.rpg-dice-popup::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+/* Modal Content Box */
+.rpg-dice-popup-content {
+    position: relative;
+    width: 100%;
+    max-width: var(--modal-max-width);
+    height: auto;
+    max-height: var(--modal-max-height);
+    min-height: 0;
+    background: rgba(30, 30, 30, 0.8);
+    border: var(--modal-border-width) solid var(--rpg-border);
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
+    color: var(--rpg-text);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    margin: auto 0;
+}
+
+/* Header */
+.rpg-dice-popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--modal-padding);
+    background: var(--rpg-accent);
+    border-bottom: var(--modal-border-width) solid var(--rpg-border);
+    flex-shrink: 0;
+}
+
+.rpg-dice-popup-header h3 {
+    margin: 0;
+    font-size: var(--modal-font-base);
+    color: var(--rpg-highlight);
+    display: flex;
+    align-items: center;
+    gap: var(--modal-gap);
+}
+
+/* Close button - touch-friendly */
+#rpg-dice-popup-close {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-.rpg-dice-popup-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(5px);
+/* Scrollable Body */
+.rpg-dice-popup-body {
+    padding: var(--modal-padding);
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    flex: 1 1 auto;
+    min-height: 0;
 }
 
-.rpg-dice-popup-content {
-    position: relative;
-    width: 90%;
-    max-width: 31.25rem;
-    background: var(--rpg-bg);
-    border: 3px solid var(--rpg-border);
-    border-radius: 0.938em;
-    box-shadow: 0 10px 50px rgba(0, 0, 0, 0.9);
-    overflow: hidden;
-    animation: popupSlideIn 0.3s ease-out;
+/* Input Container */
+.rpg-dice-selector-container {
+    padding: var(--modal-padding);
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 0.5rem;
+    border: var(--modal-border-width) solid var(--rpg-border);
+    margin-bottom: var(--modal-gap);
+}
+
+/* Input Grid - Stacked on mobile */
+.rpg-dice-selector {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--modal-gap);
+    margin-bottom: var(--modal-gap);
+}
+
+.rpg-dice-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.rpg-dice-input-group label {
+    font-size: var(--modal-font-small);
+    font-weight: 600;
     color: var(--rpg-text);
 }
 
-@keyframes popupSlideIn {
+.rpg-dice-input-group input,
+.rpg-dice-input-group select {
+    width: 100%;
+    min-height: var(--modal-input-height);
+    padding: 0.5rem;
+    border: var(--modal-border-width) solid var(--rpg-border);
+    border-radius: 0.375rem;
+    background: var(--rpg-accent);
+    color: var(--rpg-text);
+    font-size: var(--modal-font-base);
+    font-weight: 600;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.rpg-dice-input-group input:focus,
+.rpg-dice-input-group select:focus {
+    outline: none;
+    border-color: var(--rpg-highlight);
+    box-shadow: 0 0 0 3px rgba(var(--rpg-highlight-rgb, 255, 0, 100), 0.2);
+    background: rgba(0, 0, 0, 0.5);
+}
+
+/* Roll Button - touch-friendly */
+#rpg-dice-roll-btn {
+    width: 100%;
+    min-height: var(--modal-button-height);
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, var(--rpg-highlight), var(--rpg-accent));
+    border: var(--modal-border-width) solid var(--rpg-highlight);
+    border-radius: 0.5rem;
+    color: var(--rpg-text);
+    font-size: var(--modal-font-base);
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+#rpg-dice-roll-btn:active {
+    transform: scale(0.98);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* Animation Section */
+.rpg-dice-animation {
+    text-align: center;
+    padding: var(--modal-padding);
+}
+
+.rpg-dice-rolling i {
+    font-size: var(--modal-font-large);
+    color: var(--rpg-highlight);
+    animation: diceRoll 0.8s ease-in-out infinite;
+}
+
+.rpg-dice-rolling-text {
+    margin-top: var(--modal-gap);
+    font-size: var(--modal-font-base);
+    font-weight: 600;
+    color: var(--rpg-highlight);
+    animation: pulseGlow 1s ease-in-out infinite;
+}
+
+/* Result Section */
+.rpg-dice-result {
+    text-align: center;
+    padding: var(--modal-padding);
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 0.5rem;
+    border: var(--modal-border-width) solid var(--rpg-border);
+}
+
+.rpg-dice-result-label {
+    font-size: var(--modal-font-small);
+    color: var(--rpg-text);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.8;
+}
+
+.rpg-dice-result-value {
+    font-size: var(--modal-font-huge);
+    font-weight: 700;
+    color: var(--rpg-highlight);
+    text-shadow: 0 0 20px var(--rpg-highlight);
+    line-height: 1;
+}
+
+.rpg-dice-result-value.is-animating {
+    animation: resultPop 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.rpg-dice-result-details {
+    margin-top: var(--modal-gap);
+    font-size: var(--modal-font-small);
+    color: var(--rpg-text);
+    opacity: 0.7;
+}
+
+/* Save Button */
+.rpg-dice-save-btn {
+    margin-top: var(--modal-gap);
+    width: 100%;
+    min-height: var(--modal-button-height);
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, #28a745, #20c997);
+    border: var(--modal-border-width) solid #28a745;
+    border-radius: 0.5rem;
+    color: white;
+    font-size: var(--modal-font-base);
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.rpg-dice-save-btn:active {
+    transform: scale(0.98);
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.4);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+@keyframes slideInUp {
     from {
         opacity: 0;
-        transform: translateY(-3.125rem) scale(0.9);
+        transform: translateY(20px) scale(0.95);
     }
     to {
         opacity: 1;
@@ -2223,216 +2475,20 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     }
 }
 
-.rpg-dice-popup-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1.25em;
-    background: var(--rpg-accent);
-    border-bottom: 2px solid var(--rpg-border);
-}
-
-.rpg-dice-popup-header h3 {
-    margin: 0;
-    font-size: 1.25rem;
-    color: var(--rpg-highlight);
-    display: flex;
-    align-items: center;
-    gap: 0.625em;
-}
-
-.rpg-dice-popup-body {
-    padding: 1.562em;
-}
-
-.rpg-dice-selector-container {
-    padding: 1.25em;
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 0.75em;
-    border: 2px solid var(--rpg-border);
-    margin-bottom: 1.25em;
-}
-
-.rpg-dice-selector {
-    display: flex;
-    gap: 0.938em;
-    margin-bottom: 0.938em;
-}
-
-.rpg-dice-input-group {
-    flex: 1;
-}
-
-.rpg-dice-input-group label {
-    display: block;
-    margin-bottom: 0.5em;
-    font-size: 0.812rem;
-    font-weight: bold;
-    color: var(--rpg-text);
-}
-
-.rpg-dice-input-group input,
-.rpg-dice-input-group select {
-    width: 100%;
-    padding: 0.625em;
-    border: 2px solid var(--rpg-border);
-    border-radius: 0.5em;
-    background: var(--rpg-accent);
-    color: var(--rpg-text);
-    font-size: 1rem;
-    font-weight: bold;
-    text-align: center;
-    transition: all 0.3s ease;
-}
-
-.rpg-dice-input-group input:focus,
-.rpg-dice-input-group select:focus {
-    outline: none;
-    border-color: var(--rpg-highlight);
-    box-shadow: 0 0 10px var(--rpg-highlight);
-    background: rgba(0, 0, 0, 0.5);
-}
-
-#rpg-dice-roll-btn {
-    width: 100%;
-    padding: 0.75em 1.25em;
-    background: linear-gradient(135deg, var(--rpg-highlight), var(--rpg-accent));
-    border: 2px solid var(--rpg-highlight);
-    border-radius: 0.625em;
-    color: var(--rpg-text);
-    font-size: 1rem;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.625em;
-}
-
-#rpg-dice-roll-btn:hover {
-    transform: translateY(-0.125rem);
-    box-shadow: 0 6px 20px var(--rpg-highlight);
-    background: var(--rpg-highlight);
-}
-
-#rpg-dice-roll-btn:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
-}
-
-.rpg-dice-animation {
-    text-align: center;
-    padding: 2.5em 1.25em;
-}
-
-.rpg-dice-rolling i {
-    font-size: 5rem;
-    color: var(--rpg-highlight);
-    animation: diceRoll 0.8s ease-in-out infinite;
-}
-
 @keyframes diceRoll {
-    0%, 100% {
-        transform: rotate(0deg) scale(1);
-    }
-    25% {
-        transform: rotate(90deg) scale(1.1);
-    }
-    50% {
-        transform: rotate(180deg) scale(1);
-    }
-    75% {
-        transform: rotate(270deg) scale(1.1);
-    }
-}
-
-.rpg-dice-rolling-text {
-    margin-top: 1.25em;
-    font-size: 1.125rem;
-    font-weight: bold;
-    color: var(--rpg-highlight);
-    animation: pulseGlow 1s ease-in-out infinite;
-}
-
-.rpg-dice-result {
-    text-align: center;
-    padding: 1.875em 1.25em;
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 0.75em;
-    border: 2px solid var(--rpg-border);
-}
-
-.rpg-dice-result-label {
-    font-size: 0.875rem;
-    color: var(--rpg-text);
-    margin-bottom: 0.625em;
-    text-transform: uppercase;
-    letter-spacing: 0.062em;
-}
-
-.rpg-dice-result-value {
-    font-size: 3.75rem;
-    font-weight: bold;
-    color: var(--rpg-highlight);
-    text-shadow: 0 0 20px var(--rpg-highlight);
-    animation: resultPop 0.5s ease-out;
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(90deg) scale(1.1); }
+    50% { transform: rotate(180deg); }
+    75% { transform: rotate(270deg) scale(1.1); }
 }
 
 @keyframes resultPop {
-    0% {
-        transform: scale(0);
-        opacity: 0;
-    }
-    50% {
-        transform: scale(1.2);
-    }
-    100% {
-        transform: scale(1);
-        opacity: 1;
-    }
+    0% { transform: scale(0); opacity: 0; }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); opacity: 1; }
 }
 
-.rpg-dice-result-details {
-    margin-top: 0.938em;
-    font-size: 0.875rem;
-    color: var(--rpg-text);
-    opacity: 0.8;
-}
-
-.rpg-dice-save-btn {
-    margin-top: 1.25em;
-    width: 100%;
-    max-width: 12.5rem;
-    padding: 0.625em 1.25em;
-    background: linear-gradient(135deg, #28a745, #20c997);
-    border: 2px solid #28a745;
-    border-radius: 0.625em;
-    color: white;
-    font-size: 0.938rem;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5em;
-}
-
-.rpg-dice-save-btn:hover {
-    transform: translateY(-0.125rem);
-    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.6);
-    background: #28a745;
-}
-
-.rpg-dice-save-btn:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 10px rgba(40, 167, 69, 0.4);
-}
-
-/* Theme-specific popup styles */
+/* Theme Support - CSS Custom Properties */
 .rpg-dice-popup[data-theme="sci-fi"] .rpg-dice-popup-content {
     --rpg-bg: #0a0e27;
     --rpg-accent: #1a1f3a;
@@ -2455,6 +2511,35 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     --rpg-text: #00ff9f;
     --rpg-highlight: #ff00ff;
     --rpg-border: #ff00ff;
+}
+
+/* Desktop Enhancement (1001px+) */
+@media (min-width: 1001px) {
+    .rpg-dice-popup {
+        --modal-padding: 1.5rem;
+        --modal-gap: 1rem;
+        --modal-font-base: 1rem;
+        --modal-font-small: 0.875rem;
+        --modal-font-large: 3rem;
+        --modal-font-huge: 3.75rem;
+        --modal-max-width: 500px;
+    }
+
+    /* Side-by-side inputs on desktop */
+    .rpg-dice-selector {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    /* Hover effects on desktop */
+    #rpg-dice-roll-btn:hover,
+    .rpg-dice-save-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px currentColor;
+    }
+
+    .rpg-dice-save-btn {
+        max-width: 200px;
+    }
 }
 
 /* ============================================
@@ -2558,94 +2643,135 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 }
 
 /* ============================================
-   SETTINGS POPUP
+   SETTINGS MODAL - MOBILE FIRST
    ============================================ */
+
+/* CSS Custom Properties for Responsive Scaling */
+.rpg-settings-popup {
+    /* Fluid spacing */
+    --modal-padding: clamp(0.5rem, 2vw, 0.75rem);
+    --modal-gap: clamp(0.375rem, 1.5vw, 0.5rem);
+    --modal-border-width: 2px;
+
+    /* Fluid typography */
+    --modal-font-base: clamp(0.8rem, 3vw, 0.9rem);
+    --modal-font-small: clamp(0.7rem, 2.5vw, 0.8rem);
+    --modal-font-heading: clamp(0.9rem, 3.5vw, 1rem);
+
+    /* Content constraints - more height than dice roller */
+    --modal-max-width: min(90vw, 500px);
+    --modal-max-height: 75vh;
+}
+
+/* Modal Container - Hidden by default */
 .rpg-settings-popup {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    inset: 0;
     z-index: 10000;
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
+    padding: 0.5rem;
 }
 
-.rpg-settings-popup-overlay {
+/* Open state */
+.rpg-settings-popup.is-open {
+    display: flex;
+    animation: fadeIn 0.2s ease-out;
+}
+
+/* Closing state */
+.rpg-settings-popup.is-closing {
+    display: flex;
+    animation: fadeOut 0.2s ease-in;
+}
+
+/* Backdrop overlay - using ::before pseudo-element */
+.rpg-settings-popup::before {
+    content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
     backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
 }
 
+/* Modal Content Box */
 .rpg-settings-popup-content {
     position: relative;
-    background: var(--rpg-bg);
-    border: 3px solid var(--rpg-border);
-    border-radius: 0.938em;
-    max-width: 31.25rem;
-    width: 90%;
-    max-height: 80vh;
-    overflow: hidden;
+    width: 100%;
+    max-width: var(--modal-max-width);
+    height: auto;
+    max-height: var(--modal-max-height);
+    min-height: 0;
+    background: rgba(30, 30, 30, 0.8);
+    border: var(--modal-border-width) solid var(--rpg-border);
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
+    color: var(--rpg-text);
     display: flex;
     flex-direction: column;
-    box-shadow: 0 10px 50px rgba(0, 0, 0, 0.9);
-    animation: popupSlideIn 0.3s ease-out;
-    color: var(--rpg-text);
+    overflow: hidden;
+    animation: slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    margin: auto 0;
 }
 
+/* Header */
 .rpg-settings-popup-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.938em 1.25em;
+    padding: var(--modal-padding);
     background: var(--rpg-accent);
-    border-bottom: 1px solid var(--rpg-border);
+    border-bottom: var(--modal-border-width) solid var(--rpg-border);
+    flex-shrink: 0;
 }
 
 .rpg-settings-popup-header h3 {
     margin: 0;
-    font-size: 1.125rem;
+    font-size: var(--modal-font-heading);
     color: var(--rpg-highlight);
     display: flex;
     align-items: center;
-    gap: 0.625em;
+    gap: var(--modal-gap);
 }
 
+/* Close button - touch-friendly */
 .rpg-popup-close {
     background: transparent;
     border: none;
     color: var(--rpg-text);
     font-size: 1.5rem;
     cursor: pointer;
-    padding: 0;
-    width: 1.875rem;
-    height: 1.875rem;
+    padding: 0.5rem;
+    min-width: 44px;
+    min-height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 0.25em;
+    border-radius: 0.25rem;
     transition: all 0.2s ease;
 }
 
-.rpg-popup-close:hover {
+.rpg-popup-close:active {
     background: rgba(255, 255, 255, 0.1);
     color: var(--rpg-highlight);
 }
 
+/* Scrollable Body */
 .rpg-settings-popup-body {
-    padding: 1.25em;
+    padding: var(--modal-padding);
     overflow-y: auto;
-    flex: 1;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    flex: 1 1 auto;
+    min-height: 0;
 }
 
+/* Settings Groups */
 .rpg-settings-group {
-    margin-bottom: 1.25em;
-    padding-bottom: 1.25em;
+    margin-bottom: var(--modal-padding);
+    padding-bottom: var(--modal-padding);
     border-bottom: 1px solid var(--rpg-border);
 }
 
@@ -2654,15 +2780,16 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 }
 
 .rpg-settings-group h4 {
-    margin: 0 0 0.938em 0;
-    font-size: 0.938rem;
+    margin: 0 0 var(--modal-gap) 0;
+    font-size: var(--modal-font-base);
     color: var(--rpg-highlight);
     display: flex;
     align-items: center;
-    gap: 0.5em;
+    gap: var(--modal-gap);
+    font-weight: 600;
 }
 
-/* Apply theme to settings popup */
+/* Theme Support */
 #rpg-settings-popup[data-theme="sci-fi"] .rpg-settings-popup-content {
     --rpg-bg: #0a0e27;
     --rpg-accent: #1a1f3a;
@@ -2685,6 +2812,24 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     --rpg-text: #00ff9f;
     --rpg-highlight: #ff00ff;
     --rpg-border: #ff00ff;
+}
+
+/* Desktop Enhancement (1001px+) */
+@media (min-width: 1001px) {
+    .rpg-settings-popup {
+        --modal-padding: 1rem;
+        --modal-gap: 0.75rem;
+        --modal-font-base: 0.9rem;
+        --modal-font-small: 0.8rem;
+        --modal-font-heading: 1.125rem;
+        --modal-max-width: 600px;
+    }
+
+    /* Hover effects on desktop */
+    .rpg-popup-close:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--rpg-highlight);
+    }
 }
 
 /* ============================================
@@ -2991,20 +3136,30 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 /* Hide mobile toggle on desktop, show on mobile */
 .rpg-mobile-toggle {
     display: none;
+    align-items: center;
+    justify-content: center;
     position: fixed;
-    bottom: 5rem;
-    right: 1.25rem;
-    width: 3.5rem;
-    height: 3.5rem;
+    /* Position set by JavaScript based on saved settings */
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
-    background: var(--rpg-accent, #2c3e50);
-    border: 3px solid var(--rpg-border, #34495e);
+    background: var(--SmartThemeBlurTintColor);
+    border: 2px solid var(--SmartThemeBorderColor);
     color: var(--rpg-text, #ecf0f1);
-    font-size: 1.5rem;
-    cursor: pointer;
-    z-index: 999;
+    font-size: 1.25rem;
+    cursor: grab;
+    z-index: 10002;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    transition: all 0.3s ease;
+    transition: opacity 0.3s ease, transform 0.2s ease, top 0.3s ease, left 0.3s ease, right 0.3s ease, bottom 0.3s ease;
+    user-select: none; /* Prevent text selection while dragging */
+    -webkit-user-select: none;
+    will-change: top, left; /* Optimize for position changes */
+}
+
+/* Disable transitions while actively dragging */
+.rpg-mobile-toggle.dragging {
+    transition: none;
+    cursor: grabbing;
 }
 
 .rpg-mobile-toggle:hover {
@@ -3034,13 +3189,32 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     backdrop-filter: blur(2px);
 }
 
-/* Mobile-specific panel behavior */
-@media (max-width: 768px) {
-    /* Show the FAB on mobile */
+/* Mobile-specific panel behavior - matches SillyTavern's 1000px breakpoint */
+/* CACHE BUST v2025-01-16 */
+@media (max-width: 1000px) {
+    /* ========================================
+       MOBILE PANEL FOUNDATION
+       ======================================== */
+
+    /* Show the mobile FAB toggle button */
     .rpg-mobile-toggle {
         display: flex;
-        align-items: center;
-        justify-content: center;
+    }
+
+    /* Hide FAB when panel is open */
+    body:has(.rpg-panel.rpg-mobile-open) .rpg-mobile-toggle {
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    /* Hide internal collapse toggle when panel is closed on mobile */
+    .rpg-collapse-toggle {
+        display: none !important;
+    }
+
+    /* Show internal collapse toggle when panel is open on mobile */
+    .rpg-panel.rpg-mobile-open .rpg-collapse-toggle {
+        display: flex !important;
     }
 
     /* Show overlay when needed */
@@ -3048,39 +3222,502 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
         display: block;
     }
 
-    /* Hide panel by default on mobile */
+    /* Remove margin adjustments on mobile - content takes full width */
+    body:has(.rpg-panel) #sheld {
+        margin-right: 0 !important;
+        margin-left: 0 !important;
+    }
+
+    /* Mobile panel - slide from right like desktop */
     .rpg-panel {
-        transform: translateY(100%);
-        transition: transform 0.3s ease-in-out;
-    }
+        position: fixed !important;
+        top: var(--topBarBlockSize) !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        left: auto !important;
 
-    /* Show panel when opened */
-    .rpg-panel.rpg-mobile-open {
-        transform: translateY(0);
-        z-index: 999;
-    }
+        /* Mobile panel sizing */
+        width: 85dvw !important;
+        max-width: 400px !important;
+        height: calc(100dvh - var(--topBarBlockSize)) !important;
 
-    /* On mobile, panel is always at bottom */
-    .rpg-panel.rpg-position-right,
-    .rpg-panel.rpg-position-left,
-    .rpg-panel.rpg-position-top {
-        position: fixed;
-        top: var(--topBarBlockSize);
-        bottom: 0;
-        left: 0;
-        right: 0;
-        width: 100%;
-        max-width: 100%;
-        border-radius: 1.25em 1.25em 0 0;
-        overflow-y: scroll;
+        /* Hidden by default - completely removed from layout */
+        display: none !important;
+
+        overflow-y: auto !important;
         -webkit-overflow-scrolling: touch;
+
+        /* Styling */
+        border-radius: 20px 0 0 0;
+        border-left: 1px solid var(--SmartThemeBorderColor);
+        border-top: 1px solid var(--SmartThemeBorderColor);
+        backdrop-filter: blur(calc(var(--SmartThemeBlurStrength) * 2));
+        box-shadow: -5px 0 20px var(--rpg-shadow);
+    }
+
+    /* Show panel when opened with slide-in animation */
+    .rpg-panel.rpg-mobile-open {
+        display: block !important;
+        z-index: 50;
+        animation: rpgSlideInFromRight 0.3s ease-in-out;
+    }
+
+    /* Closing animation - slide out to right */
+    .rpg-panel.rpg-mobile-closing {
+        display: block !important;
+        z-index: 50;
+        animation: rpgSlideOutToRight 0.3s ease-in-out;
+    }
+
+    /* Slide-in animation from right */
+    @keyframes rpgSlideInFromRight {
+        from {
+            transform: translateX(100%);
+        }
+        to {
+            transform: translateX(0);
+        }
+    }
+
+    /* Slide-out animation to right */
+    @keyframes rpgSlideOutToRight {
+        from {
+            transform: translateX(0);
+        }
+        to {
+            transform: translateX(100%);
+        }
+    }
+
+    /* ========================================
+       MOBILE KEYBOARD HANDLING
+       ======================================== */
+
+    /* When mobile keyboard is visible, adjust panel layout to prevent squashing */
+    .rpg-panel.rpg-keyboard-visible {
+        /* Prevent content from being pushed too far up */
+        padding-bottom: 20px;
+    }
+
+    /* Make sections more compact when keyboard visible */
+    .rpg-panel.rpg-keyboard-visible .rpg-stats-section,
+    .rpg-panel.rpg-keyboard-visible .rpg-info-section,
+    .rpg-panel.rpg-keyboard-visible .rpg-thoughts-section {
+        padding: 8px 12px;
+    }
+
+    /* Reduce spacing in stat bars when keyboard visible */
+    .rpg-panel.rpg-keyboard-visible .rpg-stats-grid {
+        gap: 4px;
+    }
+
+    /* Disable collapsed state on mobile */
+    .rpg-panel.rpg-collapsed {
+        max-width: 100dvw !important;
+        min-width: unset !important;
+        width: 100dvw !important;
+    }
+
+    .rpg-panel.rpg-collapsed .rpg-game-container {
+        opacity: 1 !important;
+        pointer-events: auto !important;
+    }
+
+    /* Collapse toggle on mobile - right side, always visible */
+    .rpg-collapse-toggle {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        position: fixed !important;
+        top: calc(var(--topBarBlockSize) + 120px) !important;
+        left: 12px !important;
+        right: auto !important;
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        min-height: 44px;
+        border-radius: 50%;
+        background: var(--SmartThemeBlurTintColor);
+        border: 2px solid var(--SmartThemeBorderColor);
+        z-index: 9999 !important;
+        transition: all 0.2s ease;
+        transform: none !important;
+        pointer-events: auto !important;
+        cursor: pointer !important;
+    }
+
+    .rpg-collapse-toggle:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: scale(1.05) !important;
+    }
+
+    .rpg-collapse-toggle:active {
+        transform: scale(0.95) !important;
+    }
+
+    /* Mobile icon styling - use chevrons for drawer UX */
+    .rpg-collapse-toggle i {
+        transform: none !important;
+        font-size: 20px;
+    }
+
+    /* ========================================
+       MOBILE TAB NAVIGATION
+       ======================================== */
+
+    /* Mobile tab container wrapper */
+    .rpg-mobile-container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        min-height: 0;
+        margin: -12px -12px 16px -12px;
+    }
+
+    /* Tab container at top of panel */
+    .rpg-mobile-tabs {
+        display: flex;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: var(--SmartThemeBlurTintColor);
+        backdrop-filter: blur(calc(var(--SmartThemeBlurStrength) * 1.5));
+        border-bottom: 2px solid var(--SmartThemeBorderColor);
+        margin: 0;
+        padding: 0;
+    }
+
+    .rpg-mobile-tab {
+        flex: 1;
+        height: 44px;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--SmartThemeBodyColor);
+        background: transparent;
+        border: none;
+        border-bottom: 3px solid transparent;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        padding: 0 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .rpg-mobile-tab:active {
+        transform: scale(0.97);
+    }
+
+    .rpg-mobile-tab.active {
+        color: var(--SmartThemeQuoteColor);
+        border-bottom-color: var(--SmartThemeQuoteColor);
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .rpg-mobile-tab i {
+        font-size: 16px;
+    }
+
+    /* Tab content sections */
+    .rpg-mobile-tab-content {
+        display: none;
+        animation: fadeIn 0.2s ease;
+    }
+
+    .rpg-mobile-tab-content.active {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+        padding: 12px;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Combined Info & Characters wrapper */
+    .rpg-mobile-combined-content {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        height: 100%;
+        min-height: 0;
+    }
+
+    /* Info Box takes fixed 50% of vertical space */
+    .rpg-mobile-combined-content > #rpg-info-box {
+        flex: 0 0 50%;
+        min-height: 0;
+        overflow-y: auto;
+        padding-bottom: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5em;
+    }
+
+    /* Characters section takes remaining 50% */
+    .rpg-mobile-combined-content > #rpg-thoughts {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        padding-bottom: 16px;
+    }
+
+    /* Add divider between Info and Characters */
+    .rpg-mobile-combined-content > .rpg-section:not(:last-child) {
+        border-bottom: 1px solid var(--SmartThemeBorderColor);
+        margin-bottom: 16px;
+    }
+
+    /* Hide dividers on mobile (tabs handle separation) */
+    .rpg-divider {
+        display: none;
+    }
+
+    /* ========================================
+       MOBILE INFO BOX IMPROVEMENTS
+       ======================================== */
+
+    /* Rows scale proportionally to fill Info Box */
+    .rpg-dashboard-row-1 {
+        flex: 1.2 !important;  /* Slightly more space for 4 widgets */
+        display: flex !important;
+        gap: 0.25em;
+    }
+
+    .rpg-dashboard-row-2 {
+        flex: 0.8 !important;  /* Less space for 1 widget */
+        display: flex !important;
+    }
+
+    /* Widgets fill their row height */
+    .rpg-dashboard-row-1 .rpg-dashboard-widget,
+    .rpg-dashboard-row-2 .rpg-dashboard-widget {
+        height: 100% !important;
+        flex: 1 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center;
+    }
+
+    /* ========================================
+       MOBILE STATS TAB LAYOUT IMPROVEMENTS
+       ======================================== */
+
+    /* Make the entire stats section a grid */
+    .rpg-stats-section {
+        display: grid !important;
+        grid-template-columns: 40% 60%; /* Left for inventory/mood, right for attributes */
+        grid-template-rows: auto auto auto auto; /* Portrait, stat bars, inventory, mood */
+        gap: 12px;
+        padding: 16px 12px;
+    }
+
+    /* Use display: contents so children participate in grid */
+    .rpg-stats-header,
+    .rpg-stats-content {
+        display: contents !important;
+    }
+
+    /* Portrait row - centered at top, full width */
+    .rpg-stats-header-left {
+        grid-column: 1 / 3;
+        grid-row: 1;
+        display: flex !important;
+        justify-content: center;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .rpg-user-portrait {
+        width: 64px;
+        height: 64px;
+    }
+
+    /* Hide stats title on mobile */
+    .rpg-stats-title {
+        display: none;
+    }
+
+    /* Stat bars row - full width */
+    .rpg-stats-left {
+        grid-column: 1 / 3;
+        grid-row: 2;
+        display: contents !important;
+    }
+
+    .rpg-stats-grid {
+        grid-column: 1 / 3;
+        grid-row: 2;
+    }
+
+    /* Inventory - bottom left */
+    .rpg-inventory-box {
+        grid-column: 1;
+        grid-row: 3;
+        margin: 0;
+        min-height: auto;
+        max-height: none;
+        max-width: 100%; /* Override 12.5rem restriction */
+    }
+
+    /* Mood - below inventory on left */
+    .rpg-mood {
+        grid-column: 1;
+        grid-row: 4;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 0;
+    }
+
+    /* Attributes - right side, spanning rows 3-4 */
+    .rpg-stats-right {
+        grid-column: 2;
+        grid-row: 3 / 5;
+        display: contents !important;
+    }
+
+    .rpg-classic-stats {
+        grid-column: 2;
+        grid-row: 3 / 5;
+    }
+
+    /* Attributes as ultra-compact 2x3 grid for mobile */
+    .rpg-classic-stats-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        grid-template-rows: repeat(3, 1fr) !important;
+        gap: 3px;
+        margin: 4px 5px 4px 0;
+        padding-right: 5px;
+    }
+
+    /* Each attribute - ULTRA COMPACT with vertical stack layout */
+    .rpg-classic-stat {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto auto;
+        gap: 2px 4px;
+        padding: 4px 6px;
+        min-height: auto;
+        height: auto;
+        background: var(--SmartThemeBlurTintColor);
+        border: 1px solid var(--SmartThemeBorderColor);
+        border-radius: 4px;
+    }
+
+    /* Make buttons container children participate in parent grid */
+    .rpg-classic-stat-buttons {
+        display: contents;
+    }
+
+    /* Label - top left */
+    .rpg-classic-stat-label {
+        grid-column: 1;
+        grid-row: 1;
+        font-size: 9px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        align-self: center;
+        justify-self: center;
+    }
+
+    /* Value - top right */
+    .rpg-classic-stat-value {
+        grid-column: 2;
+        grid-row: 1;
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--SmartThemeQuoteColor);
+        text-align: center;
+        align-self: center;
+        justify-self: center;
+    }
+
+    /* Minus button - bottom left */
+    .rpg-stat-decrease {
+        grid-column: 1;
+        grid-row: 2;
+        justify-self: center;
+    }
+
+    /* Plus button - bottom right */
+    .rpg-stat-increase {
+        grid-column: 2;
+        grid-row: 2;
+        justify-self: center;
+    }
+
+    .rpg-classic-stat-btn {
+        min-width: 24px !important;
+        min-height: 24px !important;
+        width: 24px;
+        height: 24px;
+        font-size: 14px;
+        font-weight: 700;
+        border-radius: 4px;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        cursor: pointer;
+        user-select: none;
+        background: var(--rpg-accent);
+        border: 1px solid var(--rpg-border);
+        color: var(--rpg-text);
+    }
+
+    .rpg-classic-stat-btn:hover {
+        background: var(--rpg-highlight);
+        border-color: var(--rpg-highlight);
+        transform: scale(1.05);
+    }
+
+    .rpg-classic-stat-btn:active {
+        transform: scale(0.95);
+    }
+
+    /* ========================================
+       MOBILE THOUGHT ICON POSITIONING
+       ======================================== */
+
+    /* Position thought icon above avatar on mobile to prevent off-screen clipping */
+    /* JavaScript will calculate position, but add transform to move it above and right */
+    #rpg-thought-icon {
+        /* Use transform to shift icon above and to the right of avatar */
+        transform: translate(50px, -45px) !important;
+        /* Smooth animation for position changes during scroll */
+        transition: top 0.2s ease-out, left 0.2s ease-out !important;
+        will-change: top, left;
+    }
+
+    /* ========================================
+       MOBILE CHARACTER RELATIONSHIP BADGE
+       ======================================== */
+
+    /* Keep relationship badge small on mobile to prevent it from covering avatar */
+    .rpg-relationship-badge {
+        width: 18px !important;
+        height: 18px !important;
+        font-size: 10px !important;
+        padding: 0 !important;
+        min-height: unset !important;
+        line-height: 18px !important;
     }
 }
 
 /* Extra small screens - adjust FAB position */
 @media (max-width: 480px) {
     .rpg-mobile-toggle {
-        bottom: 4.375rem;
+        bottom: 6rem;
         right: 0.938rem;
         width: 3.25rem;
         height: 3.25rem;
@@ -3090,13 +3727,6 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 
 /* Touch-friendly improvements for mobile */
 @media (max-width: 768px) {
-    /* Larger touch targets for buttons */
-    .rpg-classic-stat-btn {
-        min-width: 2.75rem;
-        min-height: 2.75rem;
-        font-size: 1.125rem;
-    }
-
     /* More padding for editable fields */
     .rpg-editable {
         padding: 0.5em;

@@ -35,6 +35,10 @@ let extensionSettings = {
     statBarColorLow: '#cc3333', // Color for low stat values (red)
     statBarColorHigh: '#33cc66', // Color for high stat values (green)
     enableAnimations: true, // Enable smooth animations for stats and content updates
+    mobileFabPosition: {
+        top: 'calc(var(--topBarBlockSize) + 60px)',
+        right: '12px'
+    }, // Saved position for mobile FAB button
     userStats: {
         health: 100,
         sustenance: 100,
@@ -511,9 +515,12 @@ async function initUI() {
     renderThoughts();
     updateDiceDisplay();
     setupDiceRoller();
+    setupClassicStatsButtons();
     setupSettingsPopup();
     addDiceQuickReply();
     setupPlotButtons();
+    setupMobileKeyboardHandling();
+    setupContentEditableScrolling();
 }
 
 /**
@@ -647,20 +654,172 @@ async function sendPlotProgression(type) {
             $('#rpg-plot-random, #rpg-plot-natural').prop('disabled', false).css('opacity', '1');
         }, 1000);
     }
-}/**
+}
+
+/**
+ * Modern DiceModal ES6 Class
+ * Manages dice roller modal with proper state management and CSS classes
+ */
+class DiceModal {
+    constructor() {
+        this.modal = document.getElementById('rpg-dice-popup');
+        this.animation = document.getElementById('rpg-dice-animation');
+        this.result = document.getElementById('rpg-dice-result');
+        this.resultValue = document.getElementById('rpg-dice-result-value');
+        this.resultDetails = document.getElementById('rpg-dice-result-details');
+        this.rollBtn = document.getElementById('rpg-dice-roll-btn');
+
+        this.state = 'IDLE'; // IDLE, ROLLING, SHOWING_RESULT
+        this.isAnimating = false;
+    }
+
+    /**
+     * Opens the modal with proper animation
+     */
+    open() {
+        if (this.isAnimating) return;
+
+        // Apply theme
+        const theme = extensionSettings.theme;
+        this.modal.setAttribute('data-theme', theme);
+
+        // Apply custom theme if needed
+        if (theme === 'custom') {
+            this._applyCustomTheme();
+        }
+
+        // Reset to initial state
+        this._setState('IDLE');
+
+        // Open modal with CSS class
+        this.modal.classList.add('is-open');
+        this.modal.classList.remove('is-closing');
+
+        // Focus management
+        this.modal.querySelector('#rpg-dice-popup-close')?.focus();
+    }
+
+    /**
+     * Closes the modal with animation
+     */
+    close() {
+        if (this.isAnimating) return;
+
+        this.isAnimating = true;
+        this.modal.classList.add('is-closing');
+        this.modal.classList.remove('is-open');
+
+        // Wait for animation to complete
+        setTimeout(() => {
+            this.modal.classList.remove('is-closing');
+            this.isAnimating = false;
+
+            // Clear pending roll
+            pendingDiceRoll = null;
+        }, 200);
+    }
+
+    /**
+     * Starts the rolling animation
+     */
+    startRolling() {
+        this._setState('ROLLING');
+    }
+
+    /**
+     * Shows the result
+     * @param {number} total - The total roll value
+     * @param {Array<number>} rolls - Individual roll values
+     */
+    showResult(total, rolls) {
+        this._setState('SHOWING_RESULT');
+
+        // Update result values
+        this.resultValue.textContent = total;
+        this.resultValue.classList.add('is-animating');
+
+        // Remove animation class after it completes
+        setTimeout(() => {
+            this.resultValue.classList.remove('is-animating');
+        }, 500);
+
+        // Show details if multiple rolls
+        if (rolls && rolls.length > 1) {
+            this.resultDetails.textContent = `Rolls: ${rolls.join(', ')}`;
+        } else {
+            this.resultDetails.textContent = '';
+        }
+    }
+
+    /**
+     * Manages modal state changes
+     * @private
+     */
+    _setState(newState) {
+        this.state = newState;
+
+        switch (newState) {
+            case 'IDLE':
+                this.rollBtn.hidden = false;
+                this.animation.hidden = true;
+                this.result.hidden = true;
+                break;
+
+            case 'ROLLING':
+                this.rollBtn.hidden = true;
+                this.animation.hidden = false;
+                this.result.hidden = true;
+                this.animation.setAttribute('aria-busy', 'true');
+                break;
+
+            case 'SHOWING_RESULT':
+                this.rollBtn.hidden = true;
+                this.animation.hidden = true;
+                this.result.hidden = false;
+                this.animation.setAttribute('aria-busy', 'false');
+                break;
+        }
+    }
+
+    /**
+     * Applies custom theme colors
+     * @private
+     */
+    _applyCustomTheme() {
+        const content = this.modal.querySelector('.rpg-dice-popup-content');
+        if (content && extensionSettings.customColors) {
+            content.style.setProperty('--rpg-bg', extensionSettings.customColors.bg);
+            content.style.setProperty('--rpg-accent', extensionSettings.customColors.accent);
+            content.style.setProperty('--rpg-text', extensionSettings.customColors.text);
+            content.style.setProperty('--rpg-highlight', extensionSettings.customColors.highlight);
+        }
+    }
+}
+
+// Global instance
+let diceModal = null;
+
+/**
  * Sets up the dice roller functionality.
  */
 function setupDiceRoller() {
+    // Initialize DiceModal instance
+    diceModal = new DiceModal();
     // Click dice display to open popup
     $('#rpg-dice-display').on('click', function() {
         openDicePopup();
     });
 
-    // Close popup
-    $('#rpg-dice-popup-close, .rpg-dice-popup-overlay').on('click', function() {
-        // Discard pending roll without saving
-        pendingDiceRoll = null;
+    // Close popup - handle both close button and backdrop clicks
+    $('#rpg-dice-popup-close').on('click', function() {
         closeDicePopup();
+    });
+
+    // Close on backdrop click (clicking outside content)
+    $('#rpg-dice-popup').on('click', function(e) {
+        if (e.target === this) {
+            closeDicePopup();
+        }
     });
 
     // Roll dice button
@@ -705,54 +864,45 @@ function clearDiceRoll() {
 
 /**
  * Opens the dice rolling popup.
+ * Backwards compatible wrapper for DiceModal class.
  */
 function openDicePopup() {
-    // Apply current theme to popup
-    const theme = extensionSettings.theme;
-    $('#rpg-dice-popup').attr('data-theme', theme);
-
-    $('#rpg-dice-popup').fadeIn(200);
-    $('#rpg-dice-animation').hide();
-    $('#rpg-dice-result').hide();
-    $('#rpg-dice-roll-btn').show();
-
-    // Apply custom theme if selected
-    if (theme === 'custom') {
-        applyCustomThemeToPopup();
+    if (diceModal) {
+        diceModal.open();
     }
 }
 
 /**
- * Applies custom theme colors to the dice popup.
+ * Closes the dice rolling popup.
+ * Backwards compatible wrapper for DiceModal class.
  */
-function applyCustomThemeToPopup() {
-    const $popup = $('#rpg-dice-popup');
-    $popup.find('.rpg-dice-popup-content').css({
-        '--rpg-bg': extensionSettings.customColors.bg,
-        '--rpg-accent': extensionSettings.customColors.accent,
-        '--rpg-text': extensionSettings.customColors.text,
-        '--rpg-highlight': extensionSettings.customColors.highlight
-    });
+function closeDicePopup() {
+    if (diceModal) {
+        diceModal.close();
+    }
 }
 
 /**
- * Closes the dice rolling popup.
+ * @deprecated Legacy function - use diceModal._applyCustomTheme() instead
  */
-function closeDicePopup() {
-    $('#rpg-dice-popup').fadeOut(200);
+function applyCustomThemeToPopup() {
+    if (diceModal) {
+        diceModal._applyCustomTheme();
+    }
 }
 
 /**
  * Rolls the dice and displays result.
+ * Refactored to use DiceModal class.
  */
 async function rollDice() {
+    if (!diceModal) return;
+
     const count = parseInt(String($('#rpg-dice-count').val())) || 1;
     const sides = parseInt(String($('#rpg-dice-sides').val())) || 20;
 
-    // Hide roll button and show animation
-    $('#rpg-dice-roll-btn').hide();
-    $('#rpg-dice-animation').show();
-    $('#rpg-dice-result').hide();
+    // Start rolling animation
+    diceModal.startRolling();
 
     // Wait for animation (simulate rolling)
     await new Promise(resolve => setTimeout(resolve, 1200));
@@ -773,16 +923,8 @@ async function rollDice() {
         timestamp: Date.now()
     };
 
-    // Hide animation and show result
-    $('#rpg-dice-animation').hide();
-    $('#rpg-dice-result').show();
-    $('#rpg-dice-result-value').text(total);
-
-    if (rolls.length > 1) {
-        $('#rpg-dice-result-details').text(`Rolls: ${rolls.join(', ')}`);
-    } else {
-        $('#rpg-dice-result-details').text('');
-    }
+    // Show result
+    diceModal.showResult(total, rolls);
 
     // Don't update sidebar display yet - only update when user clicks "Save Roll"
 }
@@ -840,60 +982,173 @@ function addDiceQuickReply() {
 }
 
 /**
- * Opens the settings popup.
+ * Sets up event listeners for classic stat +/- buttons using delegation.
+ * Uses delegated events to persist across re-renders of the stats section.
  */
-function openSettingsPopup() {
-    const theme = extensionSettings.theme || 'default';
-    $('#rpg-settings-popup').attr('data-theme', theme);
+function setupClassicStatsButtons() {
+    if (!$userStatsContainer) return;
 
-    // Apply custom theme colors if custom theme is selected
-    if (theme === 'custom') {
-        applyCustomThemeToSettingsPopup();
-    }
+    // Delegated event listener for increase buttons
+    $userStatsContainer.on('click', '.rpg-stat-increase', function() {
+        const stat = $(this).data('stat');
+        if (extensionSettings.classicStats[stat] < 100) {
+            extensionSettings.classicStats[stat]++;
+            saveSettings();
+            saveChatData();
+            // Update only the specific stat value, not the entire stats panel
+            $(this).closest('.rpg-classic-stat').find('.rpg-classic-stat-value').text(extensionSettings.classicStats[stat]);
+        }
+    });
 
-    $('#rpg-settings-popup').fadeIn(200);
-}
-
-/**
- * Closes the settings popup.
- */
-function closeSettingsPopup() {
-    $('#rpg-settings-popup').fadeOut(200);
-}
-
-/**
- * Applies custom theme colors to the settings popup.
- */
-function applyCustomThemeToSettingsPopup() {
-    const popup = $('#rpg-settings-popup .rpg-settings-popup-content');
-    popup.css({
-        '--rpg-bg': extensionSettings.customColors.bg,
-        '--rpg-accent': extensionSettings.customColors.accent,
-        '--rpg-text': extensionSettings.customColors.text,
-        '--rpg-highlight': extensionSettings.customColors.highlight
+    // Delegated event listener for decrease buttons
+    $userStatsContainer.on('click', '.rpg-stat-decrease', function() {
+        const stat = $(this).data('stat');
+        if (extensionSettings.classicStats[stat] > 1) {
+            extensionSettings.classicStats[stat]--;
+            saveSettings();
+            saveChatData();
+            // Update only the specific stat value, not the entire stats panel
+            $(this).closest('.rpg-classic-stat').find('.rpg-classic-stat-value').text(extensionSettings.classicStats[stat]);
+        }
     });
 }
 
 /**
+ * SettingsModal - Manages the settings popup modal
+ * Handles opening, closing, theming, and animations
+ */
+class SettingsModal {
+    constructor() {
+        this.modal = document.getElementById('rpg-settings-popup');
+        this.content = this.modal?.querySelector('.rpg-settings-popup-content');
+        this.isAnimating = false;
+    }
+
+    /**
+     * Opens the modal with proper animation
+     */
+    open() {
+        if (this.isAnimating || !this.modal) return;
+
+        // Apply theme
+        const theme = extensionSettings.theme || 'default';
+        this.modal.setAttribute('data-theme', theme);
+
+        // Apply custom theme if needed
+        if (theme === 'custom') {
+            this._applyCustomTheme();
+        }
+
+        // Open modal with CSS class
+        this.modal.classList.add('is-open');
+        this.modal.classList.remove('is-closing');
+
+        // Focus management
+        this.modal.querySelector('#rpg-close-settings')?.focus();
+    }
+
+    /**
+     * Closes the modal with animation
+     */
+    close() {
+        if (this.isAnimating || !this.modal) return;
+
+        this.isAnimating = true;
+        this.modal.classList.add('is-closing');
+        this.modal.classList.remove('is-open');
+
+        // Wait for animation to complete
+        setTimeout(() => {
+            this.modal.classList.remove('is-closing');
+            this.isAnimating = false;
+        }, 200);
+    }
+
+    /**
+     * Updates the theme in real-time (used when theme selector changes)
+     */
+    updateTheme() {
+        if (!this.modal) return;
+
+        const theme = extensionSettings.theme || 'default';
+        this.modal.setAttribute('data-theme', theme);
+
+        if (theme === 'custom') {
+            this._applyCustomTheme();
+        } else {
+            // Clear custom CSS variables to let theme CSS take over
+            this._clearCustomTheme();
+        }
+    }
+
+    /**
+     * Applies custom theme colors
+     * @private
+     */
+    _applyCustomTheme() {
+        if (!this.content || !extensionSettings.customColors) return;
+
+        this.content.style.setProperty('--rpg-bg', extensionSettings.customColors.bg);
+        this.content.style.setProperty('--rpg-accent', extensionSettings.customColors.accent);
+        this.content.style.setProperty('--rpg-text', extensionSettings.customColors.text);
+        this.content.style.setProperty('--rpg-highlight', extensionSettings.customColors.highlight);
+    }
+
+    /**
+     * Clears custom theme colors
+     * @private
+     */
+    _clearCustomTheme() {
+        if (!this.content) return;
+
+        this.content.style.setProperty('--rpg-bg', '');
+        this.content.style.setProperty('--rpg-accent', '');
+        this.content.style.setProperty('--rpg-text', '');
+        this.content.style.setProperty('--rpg-highlight', '');
+    }
+}
+
+// Global instance
+let settingsModal = null;
+
+/**
+ * Opens the settings popup.
+ * Backwards compatible wrapper for SettingsModal class.
+ */
+function openSettingsPopup() {
+    if (settingsModal) {
+        settingsModal.open();
+    }
+}
+
+/**
+ * Closes the settings popup.
+ * Backwards compatible wrapper for SettingsModal class.
+ */
+function closeSettingsPopup() {
+    if (settingsModal) {
+        settingsModal.close();
+    }
+}
+
+/**
+ * Applies custom theme colors to the settings popup.
+ * Backwards compatible wrapper for SettingsModal class.
+ * @deprecated Use settingsModal.updateTheme() instead
+ */
+function applyCustomThemeToSettingsPopup() {
+    if (settingsModal) {
+        settingsModal._applyCustomTheme();
+    }
+}
+
+/**
  * Updates the settings popup theme in real-time.
+ * Backwards compatible wrapper for SettingsModal class.
  */
 function updateSettingsPopupTheme() {
-    const theme = extensionSettings.theme || 'default';
-    const popup = $('#rpg-settings-popup .rpg-settings-popup-content');
-
-    $('#rpg-settings-popup').attr('data-theme', theme);
-
-    // Apply custom theme colors if custom theme is selected
-    if (theme === 'custom') {
-        applyCustomThemeToSettingsPopup();
-    } else {
-        // Clear custom CSS variables to let theme CSS take over
-        popup.css({
-            '--rpg-bg': '',
-            '--rpg-accent': '',
-            '--rpg-text': '',
-            '--rpg-highlight': ''
-        });
+    if (settingsModal) {
+        settingsModal.updateTheme();
     }
 }
 
@@ -901,14 +1156,24 @@ function updateSettingsPopupTheme() {
  * Sets up the settings popup functionality.
  */
 function setupSettingsPopup() {
+    // Initialize SettingsModal instance
+    settingsModal = new SettingsModal();
+
     // Open settings popup
     $('#rpg-open-settings').on('click', function() {
         openSettingsPopup();
     });
 
-    // Close settings popup
-    $('#rpg-close-settings, .rpg-settings-popup-overlay').on('click', function() {
+    // Close settings popup - close button
+    $('#rpg-close-settings').on('click', function() {
         closeSettingsPopup();
+    });
+
+    // Close on backdrop click (clicking outside content)
+    $('#rpg-settings-popup').on('click', function(e) {
+        if (e.target === this) {
+            closeSettingsPopup();
+        }
     });
 
     // Clear cache button
@@ -982,6 +1247,24 @@ function setupSettingsPopup() {
 }
 
 /**
+ * Helper function to close the mobile panel with animation.
+ */
+function closeMobilePanelWithAnimation() {
+    const $panel = $('#rpg-companion-panel');
+    const $mobileToggle = $('#rpg-mobile-toggle');
+
+    // Add closing class to trigger slide-out animation
+    $panel.removeClass('rpg-mobile-open').addClass('rpg-mobile-closing');
+    $mobileToggle.removeClass('active');
+
+    // Wait for animation to complete before hiding
+    $panel.one('animationend', function() {
+        $panel.removeClass('rpg-mobile-closing');
+        $('.rpg-mobile-overlay').remove();
+    });
+}
+
+/**
  * Sets up the mobile toggle button (FAB).
  */
 function setupMobileToggle() {
@@ -989,26 +1272,680 @@ function setupMobileToggle() {
     const $panel = $('#rpg-companion-panel');
     const $overlay = $('<div class="rpg-mobile-overlay"></div>');
 
-    // Toggle panel visibility on mobile
-    $mobileToggle.on('click', function() {
-        if ($panel.hasClass('rpg-mobile-open')) {
-            // Close panel
-            $panel.removeClass('rpg-mobile-open');
-            $overlay.remove();
-            $mobileToggle.removeClass('active');
+    // DIAGNOSTIC: Check if elements exist and log setup state
+    console.log('[RPG Mobile] ========================================');
+    console.log('[RPG Mobile] setupMobileToggle called');
+    console.log('[RPG Mobile] Button exists:', $mobileToggle.length > 0, 'jQuery object:', $mobileToggle);
+    console.log('[RPG Mobile] Panel exists:', $panel.length > 0);
+    console.log('[RPG Mobile] Window width:', window.innerWidth);
+    console.log('[RPG Mobile] Is mobile viewport (<=1000):', window.innerWidth <= 1000);
+    console.log('[RPG Mobile] ========================================');
+
+    if ($mobileToggle.length === 0) {
+        console.error('[RPG Mobile] ERROR: Mobile toggle button not found in DOM!');
+        console.error('[RPG Mobile] Cannot attach event handlers - button does not exist');
+        return; // Exit early if button doesn't exist
+    }
+
+    // Load and apply saved FAB position
+    if (extensionSettings.mobileFabPosition) {
+        const pos = extensionSettings.mobileFabPosition;
+        console.log('[RPG Mobile] Loading saved FAB position:', pos);
+
+        // Apply saved position
+        if (pos.top) $mobileToggle.css('top', pos.top);
+        if (pos.right) $mobileToggle.css('right', pos.right);
+        if (pos.bottom) $mobileToggle.css('bottom', pos.bottom);
+        if (pos.left) $mobileToggle.css('left', pos.left);
+
+        // Constrain to viewport after position is applied
+        requestAnimationFrame(() => constrainFabToViewport());
+    }
+
+    // Touch/drag state
+    let isDragging = false;
+    let touchStartTime = 0;
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let buttonStartX = 0;
+    let buttonStartY = 0;
+    const LONG_PRESS_DURATION = 200; // ms to hold before enabling drag
+    const MOVE_THRESHOLD = 10; // px to move before enabling drag
+    let rafId = null; // RequestAnimationFrame ID for smooth updates
+    let pendingX = null;
+    let pendingY = null;
+
+    // Update position using requestAnimationFrame for smooth rendering
+    function updateFabPosition() {
+        if (pendingX !== null && pendingY !== null) {
+            $mobileToggle.css({
+                left: pendingX + 'px',
+                top: pendingY + 'px',
+                right: 'auto',
+                bottom: 'auto'
+            });
+            pendingX = null;
+            pendingY = null;
+        }
+        rafId = null;
+    }
+
+    // Touch start - begin tracking
+    $mobileToggle.on('touchstart', function(e) {
+        const touch = e.originalEvent.touches[0];
+
+        touchStartTime = Date.now();
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
+
+        const offset = $mobileToggle.offset();
+        buttonStartX = offset.left;
+        buttonStartY = offset.top;
+
+        isDragging = false;
+    });
+
+    // Touch move - check if should start dragging
+    $mobileToggle.on('touchmove', function(e) {
+        const touch = e.originalEvent.touches[0];
+        const deltaX = touch.clientX - touchStartX;
+        const deltaY = touch.clientY - touchStartY;
+        const timeSinceStart = Date.now() - touchStartTime;
+        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+        // Start dragging if held long enough OR moved far enough
+        if (!isDragging && (timeSinceStart > LONG_PRESS_DURATION || distance > MOVE_THRESHOLD)) {
+            isDragging = true;
+            $mobileToggle.addClass('dragging'); // Disable transitions while dragging
+        }
+
+        if (isDragging) {
+            e.preventDefault(); // Prevent scrolling while dragging
+
+            // Calculate new position
+            let newX = buttonStartX + deltaX;
+            let newY = buttonStartY + deltaY;
+
+            // Get button dimensions
+            const buttonWidth = $mobileToggle.outerWidth();
+            const buttonHeight = $mobileToggle.outerHeight();
+
+            // Constrain to viewport with 10px padding
+            const minX = 10;
+            const maxX = window.innerWidth - buttonWidth - 10;
+            const minY = 10;
+            const maxY = window.innerHeight - buttonHeight - 10;
+
+            newX = Math.max(minX, Math.min(maxX, newX));
+            newY = Math.max(minY, Math.min(maxY, newY));
+
+            // Store pending position and request animation frame for smooth update
+            pendingX = newX;
+            pendingY = newY;
+            if (!rafId) {
+                rafId = requestAnimationFrame(updateFabPosition);
+            }
+        }
+    });
+
+    // Mouse drag support for desktop
+    let mouseDown = false;
+
+    $mobileToggle.on('mousedown', function(e) {
+        // Prevent default to avoid text selection
+        e.preventDefault();
+
+        touchStartTime = Date.now();
+        touchStartX = e.clientX;
+        touchStartY = e.clientY;
+
+        const offset = $mobileToggle.offset();
+        buttonStartX = offset.left;
+        buttonStartY = offset.top;
+
+        isDragging = false;
+        mouseDown = true;
+    });
+
+    // Mouse move - only track if mouse is down
+    $(document).on('mousemove', function(e) {
+        if (!mouseDown) return;
+
+        const deltaX = e.clientX - touchStartX;
+        const deltaY = e.clientY - touchStartY;
+        const timeSinceStart = Date.now() - touchStartTime;
+        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+        // Start dragging if held long enough OR moved far enough
+        if (!isDragging && (timeSinceStart > LONG_PRESS_DURATION || distance > MOVE_THRESHOLD)) {
+            isDragging = true;
+            $mobileToggle.addClass('dragging'); // Disable transitions while dragging
+        }
+
+        if (isDragging) {
+            e.preventDefault();
+
+            // Calculate new position
+            let newX = buttonStartX + deltaX;
+            let newY = buttonStartY + deltaY;
+
+            // Get button dimensions
+            const buttonWidth = $mobileToggle.outerWidth();
+            const buttonHeight = $mobileToggle.outerHeight();
+
+            // Constrain to viewport with 10px padding
+            const minX = 10;
+            const maxX = window.innerWidth - buttonWidth - 10;
+            const minY = 10;
+            const maxY = window.innerHeight - buttonHeight - 10;
+
+            newX = Math.max(minX, Math.min(maxX, newX));
+            newY = Math.max(minY, Math.min(maxY, newY));
+
+            // Store pending position and request animation frame for smooth update
+            pendingX = newX;
+            pendingY = newY;
+            if (!rafId) {
+                rafId = requestAnimationFrame(updateFabPosition);
+            }
+        }
+    });
+
+    // Mouse up - save position or let click handler toggle
+    $(document).on('mouseup', function(e) {
+        if (!mouseDown) return;
+
+        mouseDown = false;
+
+        if (isDragging) {
+            // Was dragging - save new position
+            const offset = $mobileToggle.offset();
+            const newPosition = {
+                left: offset.left + 'px',
+                top: offset.top + 'px'
+            };
+
+            extensionSettings.mobileFabPosition = newPosition;
+            saveSettings();
+
+            console.log('[RPG Mobile] Saved new FAB position (mouse):', newPosition);
+
+            // Constrain to viewport bounds (now that position is saved)
+            setTimeout(() => constrainFabToViewport(), 10);
+
+            // Re-enable transitions with smooth animation
+            setTimeout(() => {
+                $mobileToggle.removeClass('dragging');
+            }, 50);
+
+            isDragging = false;
+
+            // Prevent click from firing after drag
+            e.preventDefault();
+            e.stopPropagation();
+
+            // Add flag to prevent click handler from firing
+            $mobileToggle.data('just-dragged', true);
+            setTimeout(() => {
+                $mobileToggle.data('just-dragged', false);
+            }, 100);
+        }
+        // If not dragging, let the click handler toggle the panel
+    });
+
+    // Touch end - save position or toggle panel
+    $mobileToggle.on('touchend', function(e) {
+        // TEMPORARILY COMMENTED FOR DIAGNOSIS - might be blocking click fallback
+        // e.preventDefault();
+
+        if (isDragging) {
+            // Was dragging - save new position
+            const offset = $mobileToggle.offset();
+            const newPosition = {
+                left: offset.left + 'px',
+                top: offset.top + 'px'
+            };
+
+            extensionSettings.mobileFabPosition = newPosition;
+            saveSettings();
+
+            console.log('[RPG Mobile] Saved new FAB position:', newPosition);
+
+            // Constrain to viewport bounds (now that position is saved)
+            setTimeout(() => constrainFabToViewport(), 10);
+
+            // Re-enable transitions with smooth animation
+            setTimeout(() => {
+                $mobileToggle.removeClass('dragging');
+            }, 50);
+
+            isDragging = false;
         } else {
-            // Open panel
+            // Was a tap - toggle panel
+            console.log('[RPG Mobile] Quick tap detected - toggling panel');
+
+            if ($panel.hasClass('rpg-mobile-open')) {
+                // Close panel with animation
+                closeMobilePanelWithAnimation();
+            } else {
+                // Open panel
+                $panel.addClass('rpg-mobile-open');
+                $('body').append($overlay);
+                $mobileToggle.addClass('active');
+
+                // Close when clicking overlay
+                $overlay.on('click', function() {
+                    closeMobilePanelWithAnimation();
+                });
+            }
+        }
+    });
+
+    // Click handler - works on both mobile and desktop
+    $mobileToggle.on('click', function(e) {
+        // Skip if we just finished dragging
+        if ($mobileToggle.data('just-dragged')) {
+            console.log('[RPG Mobile] Click blocked - just finished dragging');
+            return;
+        }
+
+        console.log('[RPG Mobile] >>> CLICK EVENT FIRED <<<', {
+            windowWidth: window.innerWidth,
+            isMobileViewport: window.innerWidth <= 1000,
+            panelOpen: $panel.hasClass('rpg-mobile-open')
+        });
+
+        // Work on both mobile and desktop (removed viewport check)
+        if ($panel.hasClass('rpg-mobile-open')) {
+            console.log('[RPG Mobile] Click: Closing panel');
+            closeMobilePanelWithAnimation();
+        } else {
+            console.log('[RPG Mobile] Click: Opening panel');
             $panel.addClass('rpg-mobile-open');
             $('body').append($overlay);
             $mobileToggle.addClass('active');
 
-            // Close when clicking overlay
             $overlay.on('click', function() {
-                $panel.removeClass('rpg-mobile-open');
-                $overlay.remove();
-                $mobileToggle.removeClass('active');
+                console.log('[RPG Mobile] Overlay clicked - closing panel');
+                closeMobilePanelWithAnimation();
             });
         }
+    });
+
+    // Handle viewport resize to manage desktop/mobile transitions
+    let wasMobile = window.innerWidth <= 1000;
+    let resizeTimer;
+
+    $(window).on('resize', function() {
+        clearTimeout(resizeTimer);
+
+        const isMobile = window.innerWidth <= 1000;
+        const $panel = $('#rpg-companion-panel');
+        const $mobileToggle = $('#rpg-mobile-toggle');
+
+        // Transitioning from desktop to mobile - handle immediately for smooth transition
+        if (!wasMobile && isMobile) {
+            console.log('[RPG Mobile] Transitioning desktop -> mobile');
+
+            // Remove desktop positioning classes
+            $panel.removeClass('rpg-position-right rpg-position-left rpg-position-top');
+
+            // Clear collapsed state - mobile doesn't use collapse
+            $panel.removeClass('rpg-collapsed');
+
+            // Close panel on mobile with animation
+            closeMobilePanelWithAnimation();
+
+            // Clear any inline styles that might be overriding CSS
+            $panel.attr('style', '');
+
+            console.log('[RPG Mobile] After cleanup:', {
+                panelClasses: $panel.attr('class'),
+                inlineStyles: $panel.attr('style'),
+                panelPosition: {
+                    top: $panel.css('top'),
+                    bottom: $panel.css('bottom'),
+                    transform: $panel.css('transform'),
+                    visibility: $panel.css('visibility')
+                }
+            });
+
+            // Set up mobile tabs IMMEDIATELY (no debounce delay)
+            setupMobileTabs();
+
+            // Update icon for mobile state
+            updateCollapseToggleIcon();
+
+            wasMobile = isMobile;
+            return;
+        }
+
+        // For mobile to desktop transition, use debounce
+        resizeTimer = setTimeout(function() {
+            const isMobile = window.innerWidth <= 1000;
+
+            // Transitioning from mobile to desktop
+            if (wasMobile && !isMobile) {
+                // Disable transitions to prevent left→right slide animation
+                $panel.css('transition', 'none');
+
+                $panel.removeClass('rpg-mobile-open rpg-mobile-closing');
+                $mobileToggle.removeClass('active');
+                $('.rpg-mobile-overlay').remove();
+
+                // Restore desktop positioning class
+                const position = extensionSettings.panelPosition || 'right';
+                $panel.addClass('rpg-position-' + position);
+
+                // Remove mobile tabs structure
+                removeMobileTabs();
+
+                // Force reflow to apply position instantly
+                $panel[0].offsetHeight;
+
+                // Re-enable transitions after positioned
+                setTimeout(function() {
+                    $panel.css('transition', '');
+                }, 50);
+            }
+
+            wasMobile = isMobile;
+
+            // Constrain FAB to viewport after resize (only if user has positioned it)
+            constrainFabToViewport();
+        }, 150); // Debounce only for mobile→desktop
+    });
+
+    // Initialize mobile tabs if starting on mobile
+    const isMobile = window.innerWidth <= 1000;
+    if (isMobile) {
+        const $panel = $('#rpg-companion-panel');
+        // Clear any inline styles
+        $panel.attr('style', '');
+
+        console.log('[RPG Mobile] Initial load on mobile viewport:', {
+            panelClasses: $panel.attr('class'),
+            inlineStyles: $panel.attr('style'),
+            panelPosition: {
+                top: $panel.css('top'),
+                bottom: $panel.css('top'),
+                transform: $panel.css('transform'),
+                visibility: $panel.css('visibility')
+            }
+        });
+        setupMobileTabs();
+        // Set initial icon for mobile
+        updateCollapseToggleIcon();
+    }
+}
+
+/**
+ * Constrains the mobile FAB button to viewport bounds with top-bar awareness.
+ * Only runs when button is in user-controlled state (mobileFabPosition exists).
+ * Ensures button never goes behind the top bar or outside viewport edges.
+ */
+function constrainFabToViewport() {
+    // Only constrain if user has set a custom position
+    if (!extensionSettings.mobileFabPosition) {
+        console.log('[RPG Mobile] Skipping viewport constraint - using CSS defaults');
+        return;
+    }
+
+    const $mobileToggle = $('#rpg-mobile-toggle');
+    if ($mobileToggle.length === 0) return;
+
+    // Skip if button is not visible
+    if (!$mobileToggle.is(':visible')) {
+        console.log('[RPG Mobile] Skipping viewport constraint - button not visible');
+        return;
+    }
+
+    // Get current position
+    const offset = $mobileToggle.offset();
+    if (!offset) return;
+
+    let currentX = offset.left;
+    let currentY = offset.top;
+
+    const buttonWidth = $mobileToggle.outerWidth();
+    const buttonHeight = $mobileToggle.outerHeight();
+
+    // Get top bar height from CSS variable (fallback to 50px if not set)
+    const topBarHeight = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--topBarBlockSize')) || 50;
+
+    // Calculate viewport bounds with padding
+    // Use top bar height + extra padding for top bound
+    const minX = 10;
+    const maxX = window.innerWidth - buttonWidth - 10;
+    const minY = topBarHeight + 60; // Top bar + extra space for visibility
+    const maxY = window.innerHeight - buttonHeight - 10;
+
+    // Constrain to bounds
+    let newX = Math.max(minX, Math.min(maxX, currentX));
+    let newY = Math.max(minY, Math.min(maxY, currentY));
+
+    // Only update if position changed
+    if (newX !== currentX || newY !== currentY) {
+        console.log('[RPG Mobile] Constraining FAB to viewport:', {
+            old: { x: currentX, y: currentY },
+            new: { x: newX, y: newY },
+            viewport: { width: window.innerWidth, height: window.innerHeight },
+            topBarHeight
+        });
+
+        // Apply new position
+        $mobileToggle.css({
+            left: newX + 'px',
+            top: newY + 'px',
+            right: 'auto',
+            bottom: 'auto'
+        });
+
+        // Save corrected position
+        extensionSettings.mobileFabPosition = {
+            left: newX + 'px',
+            top: newY + 'px'
+        };
+        saveSettings();
+    }
+}
+
+/**
+ * Sets up mobile tab navigation for organizing content.
+ * Only runs on mobile viewports (<=1000px).
+ */
+function setupMobileTabs() {
+    const isMobile = window.innerWidth <= 1000;
+    if (!isMobile) return;
+
+    // Check if tabs already exist
+    if ($('.rpg-mobile-tabs').length > 0) return;
+
+    const $panel = $('#rpg-companion-panel');
+    const $contentBox = $panel.find('.rpg-content-box');
+
+    // Get existing sections
+    const $userStats = $('#rpg-user-stats');
+    const $infoBox = $('#rpg-info-box');
+    const $thoughts = $('#rpg-thoughts');
+
+    // If no sections exist, nothing to organize
+    if ($userStats.length === 0 && $infoBox.length === 0 && $thoughts.length === 0) {
+        return;
+    }
+
+    // Create tab navigation (only show tabs for sections that exist)
+    const tabs = [];
+    const hasInfoOrCharacters = $infoBox.length > 0 || $thoughts.length > 0;
+
+    if ($userStats.length > 0) {
+        tabs.push('<button class="rpg-mobile-tab active" data-tab="stats"><i class="fa-solid fa-chart-bar"></i><span>Stats</span></button>');
+    }
+    // Combine Info and Characters into one tab
+    if (hasInfoOrCharacters) {
+        tabs.push('<button class="rpg-mobile-tab ' + (tabs.length === 0 ? 'active' : '') + '" data-tab="info-characters"><i class="fa-solid fa-book"></i><span>Info</span></button>');
+    }
+
+    const $tabNav = $('<div class="rpg-mobile-tabs">' + tabs.join('') + '</div>');
+
+    // Determine which tab should be active
+    let firstTab = '';
+    if ($userStats.length > 0) firstTab = 'stats';
+    else if (hasInfoOrCharacters) firstTab = 'info-characters';
+
+    // Create tab content wrappers
+    const $statsTab = $('<div class="rpg-mobile-tab-content ' + (firstTab === 'stats' ? 'active' : '') + '" data-tab-content="stats"></div>');
+    const $infoCharactersTab = $('<div class="rpg-mobile-tab-content ' + (firstTab === 'info-characters' ? 'active' : '') + '" data-tab-content="info-characters"></div>');
+
+    // Create combined content wrapper for Info and Characters
+    const $combinedWrapper = $('<div class="rpg-mobile-combined-content"></div>');
+
+    // Move sections into their respective tabs (detach to preserve event handlers)
+    if ($userStats.length > 0) {
+        $statsTab.append($userStats.detach());
+        $userStats.show();
+    }
+    if ($infoBox.length > 0) {
+        $combinedWrapper.append($infoBox.detach());
+        $infoBox.show();
+    }
+    if ($thoughts.length > 0) {
+        $combinedWrapper.append($thoughts.detach());
+        $thoughts.show();
+    }
+
+    // Add combined wrapper to the info-characters tab
+    if (hasInfoOrCharacters) {
+        $infoCharactersTab.append($combinedWrapper);
+    }
+
+    // Hide dividers on mobile
+    $('.rpg-divider').hide();
+
+    // Build mobile tab structure
+    const $mobileContainer = $('<div class="rpg-mobile-container"></div>');
+    $mobileContainer.append($tabNav);
+
+    // Only append tab content wrappers that have content
+    if ($userStats.length > 0) $mobileContainer.append($statsTab);
+    if (hasInfoOrCharacters) $mobileContainer.append($infoCharactersTab);
+
+    // Insert mobile tab structure at the beginning of content box
+    $contentBox.prepend($mobileContainer);
+
+    // Handle tab switching
+    $tabNav.find('.rpg-mobile-tab').on('click', function() {
+        const tabName = $(this).data('tab');
+
+        // Update active tab button
+        $tabNav.find('.rpg-mobile-tab').removeClass('active');
+        $(this).addClass('active');
+
+        // Update active tab content
+        $mobileContainer.find('.rpg-mobile-tab-content').removeClass('active');
+        $mobileContainer.find('[data-tab-content="' + tabName + '"]').addClass('active');
+    });
+}
+
+/**
+ * Removes mobile tab navigation and restores desktop layout.
+ */
+function removeMobileTabs() {
+    // Get sections from tabs before removing
+    const $userStats = $('#rpg-user-stats').detach();
+    const $infoBox = $('#rpg-info-box').detach();
+    const $thoughts = $('#rpg-thoughts').detach();
+
+    // Remove mobile tab container
+    $('.rpg-mobile-container').remove();
+
+    // Get dividers
+    const $dividerStats = $('#rpg-divider-stats');
+    const $dividerInfo = $('#rpg-divider-info');
+
+    // Restore original sections to content box in correct order
+    const $contentBox = $('.rpg-content-box');
+
+    // Re-insert sections in original order
+    if ($dividerStats.length) {
+        $dividerStats.before($userStats);
+        $dividerInfo.before($infoBox);
+        $contentBox.append($thoughts);
+    } else {
+        // Fallback if dividers don't exist
+        $contentBox.prepend($thoughts);
+        $contentBox.prepend($infoBox);
+        $contentBox.prepend($userStats);
+    }
+
+    // Show sections and dividers
+    $userStats.show();
+    $infoBox.show();
+    $thoughts.show();
+    $('.rpg-divider').show();
+}
+
+/**
+ * Sets up mobile keyboard handling using Visual Viewport API.
+ * Prevents layout squashing when keyboard appears by detecting
+ * viewport changes and adding CSS classes for adjustment.
+ */
+function setupMobileKeyboardHandling() {
+    if (!window.visualViewport) {
+        // console.log('[RPG Mobile] Visual Viewport API not supported');
+        return;
+    }
+
+    const $panel = $('#rpg-companion-panel');
+    let keyboardVisible = false;
+
+    // Listen for viewport resize (keyboard show/hide)
+    window.visualViewport.addEventListener('resize', () => {
+        // Only handle if panel is open on mobile
+        if (!$panel.hasClass('rpg-mobile-open')) return;
+
+        const viewportHeight = window.visualViewport.height;
+        const windowHeight = window.innerHeight;
+
+        // Keyboard visible if viewport significantly smaller than window
+        // Using 75% threshold to account for browser UI variations
+        const isKeyboardShowing = viewportHeight < windowHeight * 0.75;
+
+        if (isKeyboardShowing && !keyboardVisible) {
+            // Keyboard just appeared
+            keyboardVisible = true;
+            $panel.addClass('rpg-keyboard-visible');
+            // console.log('[RPG Mobile] Keyboard opened');
+        } else if (!isKeyboardShowing && keyboardVisible) {
+            // Keyboard just disappeared
+            keyboardVisible = false;
+            $panel.removeClass('rpg-keyboard-visible');
+            // console.log('[RPG Mobile] Keyboard closed');
+        }
+    });
+}
+
+/**
+ * Handles focus on contenteditable fields to ensure they're visible when keyboard appears.
+ * Uses smooth scrolling to bring focused field into view with proper padding.
+ */
+function setupContentEditableScrolling() {
+    const $panel = $('#rpg-companion-panel');
+
+    // Use event delegation for all contenteditable fields
+    $panel.on('focusin', '[contenteditable="true"]', function(e) {
+        const $field = $(this);
+
+        // Small delay to let keyboard animate in
+        setTimeout(() => {
+            // Scroll field into view with padding
+            // Using 'center' to ensure field is in middle of viewport
+            $field[0].scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+                inline: 'nearest'
+            });
+        }, 300);
     });
 }
 
@@ -1020,7 +1957,79 @@ function setupCollapseToggle() {
     const $panel = $('#rpg-companion-panel');
     const $icon = $collapseToggle.find('i');
 
-    $collapseToggle.on('click', function() {
+    $collapseToggle.on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const isMobile = window.innerWidth <= 1000;
+
+        // On mobile: button toggles panel open/closed (same as desktop behavior)
+        if (isMobile) {
+            const isOpen = $panel.hasClass('rpg-mobile-open');
+            console.log('[RPG Mobile] Collapse toggle clicked. Current state:', {
+                isOpen,
+                panelClasses: $panel.attr('class'),
+                inlineStyles: $panel.attr('style'),
+                panelPosition: {
+                    top: $panel.css('top'),
+                    bottom: $panel.css('bottom'),
+                    transform: $panel.css('transform'),
+                    visibility: $panel.css('visibility')
+                }
+            });
+
+            if (isOpen) {
+                // Close panel with animation
+                console.log('[RPG Mobile] Closing panel');
+                closeMobilePanelWithAnimation();
+            } else {
+                // Open panel
+                console.log('[RPG Mobile] Opening panel');
+                $panel.addClass('rpg-mobile-open');
+                const $overlay = $('<div class="rpg-mobile-overlay"></div>');
+                $('body').append($overlay);
+
+                // Debug: Check state after animation should complete
+                setTimeout(() => {
+                    console.log('[RPG Mobile] 500ms after opening:', {
+                        panelClasses: $panel.attr('class'),
+                        hasOpenClass: $panel.hasClass('rpg-mobile-open'),
+                        visibility: $panel.css('visibility'),
+                        transform: $panel.css('transform'),
+                        display: $panel.css('display'),
+                        opacity: $panel.css('opacity')
+                    });
+                }, 500);
+
+                // Close when clicking overlay
+                $overlay.on('click', function() {
+                    console.log('[RPG Mobile] Overlay clicked - closing panel');
+                    closeMobilePanelWithAnimation();
+                    updateCollapseToggleIcon();
+                });
+            }
+
+            // Update icon to reflect new state
+            updateCollapseToggleIcon();
+
+            console.log('[RPG Mobile] After toggle:', {
+                panelClasses: $panel.attr('class'),
+                inlineStyles: $panel.attr('style'),
+                panelPosition: {
+                    top: $panel.css('top'),
+                    bottom: $panel.css('bottom'),
+                    transform: $panel.css('transform'),
+                    visibility: $panel.css('visibility')
+                },
+                gameContainer: {
+                    opacity: $('.rpg-game-container').css('opacity'),
+                    visibility: $('.rpg-game-container').css('visibility')
+                }
+            });
+            return;
+        }
+
+        // Desktop behavior: collapse/expand side panel
         const isCollapsed = $panel.hasClass('rpg-collapsed');
 
         if (isCollapsed) {
@@ -1057,21 +2066,41 @@ function updateCollapseToggleIcon() {
     const $collapseToggle = $('#rpg-collapse-toggle');
     const $panel = $('#rpg-companion-panel');
     const $icon = $collapseToggle.find('i');
-    const isCollapsed = $panel.hasClass('rpg-collapsed');
+    const isMobile = window.innerWidth <= 1000;
 
-    if (isCollapsed) {
-        // When collapsed, arrow points inward (to expand)
-        if ($panel.hasClass('rpg-position-right')) {
-            $icon.removeClass('fa-chevron-right').addClass('fa-chevron-left');
-        } else if ($panel.hasClass('rpg-position-left')) {
-            $icon.removeClass('fa-chevron-left').addClass('fa-chevron-right');
+    if (isMobile) {
+        // Mobile: slides from right, use same icon logic as desktop right panel
+        const isOpen = $panel.hasClass('rpg-mobile-open');
+        console.log('[RPG Mobile] updateCollapseToggleIcon:', {
+            isMobile: true,
+            isOpen,
+            settingIcon: isOpen ? 'chevron-left' : 'chevron-right'
+        });
+        if (isOpen) {
+            // Panel open - chevron points left (to close/slide back right)
+            $icon.removeClass('fa-chevron-down fa-chevron-up fa-chevron-right').addClass('fa-chevron-left');
+        } else {
+            // Panel closed - chevron points right (to open/slide in from right)
+            $icon.removeClass('fa-chevron-down fa-chevron-up fa-chevron-left').addClass('fa-chevron-right');
         }
     } else {
-        // When expanded, arrow points outward (to collapse)
-        if ($panel.hasClass('rpg-position-right')) {
-            $icon.removeClass('fa-chevron-left').addClass('fa-chevron-right');
-        } else if ($panel.hasClass('rpg-position-left')) {
-            $icon.removeClass('fa-chevron-right').addClass('fa-chevron-left');
+        // Desktop: icon direction based on panel position and collapsed state
+        const isCollapsed = $panel.hasClass('rpg-collapsed');
+
+        if (isCollapsed) {
+            // When collapsed, arrow points inward (to expand)
+            if ($panel.hasClass('rpg-position-right')) {
+                $icon.removeClass('fa-chevron-right').addClass('fa-chevron-left');
+            } else if ($panel.hasClass('rpg-position-left')) {
+                $icon.removeClass('fa-chevron-left').addClass('fa-chevron-right');
+            }
+        } else {
+            // When expanded, arrow points outward (to collapse)
+            if ($panel.hasClass('rpg-position-right')) {
+                $icon.removeClass('fa-chevron-left').addClass('fa-chevron-right');
+            } else if ($panel.hasClass('rpg-position-left')) {
+                $icon.removeClass('fa-chevron-right').addClass('fa-chevron-left');
+            }
         }
     }
 }
@@ -1128,10 +2157,17 @@ function updateSectionVisibility() {
 function applyPanelPosition() {
     if (!$panelContainer) return;
 
+    const isMobile = window.innerWidth <= 1000;
+
     // Remove all position classes
     $panelContainer.removeClass('rpg-position-left rpg-position-right rpg-position-top');
 
-    // Add the appropriate position class
+    // On mobile, don't apply desktop position classes
+    if (isMobile) {
+        return;
+    }
+
+    // Desktop: Add the appropriate position class
     $panelContainer.addClass(`rpg-position-${extensionSettings.panelPosition}`);
 
     // Update collapse toggle icon direction for new position
@@ -1825,29 +2861,6 @@ function renderUserStats() {
     `;
 
     $userStatsContainer.html(html);
-
-    // Add event listeners for classic stat buttons
-    $('.rpg-stat-increase').on('click', function() {
-        const stat = $(this).data('stat');
-        if (extensionSettings.classicStats[stat] < 100) {
-            extensionSettings.classicStats[stat]++;
-            saveSettings();
-            saveChatData();
-            // Update only the specific stat value, not the entire stats panel
-            $(this).closest('.rpg-classic-stat').find('.rpg-classic-stat-value').text(extensionSettings.classicStats[stat]);
-        }
-    });
-
-    $('.rpg-stat-decrease').on('click', function() {
-        const stat = $(this).data('stat');
-        if (extensionSettings.classicStats[stat] > 1) {
-            extensionSettings.classicStats[stat]--;
-            saveSettings();
-            saveChatData();
-            // Update only the specific stat value, not the entire stats panel
-            $(this).closest('.rpg-classic-stat').find('.rpg-classic-stat-value').text(extensionSettings.classicStats[stat]);
-        }
-    });
 
     // Add event listeners for editable stat values
     $('.rpg-editable-stat').on('blur', function() {
@@ -2860,7 +3873,32 @@ function createThoughtPanel($message, thoughtsArray) {
     let iconTop = avatarRect.top;
     let iconLeft;
 
-    if (panelPosition === 'left') {
+    // Detect mobile viewport (matches CSS breakpoint)
+    const isMobile = window.innerWidth <= 1000;
+
+    if (isMobile) {
+        // On mobile: position icon horizontally centered on avatar
+        // The CSS transform will shift it upward by 60px
+        iconTop = avatarRect.top; // Start at avatar top (CSS will move it up)
+        iconLeft = avatarRect.left + (avatarRect.width / 2) - 18; // Centered horizontally (18px = half of 36px icon width)
+
+        // Center the thought panel horizontally on mobile
+        left = window.innerWidth / 2 - panelWidth / 2;
+        top = avatarRect.top + avatarRect.height + 60; // Position below icon with spacing
+
+        // No side-specific classes on mobile
+        $thoughtPanel.removeClass('rpg-thought-panel-left rpg-thought-panel-right');
+        $thoughtIcon.removeClass('rpg-thought-icon-left rpg-thought-icon-right');
+
+        console.log('[RPG Companion] Mobile thought icon positioning:', {
+            isMobile,
+            windowWidth: window.innerWidth,
+            avatarLeft: avatarRect.left,
+            avatarWidth: avatarRect.width,
+            iconLeft,
+            iconTop
+        });
+    } else if (panelPosition === 'left') {
         // Main panel is on left, so thought bubble goes to RIGHT side
         // Mirror the left side positioning: bubble should be same distance from avatar
         // but on the opposite side, extending to the right
@@ -2928,8 +3966,9 @@ function createThoughtPanel($message, thoughtsArray) {
         right: 'auto' // Clear any right positioning
     });
 
-    // Initially hide the icon
-    $thoughtIcon.hide();
+    // Initially hide the panel and show the icon
+    $thoughtPanel.hide();
+    $thoughtIcon.show();
 
     // console.log('[RPG Companion] Thought panel created at:', { top, left });
 
@@ -2956,7 +3995,10 @@ function createThoughtPanel($message, thoughtsArray) {
         updateCharacterField(character, field, value);
     });
 
-    // Update position on scroll
+    // RAF throttling for smooth position updates
+    let positionUpdateRaf = null;
+
+    // Update position on scroll with RAF throttling
     const updatePanelPosition = () => {
         if (!$message.is(':visible')) {
             $thoughtPanel.hide();
@@ -2964,47 +4006,57 @@ function createThoughtPanel($message, thoughtsArray) {
             return;
         }
 
-        const newAvatarRect = $avatar[0].getBoundingClientRect();
-        const newTop = newAvatarRect.top + (newAvatarRect.height / 2);
-        const newIconTop = newAvatarRect.top;
-        let newLeft, newIconLeft;
-
-        if (panelPosition === 'left') {
-            // Position at chat's right edge, extending right
-            const chatContainer = $('#chat')[0];
-            const chatRect = chatContainer ? chatContainer.getBoundingClientRect() : { right: window.innerWidth };
-            newLeft = chatRect.right + panelMargin;
-            newIconLeft = chatRect.right + 10;
-
-            $thoughtPanel.css({
-                top: `${newTop}px`,
-                left: `${newLeft}px`,
-                right: 'auto'
-            });
-        } else {
-            // Left position relative to avatar
-            newLeft = newAvatarRect.left - panelWidth - panelMargin;
-            newIconLeft = newAvatarRect.left - 40;
-
-            $thoughtPanel.css({
-                top: `${newTop}px`,
-                left: `${newLeft}px`,
-                right: 'auto'
-            });
+        // Cancel any pending RAF
+        if (positionUpdateRaf) {
+            cancelAnimationFrame(positionUpdateRaf);
         }
 
-        $thoughtIcon.css({
-            top: `${newIconTop}px`,
-            left: `${newIconLeft}px`,
-            right: 'auto'
+        // Schedule update on next frame
+        positionUpdateRaf = requestAnimationFrame(() => {
+            const newAvatarRect = $avatar[0].getBoundingClientRect();
+            const newTop = newAvatarRect.top + (newAvatarRect.height / 2);
+            const newIconTop = newAvatarRect.top;
+            let newLeft, newIconLeft;
+
+            if (panelPosition === 'left') {
+                // Position at chat's right edge, extending right
+                const chatContainer = $('#chat')[0];
+                const chatRect = chatContainer ? chatContainer.getBoundingClientRect() : { right: window.innerWidth };
+                newLeft = chatRect.right + panelMargin;
+                newIconLeft = chatRect.right + 10;
+
+                $thoughtPanel.css({
+                    top: `${newTop}px`,
+                    left: `${newLeft}px`,
+                    right: 'auto'
+                });
+            } else {
+                // Left position relative to avatar
+                newLeft = newAvatarRect.left - panelWidth - panelMargin;
+                newIconLeft = newAvatarRect.left - 40;
+
+                $thoughtPanel.css({
+                    top: `${newTop}px`,
+                    left: `${newLeft}px`,
+                    right: 'auto'
+                });
+            }
+
+            $thoughtIcon.css({
+                top: `${newIconTop}px`,
+                left: `${newIconLeft}px`,
+                right: 'auto'
+            });
+
+            if ($thoughtPanel.is(':visible')) {
+                $thoughtPanel.show();
+            }
+            if ($thoughtIcon.is(':visible')) {
+                $thoughtIcon.show();
+            }
+
+            positionUpdateRaf = null;
         });
-
-        if ($thoughtPanel.is(':visible')) {
-            $thoughtPanel.show();
-        }
-        if ($thoughtIcon.is(':visible')) {
-            $thoughtIcon.show();
-        }
     };
 
     // Update position on scroll and resize

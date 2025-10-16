@@ -3036,9 +3036,8 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
         max-width: 400px !important;
         height: calc(100dvh - var(--topBarBlockSize)) !important;
 
-        /* Start off-screen to the right */
-        transform: translateX(100%) !important;
-        transition: transform 0.3s ease-in-out !important;
+        /* Hidden by default - completely removed from layout */
+        display: none !important;
 
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch;
@@ -3051,10 +3050,21 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
         box-shadow: -5px 0 20px var(--rpg-shadow);
     }
 
-    /* Show panel when opened - slides in from right */
+    /* Show panel when opened with slide-in animation */
     .rpg-panel.rpg-mobile-open {
-        transform: translateX(0) !important;
+        display: block !important;
         z-index: 50;
+        animation: rpgSlideInFromRight 0.3s ease-in-out;
+    }
+
+    /* Slide-in animation from right */
+    @keyframes rpgSlideInFromRight {
+        from {
+            transform: translateX(100%);
+        }
+        to {
+            transform: translateX(0);
+        }
     }
 
     /* Disable collapsed state on mobile */

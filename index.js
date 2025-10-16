@@ -519,6 +519,8 @@ async function initUI() {
     setupSettingsPopup();
     addDiceQuickReply();
     setupPlotButtons();
+    setupMobileKeyboardHandling();
+    setupContentEditableScrolling();
 }
 
 /**
@@ -1881,6 +1883,70 @@ function removeMobileTabs() {
     $infoBox.show();
     $thoughts.show();
     $('.rpg-divider').show();
+}
+
+/**
+ * Sets up mobile keyboard handling using Visual Viewport API.
+ * Prevents layout squashing when keyboard appears by detecting
+ * viewport changes and adding CSS classes for adjustment.
+ */
+function setupMobileKeyboardHandling() {
+    if (!window.visualViewport) {
+        // console.log('[RPG Mobile] Visual Viewport API not supported');
+        return;
+    }
+
+    const $panel = $('#rpg-companion-panel');
+    let keyboardVisible = false;
+
+    // Listen for viewport resize (keyboard show/hide)
+    window.visualViewport.addEventListener('resize', () => {
+        // Only handle if panel is open on mobile
+        if (!$panel.hasClass('rpg-mobile-open')) return;
+
+        const viewportHeight = window.visualViewport.height;
+        const windowHeight = window.innerHeight;
+
+        // Keyboard visible if viewport significantly smaller than window
+        // Using 75% threshold to account for browser UI variations
+        const isKeyboardShowing = viewportHeight < windowHeight * 0.75;
+
+        if (isKeyboardShowing && !keyboardVisible) {
+            // Keyboard just appeared
+            keyboardVisible = true;
+            $panel.addClass('rpg-keyboard-visible');
+            // console.log('[RPG Mobile] Keyboard opened');
+        } else if (!isKeyboardShowing && keyboardVisible) {
+            // Keyboard just disappeared
+            keyboardVisible = false;
+            $panel.removeClass('rpg-keyboard-visible');
+            // console.log('[RPG Mobile] Keyboard closed');
+        }
+    });
+}
+
+/**
+ * Handles focus on contenteditable fields to ensure they're visible when keyboard appears.
+ * Uses smooth scrolling to bring focused field into view with proper padding.
+ */
+function setupContentEditableScrolling() {
+    const $panel = $('#rpg-companion-panel');
+
+    // Use event delegation for all contenteditable fields
+    $panel.on('focusin', '[contenteditable="true"]', function(e) {
+        const $field = $(this);
+
+        // Small delay to let keyboard animate in
+        setTimeout(() => {
+            // Scroll field into view with padding
+            // Using 'center' to ensure field is in middle of viewport
+            $field[0].scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+                inline: 'nearest'
+            });
+        }, 300);
+    });
 }
 
 /**

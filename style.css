@@ -3229,6 +3229,28 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
         }
     }
 
+    /* ========================================
+       MOBILE KEYBOARD HANDLING
+       ======================================== */
+
+    /* When mobile keyboard is visible, adjust panel layout to prevent squashing */
+    .rpg-panel.rpg-keyboard-visible {
+        /* Prevent content from being pushed too far up */
+        padding-bottom: 20px;
+    }
+
+    /* Make sections more compact when keyboard visible */
+    .rpg-panel.rpg-keyboard-visible .rpg-stats-section,
+    .rpg-panel.rpg-keyboard-visible .rpg-info-section,
+    .rpg-panel.rpg-keyboard-visible .rpg-thoughts-section {
+        padding: 8px 12px;
+    }
+
+    /* Reduce spacing in stat bars when keyboard visible */
+    .rpg-panel.rpg-keyboard-visible .rpg-stats-grid {
+        gap: 4px;
+    }
+
     /* Disable collapsed state on mobile */
     .rpg-panel.rpg-collapsed {
         max-width: 100dvw !important;

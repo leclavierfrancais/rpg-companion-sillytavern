@@ -991,7 +991,7 @@ function setupClassicStatsButtons() {
     // Delegated event listener for increase buttons
     $userStatsContainer.on('click', '.rpg-stat-increase', function() {
         const stat = $(this).data('stat');
-        if (extensionSettings.classicStats[stat] < 20) {
+        if (extensionSettings.classicStats[stat] < 100) {
             extensionSettings.classicStats[stat]++;
             saveSettings();
             saveChatData();

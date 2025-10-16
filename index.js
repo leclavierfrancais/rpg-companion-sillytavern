@@ -3,99 +3,41 @@ import { eventSource, event_types, substituteParams, chat, generateRaw, saveSett
 import { selected_group, getGroupMembers } from '../../../group-chats.js';
 import { power_user } from '../../../power-user.js';
 
-const extensionName = 'third-party/rpg-companion-sillytavern';
+// Core modules
+import { extensionName, extensionFolderPath } from './src/core/config.js';
+import {
+    extensionSettings,
+    lastGeneratedData,
+    committedTrackerData,
+    lastActionWasSwipe,
+    isGenerating,
+    isPlotProgression,
+    pendingDiceRoll,
+    FALLBACK_AVATAR_DATA_URI,
+    $panelContainer,
+    $userStatsContainer,
+    $infoBoxContainer,
+    $thoughtsContainer,
+    setExtensionSettings,
+    updateExtensionSettings,
+    setLastGeneratedData,
+    updateLastGeneratedData,
+    setCommittedTrackerData,
+    updateCommittedTrackerData,
+    setLastActionWasSwipe,
+    setIsGenerating,
+    setIsPlotProgression,
+    setPendingDiceRoll,
+    setPanelContainer,
+    setUserStatsContainer,
+    setInfoBoxContainer,
+    setThoughtsContainer
+} from './src/core/state.js';
+import { loadSettings, saveSettings, saveChatData, loadChatData, updateMessageSwipeData } from './src/core/persistence.js';
+import { on as eventOn, event_types as coreEventTypes } from './src/core/events.js';
 
-// Dynamically determine extension path based on current location
-// This supports both global (public/extensions) and user-specific (data/default-user/extensions) installations
-const currentScriptPath = import.meta.url;
-const isUserExtension = currentScriptPath.includes('/data/') || currentScriptPath.includes('\\data\\');
-const extensionFolderPath = isUserExtension
-    ? `data/default-user/extensions/${extensionName}`
-    : `scripts/extensions/${extensionName}`;
-
-let extensionSettings = {
-    enabled: true,
-    autoUpdate: true,
-    updateDepth: 4, // How many messages to include in the context
-    generationMode: 'together', // 'separate' or 'together' - whether to generate with main response or separately
-    showUserStats: true,
-    showInfoBox: true,
-    showCharacterThoughts: true,
-    showThoughtsInChat: true, // Show thoughts overlay in chat
-    enableHtmlPrompt: false, // Enable immersive HTML prompt injection
-    enablePlotButtons: true, // Show plot progression buttons above chat input
-    panelPosition: 'right', // 'left', 'right', or 'top'
-    theme: 'default', // Theme: default, sci-fi, fantasy, cyberpunk, custom
-    customColors: {
-        bg: '#1a1a2e',
-        accent: '#16213e',
-        text: '#eaeaea',
-        highlight: '#e94560'
-    },
-    statBarColorLow: '#cc3333', // Color for low stat values (red)
-    statBarColorHigh: '#33cc66', // Color for high stat values (green)
-    enableAnimations: true, // Enable smooth animations for stats and content updates
-    mobileFabPosition: {
-        top: 'calc(var(--topBarBlockSize) + 60px)',
-        right: '12px'
-    }, // Saved position for mobile FAB button
-    userStats: {
-        health: 100,
-        satiety: 100,
-        energy: 100,
-        hygiene: 100,
-        arousal: 0,
-        mood: '😐',
-        conditions: 'None',
-        inventory: 'None'
-    },
-    classicStats: {
-        str: 10,
-        dex: 10,
-        con: 10,
-        int: 10,
-        wis: 10,
-        cha: 10
-    },
-    lastDiceRoll: null // Store last dice roll result
-};
-
-let lastGeneratedData = {
-    userStats: null,
-    infoBox: null,
-    characterThoughts: null,
-    html: null
-};
-
-// Tracks the "committed" tracker data that should be used as source for next generation
-// This gets updated when user sends a new message or first time generation
-let committedTrackerData = {
-    userStats: null,
-    infoBox: null,
-    characterThoughts: null
-};
-
-// Tracks whether the last action was a swipe (for separate mode)
-// Used to determine whether to commit lastGeneratedData to committedTrackerData
-let lastActionWasSwipe = false;
-
-let isGenerating = false;
-
-// Tracks if we're currently doing a plot progression
-let isPlotProgression = false;
-
-// Temporary storage for pending dice roll (not saved until user clicks "Save Roll")
-let pendingDiceRoll = null;
-
-// Fallback avatar image (base64-encoded SVG with "?" icon)
-// Using base64 to avoid quote-encoding issues in HTML attributes
-const FALLBACK_AVATAR_DATA_URI = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2NjY2NjYyIgb3BhY2l0eT0iMC4zIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIiBmaWxsPSIjNjY2IiBmb250LXNpemU9IjQwIj4/PC90ZXh0Pjwvc3ZnPg==';
-
-// UI Elements
-let $panelContainer = null;
-let $userStatsContainer = null;
-let $infoBoxContainer = null;
-let $thoughtsContainer = null;
+// Old state variable declarations removed - now imported from core modules
+// (extensionSettings, lastGeneratedData, committedTrackerData, etc. are now in src/core/state.js)
 
 /**
  * Safely attempts to get a thumbnail URL with proper error handling.
@@ -137,126 +79,8 @@ function getSafeThumbnailUrl(type, filename) {
     }
 }
 
-/**
- * Loads the extension settings from the global settings object.
- */
-function loadSettings() {
-    if (power_user.extensions && power_user.extensions[extensionName]) {
-        Object.assign(extensionSettings, power_user.extensions[extensionName]);
-        // console.log('[RPG Companion] Settings loaded:', extensionSettings);
-    } else {
-        // console.log('[RPG Companion] No saved settings found, using defaults');
-    }
-}
-
-/**
- * Saves the extension settings to the global settings object.
- */
-function saveSettings() {
-    if (!power_user.extensions) {
-        power_user.extensions = {};
-    }
-    power_user.extensions[extensionName] = extensionSettings;
-    saveSettingsDebounced();
-}
-
-/**
- * Saves RPG data to the current chat's metadata.
- */
-function saveChatData() {
-    if (!chat_metadata) {
-        return;
-    }
-
-    chat_metadata.rpg_companion = {
-        userStats: extensionSettings.userStats,
-        classicStats: extensionSettings.classicStats,
-        lastGeneratedData: lastGeneratedData,
-        timestamp: Date.now()
-    };
-
-    saveChatDebounced();
-}
-
-/**
- * Updates the last assistant message's swipe data with current tracker data.
- * This ensures user edits are preserved across swipes and included in generation context.
- */
-function updateMessageSwipeData() {
-    const chat = getContext().chat;
-    if (!chat || chat.length === 0) {
-        return;
-    }
-
-    // Find the last assistant message
-    for (let i = chat.length - 1; i >= 0; i--) {
-        const message = chat[i];
-        if (!message.is_user) {
-            // Found last assistant message - update its swipe data
-            if (!message.extra) {
-                message.extra = {};
-            }
-            if (!message.extra.rpg_companion_swipes) {
-                message.extra.rpg_companion_swipes = {};
-            }
-
-            const swipeId = message.swipe_id || 0;
-            message.extra.rpg_companion_swipes[swipeId] = {
-                userStats: lastGeneratedData.userStats,
-                infoBox: lastGeneratedData.infoBox,
-                characterThoughts: lastGeneratedData.characterThoughts
-            };
-
-            // console.log('[RPG Companion] Updated message swipe data after user edit');
-            break;
-        }
-    }
-}
-
-/**
- * Loads RPG data from the current chat's metadata.
- */
-function loadChatData() {
-    if (!chat_metadata || !chat_metadata.rpg_companion) {
-        // Reset to defaults if no data exists
-        extensionSettings.userStats = {
-            health: 100,
-            satiety: 100,
-            energy: 100,
-            hygiene: 100,
-            arousal: 0,
-            mood: '😐',
-            conditions: 'None',
-            inventory: 'None'
-        };
-        lastGeneratedData = {
-            userStats: null,
-            infoBox: null,
-            characterThoughts: null,
-            html: null
-        };
-        return;
-    }
-
-    const savedData = chat_metadata.rpg_companion;
-
-    // Restore stats
-    if (savedData.userStats) {
-        extensionSettings.userStats = { ...savedData.userStats };
-    }
-
-    // Restore classic stats
-    if (savedData.classicStats) {
-        extensionSettings.classicStats = { ...savedData.classicStats };
-    }
-
-    // Restore last generated data
-    if (savedData.lastGeneratedData) {
-        lastGeneratedData = { ...savedData.lastGeneratedData };
-    }
-
-    // console.log('[RPG Companion] Loaded chat data:', savedData);
-}
+// Persistence functions removed - now imported from src/core/persistence.js
+// (loadSettings, saveSettings, saveChatData, loadChatData, updateMessageSwipeData)
 
 /**
  * Applies the selected theme to the panel.
@@ -371,11 +195,11 @@ async function initUI() {
     `;
     $('body').append(mobileToggleHtml);
 
-    // Cache UI elements
-    $panelContainer = $('#rpg-companion-panel');
-    $userStatsContainer = $('#rpg-user-stats');
-    $infoBoxContainer = $('#rpg-info-box');
-    $thoughtsContainer = $('#rpg-thoughts');
+    // Cache UI elements using state setters
+    setPanelContainer($('#rpg-companion-panel'));
+    setUserStatsContainer($('#rpg-user-stats'));
+    setInfoBoxContainer($('#rpg-info-box'));
+    setThoughtsContainer($('#rpg-thoughts'));
 
     // Set up event listeners (enable/disable is handled in Extensions tab)
     $('#rpg-toggle-auto-update').on('change', function() {

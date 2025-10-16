@@ -41,7 +41,7 @@ let extensionSettings = {
     }, // Saved position for mobile FAB button
     userStats: {
         health: 100,
-        sustenance: 100,
+        satiety: 100,
         energy: 100,
         hygiene: 100,
         arousal: 0,
@@ -177,7 +177,7 @@ function loadChatData() {
         // Reset to defaults if no data exists
         extensionSettings.userStats = {
             health: 100,
-            sustenance: 100,
+            satiety: 100,
             energy: 100,
             hygiene: 100,
             arousal: 0,
@@ -1211,7 +1211,7 @@ function setupSettingsPopup() {
         // Reset stats to defaults and re-render
         extensionSettings.userStats = {
             health: 100,
-            sustenance: 100,
+            satiety: 100,
             energy: 100,
             hygiene: 100,
             arousal: 0,
@@ -2231,7 +2231,7 @@ function generateTrackerInstructions(includeHtmlPrompt = true, includeContinuati
     // Only add tracker instructions if at least one tracker is enabled
     if (hasAnyTrackers) {
         // Universal instruction header
-        instructions += `\nYou must start your response with an appropriate update to the trackers in EXACTLY the same format as below, enclosed in separate Markdown code fences. Replace X with proper numbers and placeholders in [brackets] with in-world details ${userName} perceives about the current scene and the present characters. Consider the last trackers in the conversation (if they exist). Manage them accordingly; raise, lower, change, or keep the values unchanged based on the user's actions, the passage of time, and logical consequences:\n`;
+        instructions += `\nYou must start your response with an appropriate update to the trackers in EXACTLY the same format as below, enclosed in separate Markdown code fences. Replace X with proper numbers and placeholders in [brackets] with in-world details ${userName} perceives about the current scene and the present characters. Consider the last trackers in the conversation (if they exist). Manage them accordingly and realistically; raise, lower, change, or keep the values unchanged based on the user's actions, the passage of time, and logical consequences:\n`;
 
         // Add format specifications for each enabled tracker
         if (extensionSettings.showUserStats) {
@@ -2239,7 +2239,7 @@ function generateTrackerInstructions(includeHtmlPrompt = true, includeContinuati
             instructions += `${userName}'s Stats\n`;
             instructions += '---\n';
             instructions += '- Health: X%\n';
-            instructions += '- Sustenance: X%\n';
+            instructions += '- Satiety: X%\n';
             instructions += '- Energy: X%\n';
             instructions += '- Hygiene: X%\n';
             instructions += '- Arousal: X%\n';
@@ -2319,7 +2319,7 @@ function generateContextualSummary() {
         const stats = extensionSettings.userStats;
         // console.log('[RPG Companion] Building stats summary with:', stats);
         summary += `${userName}'s Stats:\n`;
-        summary += `Condition: Health ${stats.health}%, Sustenance ${stats.sustenance}%, Energy ${stats.energy}%, Hygiene ${stats.hygiene}%, Arousal ${stats.arousal}% | ${stats.mood} ${stats.conditions}\n`;
+        summary += `Condition: Health ${stats.health}%, Satiety ${stats.satiety}%, Energy ${stats.energy}%, Hygiene ${stats.hygiene}%, Arousal ${stats.arousal}% | ${stats.mood} ${stats.conditions}\n`;
         if (stats.inventory && stats.inventory !== 'None') {
             summary += `Inventory: ${stats.inventory}\n`;
         }
@@ -2675,7 +2675,7 @@ function parseUserStats(statsText) {
     try {
         // Extract percentages and mood/conditions
         const healthMatch = statsText.match(/Health:\s*(\d+)%/);
-        const sustenanceMatch = statsText.match(/Sustenance:\s*(\d+)%/);
+        const satietyMatch = statsText.match(/Satiety:\s*(\d+)%/);
         const energyMatch = statsText.match(/Energy:\s*(\d+)%/);
         const hygieneMatch = statsText.match(/Hygiene:\s*(\d+)%/);
         const arousalMatch = statsText.match(/Arousal:\s*(\d+)%/);
@@ -2701,7 +2701,7 @@ function parseUserStats(statsText) {
         const inventoryMatch = statsText.match(/Inventory:\s*(.+)/i);
 
         if (healthMatch) extensionSettings.userStats.health = parseInt(healthMatch[1]);
-        if (sustenanceMatch) extensionSettings.userStats.sustenance = parseInt(sustenanceMatch[1]);
+        if (satietyMatch) extensionSettings.userStats.satiety = parseInt(satietyMatch[1]);
         if (energyMatch) extensionSettings.userStats.energy = parseInt(energyMatch[1]);
         if (hygieneMatch) extensionSettings.userStats.hygiene = parseInt(hygieneMatch[1]);
         if (arousalMatch) extensionSettings.userStats.arousal = parseInt(arousalMatch[1]);
@@ -2735,11 +2735,20 @@ function renderUserStats() {
 
     // Initialize lastGeneratedData.userStats if it doesn't exist
     if (!lastGeneratedData.userStats) {
-        lastGeneratedData.userStats = `Health: ${stats.health}%\nSustenance: ${stats.sustenance}%\nEnergy: ${stats.energy}%\nHygiene: ${stats.hygiene}%\nArousal: ${stats.arousal}%\n${stats.mood}: ${stats.conditions}\nInventory: ${stats.inventory}`;
+        lastGeneratedData.userStats = `Health: ${stats.health}%\nSatiety: ${stats.satiety}%\nEnergy: ${stats.energy}%\nHygiene: ${stats.hygiene}%\nArousal: ${stats.arousal}%\n${stats.mood}: ${stats.conditions}\nInventory: ${stats.inventory}`;
     }
 
-    // Get user portrait
-    const userPortrait = getThumbnailUrl('persona', user_avatar);
+    // Get user portrait - handle both default-user and custom persona folders
+    let userPortrait = 'img/user-default.png'; // fallback
+    if (user_avatar) {
+        // Try to get the thumbnail, but have a fallback
+        try {
+            userPortrait = getThumbnailUrl('persona', user_avatar) || 'img/user-default.png';
+        } catch (e) {
+            console.warn('[RPG Companion] Could not load user avatar, using default', e);
+            userPortrait = 'img/user-default.png';
+        }
+    }
 
     // Create gradient from low to high color
     const gradient = `linear-gradient(to right, ${extensionSettings.statBarColorLow}, ${extensionSettings.statBarColorHigh})`;
@@ -2765,11 +2774,11 @@ function renderUserStats() {
                     </div>
 
                     <div class="rpg-stat-row">
-                        <span class="rpg-stat-label">Sustenance:</span>
+                        <span class="rpg-stat-label">Satiety:</span>
                         <div class="rpg-stat-bar" style="background: ${gradient}">
-                            <div class="rpg-stat-fill" style="width: ${100 - stats.sustenance}%"></div>
+                            <div class="rpg-stat-fill" style="width: ${100 - stats.satiety}%"></div>
                         </div>
-                        <span class="rpg-stat-value rpg-editable-stat" contenteditable="true" data-field="sustenance" title="Click to edit">${stats.sustenance}%</span>
+                        <span class="rpg-stat-value rpg-editable-stat" contenteditable="true" data-field="satiety" title="Click to edit">${stats.satiety}%</span>
                     </div>
 
                     <div class="rpg-stat-row">
@@ -2882,7 +2891,7 @@ function renderUserStats() {
             lastGeneratedData.userStats = '';
         }
         // Regenerate the userStats text with updated value
-        const statsText = `Health: ${extensionSettings.userStats.health}%\nSustenance: ${extensionSettings.userStats.sustenance}%\nEnergy: ${extensionSettings.userStats.energy}%\nHygiene: ${extensionSettings.userStats.hygiene}%\nArousal: ${extensionSettings.userStats.arousal}%\n${extensionSettings.userStats.mood}: ${extensionSettings.userStats.conditions}\nInventory: ${extensionSettings.userStats.inventory}`;
+        const statsText = `Health: ${extensionSettings.userStats.health}%\nSatiety: ${extensionSettings.userStats.satiety}%\nEnergy: ${extensionSettings.userStats.energy}%\nHygiene: ${extensionSettings.userStats.hygiene}%\nArousal: ${extensionSettings.userStats.arousal}%\n${extensionSettings.userStats.mood}: ${extensionSettings.userStats.conditions}\nInventory: ${extensionSettings.userStats.inventory}`;
         lastGeneratedData.userStats = statsText;
 
         saveSettings();
@@ -2899,7 +2908,7 @@ function renderUserStats() {
         extensionSettings.userStats.inventory = value || 'None';
 
         // Update lastGeneratedData
-        const statsText = `Health: ${extensionSettings.userStats.health}%\nSustenance: ${extensionSettings.userStats.sustenance}%\nEnergy: ${extensionSettings.userStats.energy}%\nHygiene: ${extensionSettings.userStats.hygiene}%\nArousal: ${extensionSettings.userStats.arousal}%\n${extensionSettings.userStats.mood}: ${extensionSettings.userStats.conditions}\nInventory: ${extensionSettings.userStats.inventory}`;
+        const statsText = `Health: ${extensionSettings.userStats.health}%\nSatiety: ${extensionSettings.userStats.satiety}%\nEnergy: ${extensionSettings.userStats.energy}%\nHygiene: ${extensionSettings.userStats.hygiene}%\nArousal: ${extensionSettings.userStats.arousal}%\n${extensionSettings.userStats.mood}: ${extensionSettings.userStats.conditions}\nInventory: ${extensionSettings.userStats.inventory}`;
         lastGeneratedData.userStats = statsText;
 
         saveSettings();
@@ -2913,7 +2922,7 @@ function renderUserStats() {
         extensionSettings.userStats.mood = value || '😐';
 
         // Update lastGeneratedData
-        const statsText = `Health: ${extensionSettings.userStats.health}%\nSustenance: ${extensionSettings.userStats.sustenance}%\nEnergy: ${extensionSettings.userStats.energy}%\nHygiene: ${extensionSettings.userStats.hygiene}%\nArousal: ${extensionSettings.userStats.arousal}%\n${extensionSettings.userStats.mood}: ${extensionSettings.userStats.conditions}\nInventory: ${extensionSettings.userStats.inventory}`;
+        const statsText = `Health: ${extensionSettings.userStats.health}%\nSatiety: ${extensionSettings.userStats.satiety}%\nEnergy: ${extensionSettings.userStats.energy}%\nHygiene: ${extensionSettings.userStats.hygiene}%\nArousal: ${extensionSettings.userStats.arousal}%\n${extensionSettings.userStats.mood}: ${extensionSettings.userStats.conditions}\nInventory: ${extensionSettings.userStats.inventory}`;
         lastGeneratedData.userStats = statsText;
 
         saveSettings();
@@ -2926,7 +2935,7 @@ function renderUserStats() {
         extensionSettings.userStats.conditions = value || 'None';
 
         // Update lastGeneratedData
-        const statsText = `Health: ${extensionSettings.userStats.health}%\nSustenance: ${extensionSettings.userStats.sustenance}%\nEnergy: ${extensionSettings.userStats.energy}%\nHygiene: ${extensionSettings.userStats.hygiene}%\nArousal: ${extensionSettings.userStats.arousal}%\n${extensionSettings.userStats.mood}: ${extensionSettings.userStats.conditions}\nInventory: ${extensionSettings.userStats.inventory}`;
+        const statsText = `Health: ${extensionSettings.userStats.health}%\nSatiety: ${extensionSettings.userStats.satiety}%\nEnergy: ${extensionSettings.userStats.energy}%\nHygiene: ${extensionSettings.userStats.hygiene}%\nArousal: ${extensionSettings.userStats.arousal}%\n${extensionSettings.userStats.mood}: ${extensionSettings.userStats.conditions}\nInventory: ${extensionSettings.userStats.inventory}`;
         lastGeneratedData.userStats = statsText;
 
         saveSettings();
@@ -4076,12 +4085,20 @@ function createThoughtPanel($message, thoughtsArray) {
 /**
  * Event handler for when generation is about to start (TOGETHER MODE).
  * Injects RPG tracking prompt into the generation.
+ * @param {string} type - Generation type
+ * @param {object} data - Generation data including quietImage flag
  */
-function onGenerationStarted() {
+function onGenerationStarted(type, data) {
     // console.log('[RPG Companion] onGenerationStarted called');
     // console.log('[RPG Companion] enabled:', extensionSettings.enabled);
     // console.log('[RPG Companion] generationMode:', extensionSettings.generationMode);
     // console.log('[RPG Companion] ⚡ EVENT: onGenerationStarted - lastActionWasSwipe =', lastActionWasSwipe, '| isGenerating =', isGenerating);
+
+    // Skip tracker injection for image generation requests
+    if (data?.quietImage) {
+        // console.log('[RPG Companion] Detected image generation (quietImage=true), skipping tracker injection');
+        return;
+    }
 
     if (!extensionSettings.enabled) {
         return;
@@ -4127,6 +4144,20 @@ function onGenerationStarted() {
             //     characterThoughts: committedTrackerData.characterThoughts ? 'exists' : 'null'
             // });
             // Reset flag after using it (swipe generation complete, ready for next action)
+        }
+    }
+
+    // For TOGETHER mode: Check if we need to commit extension data
+    // Same logic as separate mode - commit on new messages, keep existing data on swipes
+    if (extensionSettings.generationMode === 'together') {
+        if (!lastActionWasSwipe) {
+            // User sent a new message - commit lastGeneratedData before generation
+            // console.log('[RPG Companion] 📝 TOGETHER MODE COMMIT: New message - committing lastGeneratedData');
+            committedTrackerData.userStats = lastGeneratedData.userStats;
+            committedTrackerData.infoBox = lastGeneratedData.infoBox;
+            committedTrackerData.characterThoughts = lastGeneratedData.characterThoughts;
+        } else {
+            // console.log('[RPG Companion] 🔄 TOGETHER MODE SWIPE: Using existing committedTrackerData (no commit)');
         }
     }
 
@@ -4559,6 +4590,30 @@ async function ensureHtmlCleaningRegex() {
 }
 
 /**
+ * Update the persona avatar image when user switches personas
+ */
+function updatePersonaAvatar() {
+    const portraitImg = document.querySelector('.rpg-user-portrait');
+    if (!portraitImg) return;
+
+    // Get current user_avatar from context instead of using imported value
+    const context = getContext();
+    const currentUserAvatar = context.user_avatar || user_avatar;
+
+    let userPortrait = 'img/user-default.png';
+    if (currentUserAvatar) {
+        try {
+            userPortrait = getThumbnailUrl('persona', currentUserAvatar) || 'img/user-default.png';
+        } catch (e) {
+            console.warn('[RPG Companion] Could not load user avatar, using default', e);
+            userPortrait = 'img/user-default.png';
+        }
+    }
+
+    portraitImg.src = userPortrait;
+}
+
+/**
  * Main initialization function.
  */
 jQuery(async () => {
@@ -4577,9 +4632,13 @@ jQuery(async () => {
         eventSource.on(event_types.MESSAGE_SENT, onMessageSent);
         eventSource.on(event_types.GENERATION_STARTED, onGenerationStarted);
         eventSource.on(event_types.MESSAGE_RECEIVED, onMessageReceived);
-        eventSource.on(event_types.CHARACTER_MESSAGE_RENDERED, onMessageReceived);
+        // Removed CHARACTER_MESSAGE_RENDERED to prevent race condition with cleaned messages
         eventSource.on(event_types.CHAT_CHANGED, onCharacterChanged);
         eventSource.on(event_types.MESSAGE_SWIPED, onMessageSwiped);
+        // Update persona avatar when user switches personas or chat changes
+        eventSource.on(event_types.CHAT_CHANGED, updatePersonaAvatar);
+        eventSource.on(event_types.USER_MESSAGE_RENDERED, updatePersonaAvatar);
+        eventSource.on(event_types.SETTINGS_UPDATED, updatePersonaAvatar);
 
         // console.log('[RPG Companion] Extension loaded successfully');
     } catch (error) {

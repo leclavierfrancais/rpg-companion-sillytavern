@@ -87,11 +87,55 @@ let isPlotProgression = false;
 // Temporary storage for pending dice roll (not saved until user clicks "Save Roll")
 let pendingDiceRoll = null;
 
+// Fallback avatar image (base64-encoded SVG with "?" icon)
+// Using base64 to avoid quote-encoding issues in HTML attributes
+const FALLBACK_AVATAR_DATA_URI = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2NjY2NjYyIgb3BhY2l0eT0iMC4zIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIiBmaWxsPSIjNjY2IiBmb250LXNpemU9IjQwIj4/PC90ZXh0Pjwvc3ZnPg==';
+
 // UI Elements
 let $panelContainer = null;
 let $userStatsContainer = null;
 let $infoBoxContainer = null;
 let $thoughtsContainer = null;
+
+/**
+ * Safely attempts to get a thumbnail URL with proper error handling.
+ * Returns null if the URL cannot be generated to avoid 400 Bad Request errors.
+ *
+ * @param {string} type - The type of thumbnail ('persona' or 'avatar')
+ * @param {string} filename - The filename to get thumbnail for
+ * @returns {string|null} - The thumbnail URL or null if it fails
+ */
+function getSafeThumbnailUrl(type, filename) {
+    // Return null if no filename provided
+    if (!filename || filename === 'none') {
+        console.log(`[RPG Companion] No valid filename provided for ${type} thumbnail`);
+        return null;
+    }
+
+    try {
+        // Attempt to get thumbnail URL from SillyTavern API
+        const url = getThumbnailUrl(type, filename);
+
+        // Validate that we got a string back
+        if (typeof url !== 'string' || url.trim() === '') {
+            console.warn(`[RPG Companion] getThumbnailUrl returned invalid result for ${type}:`, filename);
+            return null;
+        }
+
+        console.log(`[RPG Companion] Successfully generated ${type} thumbnail URL for: ${filename}`);
+        return url;
+    } catch (error) {
+        // Log detailed error information for debugging
+        console.error(`[RPG Companion] Failed to get ${type} thumbnail for "${filename}":`, error);
+        console.error('[RPG Companion] Error details:', {
+            type,
+            filename,
+            errorMessage: error.message,
+            errorStack: error.stack
+        });
+        return null;
+    }
+}
 
 /**
  * Loads the extension settings from the global settings object.
@@ -2739,14 +2783,14 @@ function renderUserStats() {
     }
 
     // Get user portrait - handle both default-user and custom persona folders
-    let userPortrait = 'img/user-default.png'; // fallback
+    // Use a base64-encoded SVG placeholder as fallback to avoid 400 errors
+    let userPortrait = FALLBACK_AVATAR_DATA_URI;
+
     if (user_avatar) {
-        // Try to get the thumbnail, but have a fallback
-        try {
-            userPortrait = getThumbnailUrl('persona', user_avatar) || 'img/user-default.png';
-        } catch (e) {
-            console.warn('[RPG Companion] Could not load user avatar, using default', e);
-            userPortrait = 'img/user-default.png';
+        // Try to get the thumbnail using our safe helper
+        const thumbnailUrl = getSafeThumbnailUrl('persona', user_avatar);
+        if (thumbnailUrl) {
+            userPortrait = thumbnailUrl;
         }
     }
 
@@ -2757,7 +2801,7 @@ function renderUserStats() {
         <div class="rpg-stats-content">
             <div class="rpg-stats-left">
                 <div style="display: flex; gap: clamp(4px, 0.8vh, 8px); align-items: center; flex-shrink: 0;">
-                    <img src="${userPortrait}" alt="${userName}" class="rpg-user-portrait" onerror="this.src='img/user-default.png'" />
+                    <img src="${userPortrait}" alt="${userName}" class="rpg-user-portrait" onerror="this.style.opacity='0.5';this.onerror=null;" />
                     <div class="rpg-inventory-box">
                         <div class="rpg-inventory-items rpg-editable" contenteditable="true" data-field="inventory" title="Click to edit">
                             ${stats.inventory || 'None'}
@@ -3251,12 +3295,16 @@ function renderThoughts() {
     // If no characters parsed, show a placeholder editable card
     if (presentCharacters.length === 0) {
         // Get default character portrait (try to use the current character if in 1-on-1 chat)
-        let defaultPortrait = 'img/user-default.png';
+        // Use a base64-encoded SVG placeholder as fallback to avoid 400 errors
+        let defaultPortrait = FALLBACK_AVATAR_DATA_URI;
         let defaultName = 'Character';
 
         if (this_chid !== undefined && characters[this_chid]) {
             if (characters[this_chid].avatar && characters[this_chid].avatar !== 'none') {
-                defaultPortrait = getThumbnailUrl('avatar', characters[this_chid].avatar);
+                const thumbnailUrl = getSafeThumbnailUrl('avatar', characters[this_chid].avatar);
+                if (thumbnailUrl) {
+                    defaultPortrait = thumbnailUrl;
+                }
             }
             defaultName = characters[this_chid].name || 'Character';
         }
@@ -3265,7 +3313,7 @@ function renderThoughts() {
         html += `
             <div class="rpg-character-card" data-character-name="${defaultName}">
                 <div class="rpg-character-avatar">
-                    <img src="${defaultPortrait}" alt="${defaultName}" onerror="this.src='img/user-default.png'" />
+                    <img src="${defaultPortrait}" alt="${defaultName}" onerror="this.style.opacity='0.5';this.onerror=null;" />
                     <div class="rpg-relationship-badge rpg-editable" contenteditable="true" data-character="${defaultName}" data-field="relationship" title="Click to edit (use emoji: ⚔️ ⚖️ ⭐ ❤️)">⚖️</div>
                 </div>
                 <div class="rpg-character-info">
@@ -3282,7 +3330,8 @@ function renderThoughts() {
         html += '<div class="rpg-thoughts-content">';
         for (const char of presentCharacters) {
             // Find character portrait
-            let characterPortrait = 'img/user-default.png';
+            // Use a base64-encoded SVG placeholder as fallback to avoid 400 errors
+            let characterPortrait = FALLBACK_AVATAR_DATA_URI;
 
             // console.log('[RPG Companion] Looking for avatar for:', char.name);
 
@@ -3294,25 +3343,34 @@ function renderThoughts() {
                 );
 
                 if (matchingMember && matchingMember.avatar && matchingMember.avatar !== 'none') {
-                    characterPortrait = getThumbnailUrl('avatar', matchingMember.avatar);
+                    const thumbnailUrl = getSafeThumbnailUrl('avatar', matchingMember.avatar);
+                    if (thumbnailUrl) {
+                        characterPortrait = thumbnailUrl;
+                    }
                 }
             }
 
             // For regular chats or if not found in group, search all characters
-            if (characterPortrait === 'img/user-default.png' && characters && characters.length > 0) {
+            if (characterPortrait === FALLBACK_AVATAR_DATA_URI && characters && characters.length > 0) {
                 const matchingCharacter = characters.find(c =>
                     c && c.name && c.name.toLowerCase() === char.name.toLowerCase()
                 );
 
                 if (matchingCharacter && matchingCharacter.avatar && matchingCharacter.avatar !== 'none') {
-                    characterPortrait = getThumbnailUrl('avatar', matchingCharacter.avatar);
+                    const thumbnailUrl = getSafeThumbnailUrl('avatar', matchingCharacter.avatar);
+                    if (thumbnailUrl) {
+                        characterPortrait = thumbnailUrl;
+                    }
                 }
             }
 
             // If this is the current character in a 1-on-1 chat, use their portrait
             if (this_chid !== undefined && characters[this_chid] &&
                 characters[this_chid].name && characters[this_chid].name.toLowerCase() === char.name.toLowerCase()) {
-                characterPortrait = getThumbnailUrl('avatar', characters[this_chid].avatar);
+                const thumbnailUrl = getSafeThumbnailUrl('avatar', characters[this_chid].avatar);
+                if (thumbnailUrl) {
+                    characterPortrait = thumbnailUrl;
+                }
             }
 
             // Get relationship emoji
@@ -3321,7 +3379,7 @@ function renderThoughts() {
             html += `
                 <div class="rpg-character-card" data-character-name="${char.name}">
                     <div class="rpg-character-avatar">
-                        <img src="${characterPortrait}" alt="${char.name}" onerror="this.src='img/user-default.png'" />
+                        <img src="${characterPortrait}" alt="${char.name}" onerror="this.style.opacity='0.5';this.onerror=null;" />
                         <div class="rpg-relationship-badge rpg-editable" contenteditable="true" data-character="${char.name}" data-field="relationship" title="Click to edit (use emoji: ⚔️ ⚖️ ⭐ ❤️)">${relationshipEmoji}</div>
                     </div>
                     <div class="rpg-character-info">
@@ -4594,23 +4652,33 @@ async function ensureHtmlCleaningRegex() {
  */
 function updatePersonaAvatar() {
     const portraitImg = document.querySelector('.rpg-user-portrait');
-    if (!portraitImg) return;
+    if (!portraitImg) {
+        console.log('[RPG Companion] Portrait image element not found in DOM');
+        return;
+    }
 
     // Get current user_avatar from context instead of using imported value
     const context = getContext();
     const currentUserAvatar = context.user_avatar || user_avatar;
 
-    let userPortrait = 'img/user-default.png';
-    if (currentUserAvatar) {
-        try {
-            userPortrait = getThumbnailUrl('persona', currentUserAvatar) || 'img/user-default.png';
-        } catch (e) {
-            console.warn('[RPG Companion] Could not load user avatar, using default', e);
-            userPortrait = 'img/user-default.png';
-        }
-    }
+    console.log('[RPG Companion] Attempting to update persona avatar:', currentUserAvatar);
 
-    portraitImg.src = userPortrait;
+    // Try to get a valid thumbnail URL using our safe helper
+    if (currentUserAvatar) {
+        const thumbnailUrl = getSafeThumbnailUrl('persona', currentUserAvatar);
+
+        if (thumbnailUrl) {
+            // Only update the src if we got a valid URL
+            portraitImg.src = thumbnailUrl;
+            console.log('[RPG Companion] Persona avatar updated successfully');
+        } else {
+            // Don't update the src if we couldn't get a valid URL
+            // This prevents 400 errors and keeps the existing image
+            console.warn('[RPG Companion] Could not get valid thumbnail URL for persona avatar, keeping existing image');
+        }
+    } else {
+        console.log('[RPG Companion] No user avatar configured, keeping existing image');
+    }
 }
 
 /**

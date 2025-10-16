@@ -223,7 +223,8 @@ If you enjoy this extension, consider supporting development:
 - Info Box prompt inspiration: MidnightSleeper
 - Stats Tracker concept: Community feedback
 - Special thanks to Quack for helping me with the CSS
-- Massive kudos to Paperboy for making the mobile version work
+- Massive kudos to Paperboy for making the mobile version work and for fixing bugs
+- Thanks to IDeathByte, for solving some CSS scaling issues
 
 ## 🚀 Planned Features
 

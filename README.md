@@ -38,8 +38,6 @@ An immersive RPG extension for browsers that tracks character stats, scene infor
 - **✏️ Live Editing**: Edit stats, thoughts, weather, and more directly in the panels
 - **💾 Per-Swipe Data Storage**: Each swipe preserves its own tracker data
 
-***Currently, it doesn't work on mobile devices. If someone can fix it, that would be great, as I have no way to test it on mobile.***
-
 ### Smart Features
 
 - **🔄 Swipe Detection**: Automatically handles swipes and maintains correct tracker context
@@ -47,6 +45,7 @@ An immersive RPG extension for browsers that tracks character stats, scene infor
 - **🎭 Multiple Characters**: Tracks thoughts and relationships for all present characters
 - **📍 Thought Bubbles in Chat**: Optional floating thought bubbles positioned next to character avatars
 - **🌈 Customizable Colors**: Create your own theme with custom color schemes
+- **📱 Mobile Support**: Works on mobile and tablet devices
 
 ### To-Do
 
@@ -59,7 +58,7 @@ An immersive RPG extension for browsers that tracks character stats, scene infor
 ### Main Panel Controls
 
 - **Panel Position**: Left or Right side of the chat
-- **Theme**: Choose from 6 built-in themes or create custom
+- **Theme**: Choose from 6 built-in themes or create a custom
 - **Auto-update after messages**: Automatically refresh RPG data after each message
 - **Context Messages**: How many recent messages to include when generating updates (only for Separate generation mode)
 
@@ -80,7 +79,7 @@ User: walks into the tavern
 
 AI: Trackers + Full roleplay response
 
-↓ Extension extracts tracker data from response
+↓ Extension extracts tracker data from the response
 
 ↓ Displays in sidebar panels
 
@@ -106,13 +105,13 @@ AI: Pure roleplay response - no tracker data
 
 AI: Separate call with just the tracker data
 
-↓ Extension sends separate request with context
+↓ Extension sends a separate request with context
 
 ↓ AI generates only tracker data
 
 ↓ Displays in sidebar panels
 
-↓ Context summary injected into next generation
+↓ Context summary injected into the next generation
 
 Pros:
 - Clean roleplay responses
@@ -158,7 +157,7 @@ The extension fully supports swipes:
 
 ### Manual Update
 
-You can click the "Refresh RPG Info" button in the settings to refresh the RPG data at any time.
+You can click the "Refresh RPG Info" button in the settings to refresh the RPG data at any time in separate generation mode.
 
 ## 🎨 Themes
 
@@ -198,7 +197,7 @@ If you ever have an awesome idea to do your own SillyTavern extension, don't.
 
 ### Thought bubble positioning
 
-- Bubbles use fixed 350px width for consistent positioning
+- Bubbles use a fixed 350px width for consistent positioning
 - Bubbles refresh after edits to maintain alignment
 - If issues persist, try toggling the Character Thoughts display
 
@@ -224,6 +223,7 @@ If you enjoy this extension, consider supporting development:
 - Info Box prompt inspiration: MidnightSleeper
 - Stats Tracker concept: Community feedback
 - Special thanks to Quack for helping me with the CSS
+- Massive kudos to Paperboy for making the mobile version work
 
 ## 🚀 Planned Features
 

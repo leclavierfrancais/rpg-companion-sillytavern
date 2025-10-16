@@ -651,20 +651,172 @@ async function sendPlotProgression(type) {
             $('#rpg-plot-random, #rpg-plot-natural').prop('disabled', false).css('opacity', '1');
         }, 1000);
     }
-}/**
+}
+
+/**
+ * Modern DiceModal ES6 Class
+ * Manages dice roller modal with proper state management and CSS classes
+ */
+class DiceModal {
+    constructor() {
+        this.modal = document.getElementById('rpg-dice-popup');
+        this.animation = document.getElementById('rpg-dice-animation');
+        this.result = document.getElementById('rpg-dice-result');
+        this.resultValue = document.getElementById('rpg-dice-result-value');
+        this.resultDetails = document.getElementById('rpg-dice-result-details');
+        this.rollBtn = document.getElementById('rpg-dice-roll-btn');
+
+        this.state = 'IDLE'; // IDLE, ROLLING, SHOWING_RESULT
+        this.isAnimating = false;
+    }
+
+    /**
+     * Opens the modal with proper animation
+     */
+    open() {
+        if (this.isAnimating) return;
+
+        // Apply theme
+        const theme = extensionSettings.theme;
+        this.modal.setAttribute('data-theme', theme);
+
+        // Apply custom theme if needed
+        if (theme === 'custom') {
+            this._applyCustomTheme();
+        }
+
+        // Reset to initial state
+        this._setState('IDLE');
+
+        // Open modal with CSS class
+        this.modal.classList.add('is-open');
+        this.modal.classList.remove('is-closing');
+
+        // Focus management
+        this.modal.querySelector('#rpg-dice-popup-close')?.focus();
+    }
+
+    /**
+     * Closes the modal with animation
+     */
+    close() {
+        if (this.isAnimating) return;
+
+        this.isAnimating = true;
+        this.modal.classList.add('is-closing');
+        this.modal.classList.remove('is-open');
+
+        // Wait for animation to complete
+        setTimeout(() => {
+            this.modal.classList.remove('is-closing');
+            this.isAnimating = false;
+
+            // Clear pending roll
+            pendingDiceRoll = null;
+        }, 200);
+    }
+
+    /**
+     * Starts the rolling animation
+     */
+    startRolling() {
+        this._setState('ROLLING');
+    }
+
+    /**
+     * Shows the result
+     * @param {number} total - The total roll value
+     * @param {Array<number>} rolls - Individual roll values
+     */
+    showResult(total, rolls) {
+        this._setState('SHOWING_RESULT');
+
+        // Update result values
+        this.resultValue.textContent = total;
+        this.resultValue.classList.add('is-animating');
+
+        // Remove animation class after it completes
+        setTimeout(() => {
+            this.resultValue.classList.remove('is-animating');
+        }, 500);
+
+        // Show details if multiple rolls
+        if (rolls && rolls.length > 1) {
+            this.resultDetails.textContent = `Rolls: ${rolls.join(', ')}`;
+        } else {
+            this.resultDetails.textContent = '';
+        }
+    }
+
+    /**
+     * Manages modal state changes
+     * @private
+     */
+    _setState(newState) {
+        this.state = newState;
+
+        switch (newState) {
+            case 'IDLE':
+                this.rollBtn.hidden = false;
+                this.animation.hidden = true;
+                this.result.hidden = true;
+                break;
+
+            case 'ROLLING':
+                this.rollBtn.hidden = true;
+                this.animation.hidden = false;
+                this.result.hidden = true;
+                this.animation.setAttribute('aria-busy', 'true');
+                break;
+
+            case 'SHOWING_RESULT':
+                this.rollBtn.hidden = true;
+                this.animation.hidden = true;
+                this.result.hidden = false;
+                this.animation.setAttribute('aria-busy', 'false');
+                break;
+        }
+    }
+
+    /**
+     * Applies custom theme colors
+     * @private
+     */
+    _applyCustomTheme() {
+        const content = this.modal.querySelector('.rpg-dice-popup-content');
+        if (content && extensionSettings.customColors) {
+            content.style.setProperty('--rpg-bg', extensionSettings.customColors.bg);
+            content.style.setProperty('--rpg-accent', extensionSettings.customColors.accent);
+            content.style.setProperty('--rpg-text', extensionSettings.customColors.text);
+            content.style.setProperty('--rpg-highlight', extensionSettings.customColors.highlight);
+        }
+    }
+}
+
+// Global instance
+let diceModal = null;
+
+/**
  * Sets up the dice roller functionality.
  */
 function setupDiceRoller() {
+    // Initialize DiceModal instance
+    diceModal = new DiceModal();
     // Click dice display to open popup
     $('#rpg-dice-display').on('click', function() {
         openDicePopup();
     });
 
-    // Close popup
-    $('#rpg-dice-popup-close, .rpg-dice-popup-overlay').on('click', function() {
-        // Discard pending roll without saving
-        pendingDiceRoll = null;
+    // Close popup - handle both close button and backdrop clicks
+    $('#rpg-dice-popup-close').on('click', function() {
         closeDicePopup();
+    });
+
+    // Close on backdrop click (clicking outside content)
+    $('#rpg-dice-popup').on('click', function(e) {
+        if (e.target === this) {
+            closeDicePopup();
+        }
     });
 
     // Roll dice button
@@ -709,54 +861,45 @@ function clearDiceRoll() {
 
 /**
  * Opens the dice rolling popup.
+ * Backwards compatible wrapper for DiceModal class.
  */
 function openDicePopup() {
-    // Apply current theme to popup
-    const theme = extensionSettings.theme;
-    $('#rpg-dice-popup').attr('data-theme', theme);
-
-    $('#rpg-dice-popup').fadeIn(200);
-    $('#rpg-dice-animation').hide();
-    $('#rpg-dice-result').hide();
-    $('#rpg-dice-roll-btn').show();
-
-    // Apply custom theme if selected
-    if (theme === 'custom') {
-        applyCustomThemeToPopup();
+    if (diceModal) {
+        diceModal.open();
     }
 }
 
 /**
- * Applies custom theme colors to the dice popup.
+ * Closes the dice rolling popup.
+ * Backwards compatible wrapper for DiceModal class.
  */
-function applyCustomThemeToPopup() {
-    const $popup = $('#rpg-dice-popup');
-    $popup.find('.rpg-dice-popup-content').css({
-        '--rpg-bg': extensionSettings.customColors.bg,
-        '--rpg-accent': extensionSettings.customColors.accent,
-        '--rpg-text': extensionSettings.customColors.text,
-        '--rpg-highlight': extensionSettings.customColors.highlight
-    });
+function closeDicePopup() {
+    if (diceModal) {
+        diceModal.close();
+    }
 }
 
 /**
- * Closes the dice rolling popup.
+ * @deprecated Legacy function - use diceModal._applyCustomTheme() instead
  */
-function closeDicePopup() {
-    $('#rpg-dice-popup').fadeOut(200);
+function applyCustomThemeToPopup() {
+    if (diceModal) {
+        diceModal._applyCustomTheme();
+    }
 }
 
 /**
  * Rolls the dice and displays result.
+ * Refactored to use DiceModal class.
  */
 async function rollDice() {
+    if (!diceModal) return;
+
     const count = parseInt(String($('#rpg-dice-count').val())) || 1;
     const sides = parseInt(String($('#rpg-dice-sides').val())) || 20;
 
-    // Hide roll button and show animation
-    $('#rpg-dice-roll-btn').hide();
-    $('#rpg-dice-animation').show();
-    $('#rpg-dice-result').hide();
+    // Start rolling animation
+    diceModal.startRolling();
 
     // Wait for animation (simulate rolling)
     await new Promise(resolve => setTimeout(resolve, 1200));
@@ -777,16 +920,8 @@ async function rollDice() {
         timestamp: Date.now()
     };
 
-    // Hide animation and show result
-    $('#rpg-dice-animation').hide();
-    $('#rpg-dice-result').show();
-    $('#rpg-dice-result-value').text(total);
-
-    if (rolls.length > 1) {
-        $('#rpg-dice-result-details').text(`Rolls: ${rolls.join(', ')}`);
-    } else {
-        $('#rpg-dice-result-details').text('');
-    }
+    // Show result
+    diceModal.showResult(total, rolls);
 
     // Don't update sidebar display yet - only update when user clicks "Save Roll"
 }

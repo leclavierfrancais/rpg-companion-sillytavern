@@ -211,27 +211,29 @@
     </div>
 </div>
 
-<!-- Dice Roll Popup -->
-<div id="rpg-dice-popup" class="rpg-dice-popup" style="display: none;">
-    <div class="rpg-dice-popup-overlay"></div>
+<!-- Dice Roll Modal -->
+<div id="rpg-dice-popup" class="rpg-dice-popup" role="dialog" aria-modal="true" aria-labelledby="rpg-dice-title">
     <div class="rpg-dice-popup-content">
-        <div class="rpg-dice-popup-header">
-            <h3><i class="fa-solid fa-dice-d20"></i> Roll Dice</h3>
-            <button id="rpg-dice-popup-close" class="rpg-btn-icon">
-                <i class="fa-solid fa-times"></i>
+        <header class="rpg-dice-popup-header">
+            <h3 id="rpg-dice-title">
+                <i class="fa-solid fa-dice-d20" aria-hidden="true"></i>
+                <span>Roll Dice</span>
+            </h3>
+            <button id="rpg-dice-popup-close" class="rpg-btn-icon" type="button" aria-label="Close dialog">
+                <i class="fa-solid fa-times" aria-hidden="true"></i>
             </button>
-        </div>
+        </header>
 
         <div class="rpg-dice-popup-body">
             <div class="rpg-dice-selector-container">
                 <div class="rpg-dice-selector">
                     <div class="rpg-dice-input-group">
                         <label for="rpg-dice-count">Number of Dice:</label>
-                        <input type="number" id="rpg-dice-count" min="1" max="20" value="1" class="rpg-input" />
+                        <input type="number" id="rpg-dice-count" name="dice-count" min="1" max="20" value="1" class="rpg-input" />
                     </div>
                     <div class="rpg-dice-input-group">
                         <label for="rpg-dice-sides">Dice Type:</label>
-                        <select id="rpg-dice-sides" class="rpg-select">
+                        <select id="rpg-dice-sides" name="dice-sides" class="rpg-select">
                             <option value="4">d4</option>
                             <option value="6">d6</option>
                             <option value="8">d8</option>
@@ -242,24 +244,26 @@
                         </select>
                     </div>
                 </div>
-                <button id="rpg-dice-roll-btn" class="rpg-btn-primary">
-                    <i class="fa-solid fa-dice"></i> Roll Dice
+                <button id="rpg-dice-roll-btn" class="rpg-btn-primary" type="button">
+                    <i class="fa-solid fa-dice" aria-hidden="true"></i>
+                    <span>Roll Dice</span>
                 </button>
             </div>
 
-            <div id="rpg-dice-animation" class="rpg-dice-animation" style="display: none;">
+            <div id="rpg-dice-animation" class="rpg-dice-animation" hidden aria-live="polite" aria-busy="true">
                 <div class="rpg-dice-rolling">
-                    <i class="fa-solid fa-dice-d20 fa-spin"></i>
+                    <i class="fa-solid fa-dice-d20 fa-spin" aria-hidden="true"></i>
                 </div>
                 <div class="rpg-dice-rolling-text">Rolling...</div>
             </div>
 
-            <div id="rpg-dice-result" class="rpg-dice-result" style="display: none;">
+            <div id="rpg-dice-result" class="rpg-dice-result" hidden aria-live="polite">
                 <div class="rpg-dice-result-label">Result:</div>
-                <div id="rpg-dice-result-value" class="rpg-dice-result-value">0</div>
-                <div id="rpg-dice-result-details" class="rpg-dice-result-details"></div>
-                <button id="rpg-dice-save-btn" class="rpg-btn-primary rpg-dice-save-btn">
-                    <i class="fa-solid fa-check"></i> Save Roll
+                <output id="rpg-dice-result-value" class="rpg-dice-result-value" for="rpg-dice-count rpg-dice-sides">0</output>
+                <div id="rpg-dice-result-details" class="rpg-dice-result-details" role="status"></div>
+                <button id="rpg-dice-save-btn" class="rpg-btn-primary rpg-dice-save-btn" type="button">
+                    <i class="fa-solid fa-check" aria-hidden="true"></i>
+                    <span>Save Roll</span>
                 </button>
             </div>
         </div>

@@ -3057,6 +3057,13 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
         animation: rpgSlideInFromRight 0.3s ease-in-out;
     }
 
+    /* Closing animation - slide out to right */
+    .rpg-panel.rpg-mobile-closing {
+        display: block !important;
+        z-index: 50;
+        animation: rpgSlideOutToRight 0.3s ease-in-out;
+    }
+
     /* Slide-in animation from right */
     @keyframes rpgSlideInFromRight {
         from {
@@ -3064,6 +3071,16 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
         }
         to {
             transform: translateX(0);
+        }
+    }
+
+    /* Slide-out animation to right */
+    @keyframes rpgSlideOutToRight {
+        from {
+            transform: translateX(0);
+        }
+        to {
+            transform: translateX(100%);
         }
     }
 

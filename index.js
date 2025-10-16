@@ -986,6 +986,24 @@ function setupSettingsPopup() {
 }
 
 /**
+ * Helper function to close the mobile panel with animation.
+ */
+function closeMobilePanelWithAnimation() {
+    const $panel = $('#rpg-companion-panel');
+    const $mobileToggle = $('#rpg-mobile-toggle');
+
+    // Add closing class to trigger slide-out animation
+    $panel.removeClass('rpg-mobile-open').addClass('rpg-mobile-closing');
+    $mobileToggle.removeClass('active');
+
+    // Wait for animation to complete before hiding
+    $panel.one('animationend', function() {
+        $panel.removeClass('rpg-mobile-closing');
+        $('.rpg-mobile-overlay').remove();
+    });
+}
+
+/**
  * Sets up the mobile toggle button (FAB).
  */
 function setupMobileToggle() {
@@ -1246,10 +1264,8 @@ function setupMobileToggle() {
             console.log('[RPG Mobile] Quick tap detected - toggling panel');
 
             if ($panel.hasClass('rpg-mobile-open')) {
-                // Close panel
-                $panel.removeClass('rpg-mobile-open');
-                $overlay.remove();
-                $mobileToggle.removeClass('active');
+                // Close panel with animation
+                closeMobilePanelWithAnimation();
             } else {
                 // Open panel
                 $panel.addClass('rpg-mobile-open');
@@ -1258,9 +1274,7 @@ function setupMobileToggle() {
 
                 // Close when clicking overlay
                 $overlay.on('click', function() {
-                    $panel.removeClass('rpg-mobile-open');
-                    $overlay.remove();
-                    $mobileToggle.removeClass('active');
+                    closeMobilePanelWithAnimation();
                 });
             }
         }
@@ -1283,9 +1297,7 @@ function setupMobileToggle() {
         // Work on both mobile and desktop (removed viewport check)
         if ($panel.hasClass('rpg-mobile-open')) {
             console.log('[RPG Mobile] Click: Closing panel');
-            $panel.removeClass('rpg-mobile-open');
-            $overlay.remove();
-            $mobileToggle.removeClass('active');
+            closeMobilePanelWithAnimation();
         } else {
             console.log('[RPG Mobile] Click: Opening panel');
             $panel.addClass('rpg-mobile-open');
@@ -1294,9 +1306,7 @@ function setupMobileToggle() {
 
             $overlay.on('click', function() {
                 console.log('[RPG Mobile] Overlay clicked - closing panel');
-                $panel.removeClass('rpg-mobile-open');
-                $overlay.remove();
-                $mobileToggle.removeClass('active');
+                closeMobilePanelWithAnimation();
             });
         }
     });
@@ -1322,10 +1332,8 @@ function setupMobileToggle() {
             // Clear collapsed state - mobile doesn't use collapse
             $panel.removeClass('rpg-collapsed');
 
-            // Close panel on mobile - CSS handles smooth transition
-            $panel.removeClass('rpg-mobile-open');
-            $mobileToggle.removeClass('active');
-            $('.rpg-mobile-overlay').remove();
+            // Close panel on mobile with animation
+            closeMobilePanelWithAnimation();
 
             // Clear any inline styles that might be overriding CSS
             $panel.attr('style', '');
@@ -1360,7 +1368,7 @@ function setupMobileToggle() {
                 // Disable transitions to prevent left→right slide animation
                 $panel.css('transition', 'none');
 
-                $panel.removeClass('rpg-mobile-open');
+                $panel.removeClass('rpg-mobile-open rpg-mobile-closing');
                 $mobileToggle.removeClass('active');
                 $('.rpg-mobile-overlay').remove();
 
@@ -1646,11 +1654,9 @@ function setupCollapseToggle() {
             });
 
             if (isOpen) {
-                // Close panel
+                // Close panel with animation
                 console.log('[RPG Mobile] Closing panel');
-                $panel.removeClass('rpg-mobile-open');
-                $('.rpg-mobile-overlay').remove();
-                $('#rpg-mobile-toggle').removeClass('active');
+                closeMobilePanelWithAnimation();
             } else {
                 // Open panel
                 console.log('[RPG Mobile] Opening panel');
@@ -1673,8 +1679,7 @@ function setupCollapseToggle() {
                 // Close when clicking overlay
                 $overlay.on('click', function() {
                     console.log('[RPG Mobile] Overlay clicked - closing panel');
-                    $panel.removeClass('rpg-mobile-open');
-                    $overlay.remove();
+                    closeMobilePanelWithAnimation();
                     updateCollapseToggleIcon();
                 });
             }

@@ -1514,7 +1514,7 @@ function setupMobileTabs() {
     }
     // Combine Info and Characters into one tab
     if (hasInfoOrCharacters) {
-        tabs.push('<button class="rpg-mobile-tab ' + (tabs.length === 0 ? 'active' : '') + '" data-tab="info-characters"><i class="fa-solid fa-book"></i><span>Info & Characters</span></button>');
+        tabs.push('<button class="rpg-mobile-tab ' + (tabs.length === 0 ? 'active' : '') + '" data-tab="info-characters"><i class="fa-solid fa-book"></i><span>Info</span></button>');
     }
 
     const $tabNav = $('<div class="rpg-mobile-tabs">' + tabs.join('') + '</div>');

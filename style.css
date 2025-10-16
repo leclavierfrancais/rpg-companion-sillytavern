@@ -746,7 +746,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 
 .rpg-stat-label {
     min-width: 4.062rem;
-    font-size: clamp(0.9vw, 0.95vw, 1vw);
+    font-size: clamp(0.5vw, 0.6vw, 0.7vw);
     font-weight: 600;
     text-align: left;
     color: var(--rpg-text);
@@ -776,7 +776,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 
 .rpg-stat-value {
     color: #fff;
-    font-size: clamp(0.9vw, 0.95vw, 1vw);
+    font-size: clamp(0.5vw, 0.6vw, 0.7vw);
     font-weight: bold;
     min-width: 1.875rem;
     text-align: right;

@@ -3692,7 +3692,10 @@ function createThoughtPanel($message, thoughtsArray) {
         updateCharacterField(character, field, value);
     });
 
-    // Update position on scroll
+    // RAF throttling for smooth position updates
+    let positionUpdateRaf = null;
+
+    // Update position on scroll with RAF throttling
     const updatePanelPosition = () => {
         if (!$message.is(':visible')) {
             $thoughtPanel.hide();
@@ -3700,47 +3703,57 @@ function createThoughtPanel($message, thoughtsArray) {
             return;
         }
 
-        const newAvatarRect = $avatar[0].getBoundingClientRect();
-        const newTop = newAvatarRect.top + (newAvatarRect.height / 2);
-        const newIconTop = newAvatarRect.top;
-        let newLeft, newIconLeft;
-
-        if (panelPosition === 'left') {
-            // Position at chat's right edge, extending right
-            const chatContainer = $('#chat')[0];
-            const chatRect = chatContainer ? chatContainer.getBoundingClientRect() : { right: window.innerWidth };
-            newLeft = chatRect.right + panelMargin;
-            newIconLeft = chatRect.right + 10;
-
-            $thoughtPanel.css({
-                top: `${newTop}px`,
-                left: `${newLeft}px`,
-                right: 'auto'
-            });
-        } else {
-            // Left position relative to avatar
-            newLeft = newAvatarRect.left - panelWidth - panelMargin;
-            newIconLeft = newAvatarRect.left - 40;
-
-            $thoughtPanel.css({
-                top: `${newTop}px`,
-                left: `${newLeft}px`,
-                right: 'auto'
-            });
+        // Cancel any pending RAF
+        if (positionUpdateRaf) {
+            cancelAnimationFrame(positionUpdateRaf);
         }
 
-        $thoughtIcon.css({
-            top: `${newIconTop}px`,
-            left: `${newIconLeft}px`,
-            right: 'auto'
+        // Schedule update on next frame
+        positionUpdateRaf = requestAnimationFrame(() => {
+            const newAvatarRect = $avatar[0].getBoundingClientRect();
+            const newTop = newAvatarRect.top + (newAvatarRect.height / 2);
+            const newIconTop = newAvatarRect.top;
+            let newLeft, newIconLeft;
+
+            if (panelPosition === 'left') {
+                // Position at chat's right edge, extending right
+                const chatContainer = $('#chat')[0];
+                const chatRect = chatContainer ? chatContainer.getBoundingClientRect() : { right: window.innerWidth };
+                newLeft = chatRect.right + panelMargin;
+                newIconLeft = chatRect.right + 10;
+
+                $thoughtPanel.css({
+                    top: `${newTop}px`,
+                    left: `${newLeft}px`,
+                    right: 'auto'
+                });
+            } else {
+                // Left position relative to avatar
+                newLeft = newAvatarRect.left - panelWidth - panelMargin;
+                newIconLeft = newAvatarRect.left - 40;
+
+                $thoughtPanel.css({
+                    top: `${newTop}px`,
+                    left: `${newLeft}px`,
+                    right: 'auto'
+                });
+            }
+
+            $thoughtIcon.css({
+                top: `${newIconTop}px`,
+                left: `${newIconLeft}px`,
+                right: 'auto'
+            });
+
+            if ($thoughtPanel.is(':visible')) {
+                $thoughtPanel.show();
+            }
+            if ($thoughtIcon.is(':visible')) {
+                $thoughtIcon.show();
+            }
+
+            positionUpdateRaf = null;
         });
-
-        if ($thoughtPanel.is(':visible')) {
-            $thoughtPanel.show();
-        }
-        if ($thoughtIcon.is(':visible')) {
-            $thoughtIcon.show();
-        }
     };
 
     // Update position on scroll and resize

@@ -3409,6 +3409,9 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     #rpg-thought-icon {
         /* Use transform to shift icon above and to the right of avatar */
         transform: translate(50px, -45px) !important;
+        /* Smooth animation for position changes during scroll */
+        transition: top 0.2s ease-out, left 0.2s ease-out !important;
+        will-change: top, left;
     }
 
     /* ========================================

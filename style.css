@@ -3403,6 +3403,20 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
         /* Use transform to shift icon above and to the right of avatar */
         transform: translate(50px, -45px) !important;
     }
+
+    /* ========================================
+       MOBILE CHARACTER RELATIONSHIP BADGE
+       ======================================== */
+
+    /* Keep relationship badge small on mobile to prevent it from covering avatar */
+    .rpg-relationship-badge {
+        width: 18px !important;
+        height: 18px !important;
+        font-size: 10px !important;
+        padding: 0 !important;
+        min-height: unset !important;
+        line-height: 18px !important;
+    }
 }
 
 /* Extra small screens - adjust FAB position */

@@ -3647,8 +3647,9 @@ function createThoughtPanel($message, thoughtsArray) {
         right: 'auto' // Clear any right positioning
     });
 
-    // Initially hide the icon
-    $thoughtIcon.hide();
+    // Initially hide the panel and show the icon
+    $thoughtPanel.hide();
+    $thoughtIcon.show();
 
     // console.log('[RPG Companion] Thought panel created at:', { top, left });
 

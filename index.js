@@ -979,60 +979,141 @@ function addDiceQuickReply() {
 }
 
 /**
- * Opens the settings popup.
+ * SettingsModal - Manages the settings popup modal
+ * Handles opening, closing, theming, and animations
  */
-function openSettingsPopup() {
-    const theme = extensionSettings.theme || 'default';
-    $('#rpg-settings-popup').attr('data-theme', theme);
-
-    // Apply custom theme colors if custom theme is selected
-    if (theme === 'custom') {
-        applyCustomThemeToSettingsPopup();
+class SettingsModal {
+    constructor() {
+        this.modal = document.getElementById('rpg-settings-popup');
+        this.content = this.modal?.querySelector('.rpg-settings-popup-content');
+        this.isAnimating = false;
     }
 
-    $('#rpg-settings-popup').fadeIn(200);
+    /**
+     * Opens the modal with proper animation
+     */
+    open() {
+        if (this.isAnimating || !this.modal) return;
+
+        // Apply theme
+        const theme = extensionSettings.theme || 'default';
+        this.modal.setAttribute('data-theme', theme);
+
+        // Apply custom theme if needed
+        if (theme === 'custom') {
+            this._applyCustomTheme();
+        }
+
+        // Open modal with CSS class
+        this.modal.classList.add('is-open');
+        this.modal.classList.remove('is-closing');
+
+        // Focus management
+        this.modal.querySelector('#rpg-close-settings')?.focus();
+    }
+
+    /**
+     * Closes the modal with animation
+     */
+    close() {
+        if (this.isAnimating || !this.modal) return;
+
+        this.isAnimating = true;
+        this.modal.classList.add('is-closing');
+        this.modal.classList.remove('is-open');
+
+        // Wait for animation to complete
+        setTimeout(() => {
+            this.modal.classList.remove('is-closing');
+            this.isAnimating = false;
+        }, 200);
+    }
+
+    /**
+     * Updates the theme in real-time (used when theme selector changes)
+     */
+    updateTheme() {
+        if (!this.modal) return;
+
+        const theme = extensionSettings.theme || 'default';
+        this.modal.setAttribute('data-theme', theme);
+
+        if (theme === 'custom') {
+            this._applyCustomTheme();
+        } else {
+            // Clear custom CSS variables to let theme CSS take over
+            this._clearCustomTheme();
+        }
+    }
+
+    /**
+     * Applies custom theme colors
+     * @private
+     */
+    _applyCustomTheme() {
+        if (!this.content || !extensionSettings.customColors) return;
+
+        this.content.style.setProperty('--rpg-bg', extensionSettings.customColors.bg);
+        this.content.style.setProperty('--rpg-accent', extensionSettings.customColors.accent);
+        this.content.style.setProperty('--rpg-text', extensionSettings.customColors.text);
+        this.content.style.setProperty('--rpg-highlight', extensionSettings.customColors.highlight);
+    }
+
+    /**
+     * Clears custom theme colors
+     * @private
+     */
+    _clearCustomTheme() {
+        if (!this.content) return;
+
+        this.content.style.setProperty('--rpg-bg', '');
+        this.content.style.setProperty('--rpg-accent', '');
+        this.content.style.setProperty('--rpg-text', '');
+        this.content.style.setProperty('--rpg-highlight', '');
+    }
+}
+
+// Global instance
+let settingsModal = null;
+
+/**
+ * Opens the settings popup.
+ * Backwards compatible wrapper for SettingsModal class.
+ */
+function openSettingsPopup() {
+    if (settingsModal) {
+        settingsModal.open();
+    }
 }
 
 /**
  * Closes the settings popup.
+ * Backwards compatible wrapper for SettingsModal class.
  */
 function closeSettingsPopup() {
-    $('#rpg-settings-popup').fadeOut(200);
+    if (settingsModal) {
+        settingsModal.close();
+    }
 }
 
 /**
  * Applies custom theme colors to the settings popup.
+ * Backwards compatible wrapper for SettingsModal class.
+ * @deprecated Use settingsModal.updateTheme() instead
  */
 function applyCustomThemeToSettingsPopup() {
-    const popup = $('#rpg-settings-popup .rpg-settings-popup-content');
-    popup.css({
-        '--rpg-bg': extensionSettings.customColors.bg,
-        '--rpg-accent': extensionSettings.customColors.accent,
-        '--rpg-text': extensionSettings.customColors.text,
-        '--rpg-highlight': extensionSettings.customColors.highlight
-    });
+    if (settingsModal) {
+        settingsModal._applyCustomTheme();
+    }
 }
 
 /**
  * Updates the settings popup theme in real-time.
+ * Backwards compatible wrapper for SettingsModal class.
  */
 function updateSettingsPopupTheme() {
-    const theme = extensionSettings.theme || 'default';
-    const popup = $('#rpg-settings-popup .rpg-settings-popup-content');
-
-    $('#rpg-settings-popup').attr('data-theme', theme);
-
-    // Apply custom theme colors if custom theme is selected
-    if (theme === 'custom') {
-        applyCustomThemeToSettingsPopup();
-    } else {
-        // Clear custom CSS variables to let theme CSS take over
-        popup.css({
-            '--rpg-bg': '',
-            '--rpg-accent': '',
-            '--rpg-text': '',
-            '--rpg-highlight': ''
-        });
+    if (settingsModal) {
+        settingsModal.updateTheme();
     }
 }
 
@@ -1040,14 +1121,24 @@ function updateSettingsPopupTheme() {
  * Sets up the settings popup functionality.
  */
 function setupSettingsPopup() {
+    // Initialize SettingsModal instance
+    settingsModal = new SettingsModal();
+
     // Open settings popup
     $('#rpg-open-settings').on('click', function() {
         openSettingsPopup();
     });
 
-    // Close settings popup
-    $('#rpg-close-settings, .rpg-settings-popup-overlay').on('click', function() {
+    // Close settings popup - close button
+    $('#rpg-close-settings').on('click', function() {
         closeSettingsPopup();
+    });
+
+    // Close on backdrop click (clicking outside content)
+    $('#rpg-settings-popup').on('click', function(e) {
+        if (e.target === this) {
+            closeSettingsPopup();
+        }
     });
 
     // Clear cache button

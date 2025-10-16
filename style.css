@@ -3507,69 +3507,100 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
         grid-row: 3 / 5;
     }
 
-    /* Attributes as vertical list instead of grid */
+    /* Attributes as ultra-compact 2x3 grid for mobile */
     .rpg-classic-stats-grid {
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 10px;
-        margin: 12px 0;
-        grid-template-columns: none !important;
-        grid-template-rows: none !important;
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        grid-template-rows: repeat(3, 1fr) !important;
+        gap: 3px;
+        margin: 4px 5px 4px 0;
+        padding-right: 5px;
     }
 
-    /* Each attribute as horizontal row */
+    /* Each attribute - ULTRA COMPACT with vertical stack layout */
     .rpg-classic-stat {
-        display: flex !important;
-        flex-direction: row !important;
-        align-items: center;
-        justify-content: space-between;
-        padding: 12px 16px;
-        gap: 12px;
+        display: grid !important;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto auto;
+        gap: 2px 4px;
+        padding: 4px 6px;
         min-height: auto;
         height: auto;
         background: var(--SmartThemeBlurTintColor);
         border: 1px solid var(--SmartThemeBorderColor);
-        border-radius: 10px;
+        border-radius: 4px;
     }
 
-    /* Label on left */
+    /* Make buttons container children participate in parent grid */
+    .rpg-classic-stat-buttons {
+        display: contents;
+    }
+
+    /* Label - top left */
     .rpg-classic-stat-label {
-        font-size: 14px;
+        grid-column: 1;
+        grid-row: 1;
+        font-size: 9px;
         font-weight: 600;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
-        min-width: 50px;
-        flex-shrink: 0;
+        letter-spacing: 0.3px;
+        align-self: center;
+        justify-self: center;
     }
 
-    /* Value in middle */
+    /* Value - top right */
     .rpg-classic-stat-value {
-        font-size: 24px;
+        grid-column: 2;
+        grid-row: 1;
+        font-size: 14px;
         font-weight: 700;
         color: var(--SmartThemeQuoteColor);
-        flex: 1;
         text-align: center;
+        align-self: center;
+        justify-self: center;
     }
 
-    /* Buttons on right */
-    .rpg-classic-stat-controls {
-        display: flex;
-        gap: 8px;
-        flex-shrink: 0;
+    /* Minus button - bottom left */
+    .rpg-stat-decrease {
+        grid-column: 1;
+        grid-row: 2;
+        justify-self: center;
+    }
+
+    /* Plus button - bottom right */
+    .rpg-stat-increase {
+        grid-column: 2;
+        grid-row: 2;
+        justify-self: center;
     }
 
     .rpg-classic-stat-btn {
-        min-width: 40px !important;
-        min-height: 40px !important;
-        width: 40px;
-        height: 40px;
-        font-size: 16px;
+        min-width: 24px !important;
+        min-height: 24px !important;
+        width: 24px;
+        height: 24px;
+        font-size: 14px;
         font-weight: 700;
-        border-radius: 8px;
-        display: flex;
+        border-radius: 4px;
+        display: flex !important;
         align-items: center;
         justify-content: center;
         padding: 0;
+        cursor: pointer;
+        user-select: none;
+        background: var(--rpg-accent);
+        border: 1px solid var(--rpg-border);
+        color: var(--rpg-text);
+    }
+
+    .rpg-classic-stat-btn:hover {
+        background: var(--rpg-highlight);
+        border-color: var(--rpg-highlight);
+        transform: scale(1.05);
+    }
+
+    .rpg-classic-stat-btn:active {
+        transform: scale(0.95);
     }
 
     /* ========================================
@@ -3614,13 +3645,6 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 
 /* Touch-friendly improvements for mobile */
 @media (max-width: 768px) {
-    /* Larger touch targets for buttons */
-    .rpg-classic-stat-btn {
-        min-width: 2.75rem;
-        min-height: 2.75rem;
-        font-size: 1.125rem;
-    }
-
     /* More padding for editable fields */
     .rpg-editable {
         padding: 0.5em;

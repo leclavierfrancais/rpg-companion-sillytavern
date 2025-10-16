@@ -515,6 +515,7 @@ async function initUI() {
     renderThoughts();
     updateDiceDisplay();
     setupDiceRoller();
+    setupClassicStatsButtons();
     setupSettingsPopup();
     addDiceQuickReply();
     setupPlotButtons();
@@ -976,6 +977,38 @@ function addDiceQuickReply() {
         // Quick Reply API integration would go here
         // For now, the dice display in the sidebar serves as the button
     }
+}
+
+/**
+ * Sets up event listeners for classic stat +/- buttons using delegation.
+ * Uses delegated events to persist across re-renders of the stats section.
+ */
+function setupClassicStatsButtons() {
+    if (!$userStatsContainer) return;
+
+    // Delegated event listener for increase buttons
+    $userStatsContainer.on('click', '.rpg-stat-increase', function() {
+        const stat = $(this).data('stat');
+        if (extensionSettings.classicStats[stat] < 20) {
+            extensionSettings.classicStats[stat]++;
+            saveSettings();
+            saveChatData();
+            // Update only the specific stat value, not the entire stats panel
+            $(this).closest('.rpg-classic-stat').find('.rpg-classic-stat-value').text(extensionSettings.classicStats[stat]);
+        }
+    });
+
+    // Delegated event listener for decrease buttons
+    $userStatsContainer.on('click', '.rpg-stat-decrease', function() {
+        const stat = $(this).data('stat');
+        if (extensionSettings.classicStats[stat] > 1) {
+            extensionSettings.classicStats[stat]--;
+            saveSettings();
+            saveChatData();
+            // Update only the specific stat value, not the entire stats panel
+            $(this).closest('.rpg-classic-stat').find('.rpg-classic-stat-value').text(extensionSettings.classicStats[stat]);
+        }
+    });
 }
 
 /**
@@ -2766,29 +2799,6 @@ function renderUserStats() {
     `;
 
     $userStatsContainer.html(html);
-
-    // Add event listeners for classic stat buttons
-    $('.rpg-stat-increase').on('click', function() {
-        const stat = $(this).data('stat');
-        if (extensionSettings.classicStats[stat] < 20) {
-            extensionSettings.classicStats[stat]++;
-            saveSettings();
-            saveChatData();
-            // Update only the specific stat value, not the entire stats panel
-            $(this).closest('.rpg-classic-stat').find('.rpg-classic-stat-value').text(extensionSettings.classicStats[stat]);
-        }
-    });
-
-    $('.rpg-stat-decrease').on('click', function() {
-        const stat = $(this).data('stat');
-        if (extensionSettings.classicStats[stat] > 1) {
-            extensionSettings.classicStats[stat]--;
-            saveSettings();
-            saveChatData();
-            // Update only the specific stat value, not the entire stats panel
-            $(this).closest('.rpg-classic-stat').find('.rpg-classic-stat-value').text(extensionSettings.classicStats[stat]);
-        }
-    });
 
     // Add event listeners for editable stat values
     $('.rpg-editable-stat').on('blur', function() {

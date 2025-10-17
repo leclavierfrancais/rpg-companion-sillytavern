@@ -96,6 +96,7 @@ import {
 
 // Feature modules
 import { setupPlotButtons } from './src/systems/features/plotProgression.js';
+import { setupClassicStatsButtons } from './src/systems/features/classicStats.js';
 
 // Old state variable declarations removed - now imported from core modules
 // (extensionSettings, lastGeneratedData, committedTrackerData, etc. are now in src/core/state.js)
@@ -357,37 +358,6 @@ async function initUI() {
     setupContentEditableScrolling();
 }
 
-/**
- * Sets up event listeners for classic stat +/- buttons using delegation.
- * Uses delegated events to persist across re-renders of the stats section.
- */
-function setupClassicStatsButtons() {
-    if (!$userStatsContainer) return;
-
-    // Delegated event listener for increase buttons
-    $userStatsContainer.on('click', '.rpg-stat-increase', function() {
-        const stat = $(this).data('stat');
-        if (extensionSettings.classicStats[stat] < 100) {
-            extensionSettings.classicStats[stat]++;
-            saveSettings();
-            saveChatData();
-            // Update only the specific stat value, not the entire stats panel
-            $(this).closest('.rpg-classic-stat').find('.rpg-classic-stat-value').text(extensionSettings.classicStats[stat]);
-        }
-    });
-
-    // Delegated event listener for decrease buttons
-    $userStatsContainer.on('click', '.rpg-stat-decrease', function() {
-        const stat = $(this).data('stat');
-        if (extensionSettings.classicStats[stat] > 1) {
-            extensionSettings.classicStats[stat]--;
-            saveSettings();
-            saveChatData();
-            // Update only the specific stat value, not the entire stats panel
-            $(this).closest('.rpg-classic-stat').find('.rpg-classic-stat-value').text(extensionSettings.classicStats[stat]);
-        }
-    });
-}
 
 /**
  * Sends a plot progression request and appends the result to the last message.

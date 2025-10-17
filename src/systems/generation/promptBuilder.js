@@ -51,7 +51,7 @@ export function generateTrackerInstructions(includeHtmlPrompt = true, includeCon
     // Only add tracker instructions if at least one tracker is enabled
     if (hasAnyTrackers) {
         // Universal instruction header
-        instructions += `\nYou must start your response with an appropriate update to the trackers in EXACTLY the same format as below, enclosed in separate Markdown code fences. Replace X with proper numbers and placeholders in [brackets] with in-world details ${userName} perceives about the current scene and the present characters. Consider the last trackers in the conversation (if they exist). Manage them accordingly and realistically; raise, lower, change, or keep the values unchanged based on the user's actions, the passage of time, and logical consequences:\n`;
+        instructions += `\nYou must start your response with an appropriate update to the trackers in EXACTLY the same format as below, enclosed in separate Markdown code fences. Replace X with proper numbers and placeholders in [brackets] (while removing the brackets themselves) with in-world details ${userName} perceives about the current scene and the present characters. Consider the last trackers in the conversation (if they exist). Manage them accordingly and realistically; raise, lower, change, or keep the values unchanged based on the user's actions, the passage of time, and logical consequences:\n`;
 
         // Add format specifications for each enabled tracker
         if (extensionSettings.showUserStats) {

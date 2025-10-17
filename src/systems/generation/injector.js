@@ -32,6 +32,7 @@ export function onGenerationStarted(type, data) {
     // console.log('[RPG Companion] enabled:', extensionSettings.enabled);
     // console.log('[RPG Companion] generationMode:', extensionSettings.generationMode);
     // console.log('[RPG Companion] ⚡ EVENT: onGenerationStarted - lastActionWasSwipe =', lastActionWasSwipe, '| isGenerating =', isGenerating);
+    // console.log('[RPG Companion] Committed Prompt:', committedTrackerData);
 
     // Skip tracker injection for image generation requests
     if (data?.quietImage) {

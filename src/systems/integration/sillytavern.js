@@ -185,7 +185,7 @@ export async function onMessageReceived(data) {
     // Note: No need to clear extension prompt since we used quiet_prompt option
     if (isPlotProgression) {
         setIsPlotProgression(false);
-        console.log('[RPG Companion] Plot progression generation completed');
+        // console.log('[RPG Companion] Plot progression generation completed');
     }
 }
 
@@ -291,7 +291,7 @@ export function onMessageSwiped(messageIndex) {
 export function updatePersonaAvatar() {
     const portraitImg = document.querySelector('.rpg-user-portrait');
     if (!portraitImg) {
-        console.log('[RPG Companion] Portrait image element not found in DOM');
+        // console.log('[RPG Companion] Portrait image element not found in DOM');
         return;
     }
 
@@ -299,7 +299,7 @@ export function updatePersonaAvatar() {
     const context = getContext();
     const currentUserAvatar = context.user_avatar || user_avatar;
 
-    console.log('[RPG Companion] Attempting to update persona avatar:', currentUserAvatar);
+    // console.log('[RPG Companion] Attempting to update persona avatar:', currentUserAvatar);
 
     // Try to get a valid thumbnail URL using our safe helper
     if (currentUserAvatar) {
@@ -308,14 +308,14 @@ export function updatePersonaAvatar() {
         if (thumbnailUrl) {
             // Only update the src if we got a valid URL
             portraitImg.src = thumbnailUrl;
-            console.log('[RPG Companion] Persona avatar updated successfully');
+            // console.log('[RPG Companion] Persona avatar updated successfully');
         } else {
             // Don't update the src if we couldn't get a valid URL
             // This prevents 400 errors and keeps the existing image
-            console.warn('[RPG Companion] Could not get valid thumbnail URL for persona avatar, keeping existing image');
+            // console.warn('[RPG Companion] Could not get valid thumbnail URL for persona avatar, keeping existing image');
         }
     } else {
-        console.log('[RPG Companion] No user avatar configured, keeping existing image');
+        // console.log('[RPG Companion] No user avatar configured, keeping existing image');
     }
 }
 

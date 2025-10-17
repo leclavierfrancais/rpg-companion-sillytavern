@@ -17,6 +17,7 @@ export let extensionSettings = {
     showUserStats: true,
     showInfoBox: true,
     showCharacterThoughts: true,
+    showInventory: true, // Show inventory section (v2 system)
     showThoughtsInChat: true, // Show thoughts overlay in chat
     enableHtmlPrompt: false, // Enable immersive HTML prompt injection
     enablePlotButtons: true, // Show plot progression buttons above chat input
@@ -59,7 +60,8 @@ export let extensionSettings = {
         wis: 10,
         cha: 10
     },
-    lastDiceRoll: null // Store last dice roll result
+    lastDiceRoll: null, // Store last dice roll result
+    collapsedInventoryLocations: [] // Array of collapsed storage location names
 };
 
 /**
@@ -123,6 +125,7 @@ export let $panelContainer = null;
 export let $userStatsContainer = null;
 export let $infoBoxContainer = null;
 export let $thoughtsContainer = null;
+export let $inventoryContainer = null;
 
 /**
  * State setters - provide controlled mutation of state variables
@@ -185,4 +188,8 @@ export function setInfoBoxContainer($element) {
 
 export function setThoughtsContainer($element) {
     $thoughtsContainer = $element;
+}
+
+export function setInventoryContainer($element) {
+    $inventoryContainer = $element;
 }

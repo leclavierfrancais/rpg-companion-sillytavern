@@ -29,6 +29,7 @@ export const defaultSettings = {
     showUserStats: true,
     showInfoBox: true,
     showCharacterThoughts: true,
+    showInventory: true, // Show inventory section (v2 system)
     showThoughtsInChat: true, // Show thoughts overlay in chat
     enableHtmlPrompt: false, // Enable immersive HTML prompt injection
     enablePlotButtons: true, // Show plot progression buttons above chat input
@@ -71,5 +72,6 @@ export const defaultSettings = {
         wis: 10,
         cha: 10
     },
-    lastDiceRoll: null // Store last dice roll result
+    lastDiceRoll: null, // Store last dice roll result
+    collapsedInventoryLocations: [] // Array of collapsed storage location names
 };

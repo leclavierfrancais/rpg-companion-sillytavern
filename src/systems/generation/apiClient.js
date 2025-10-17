@@ -25,8 +25,9 @@ import { parseResponse, parseUserStats } from './parser.js';
  * @param {Function} renderUserStats - UI function to render user stats
  * @param {Function} renderInfoBox - UI function to render info box
  * @param {Function} renderThoughts - UI function to render character thoughts
+ * @param {Function} renderInventory - UI function to render inventory
  */
-export async function updateRPGData(renderUserStats, renderInfoBox, renderThoughts) {
+export async function updateRPGData(renderUserStats, renderInfoBox, renderThoughts, renderInventory) {
     if (isGenerating) {
         // console.log('[RPG Companion] Already generating, skipping...');
         return;
@@ -123,6 +124,7 @@ export async function updateRPGData(renderUserStats, renderInfoBox, renderThough
                 renderUserStats();
                 renderInfoBox();
                 renderThoughts();
+                renderInventory();
             } else {
                 // No assistant message to attach to - just update display
                 if (parsedData.userStats) {
@@ -131,6 +133,7 @@ export async function updateRPGData(renderUserStats, renderInfoBox, renderThough
                 renderUserStats();
                 renderInfoBox();
                 renderThoughts();
+                renderInventory();
             }
 
             // Save to chat metadata

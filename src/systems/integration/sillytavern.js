@@ -28,6 +28,7 @@ import { updateRPGData } from '../generation/apiClient.js';
 import { renderUserStats } from '../rendering/userStats.js';
 import { renderInfoBox } from '../rendering/infoBox.js';
 import { renderThoughts, updateChatThoughts } from '../rendering/thoughts.js';
+import { renderInventory } from '../rendering/inventory.js';
 
 // Utils
 import { getSafeThumbnailUrl } from '../../utils/avatars.js';
@@ -162,6 +163,7 @@ export async function onMessageReceived(data) {
             renderUserStats();
             renderInfoBox();
             renderThoughts();
+            renderInventory();
 
             // Save to chat metadata
             saveChatData();
@@ -169,7 +171,7 @@ export async function onMessageReceived(data) {
     } else if (extensionSettings.generationMode === 'separate' && extensionSettings.autoUpdate) {
         // In separate mode with auto-update, trigger update after message
         setTimeout(async () => {
-            await updateRPGData(renderUserStats, renderInfoBox, renderThoughts);
+            await updateRPGData(renderUserStats, renderInfoBox, renderThoughts, renderInventory);
         }, 500);
     }
 
@@ -210,6 +212,7 @@ export function onCharacterChanged() {
     renderUserStats();
     renderInfoBox();
     renderThoughts();
+    renderInventory();
 
     // Update chat thought overlays
     updateChatThoughts();
@@ -280,6 +283,7 @@ export function onMessageSwiped(messageIndex) {
     renderUserStats();
     renderInfoBox();
     renderThoughts();
+    renderInventory();
 
     // Update chat thought overlays
     updateChatThoughts();

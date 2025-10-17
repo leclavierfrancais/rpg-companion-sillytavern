@@ -8,7 +8,8 @@ import {
     $panelContainer,
     $userStatsContainer,
     $infoBoxContainer,
-    $thoughtsContainer
+    $thoughtsContainer,
+    $inventoryContainer
 } from '../../core/state.js';
 
 /**
@@ -217,17 +218,25 @@ export function updateSectionVisibility() {
     $userStatsContainer.toggle(extensionSettings.showUserStats);
     $infoBoxContainer.toggle(extensionSettings.showInfoBox);
     $thoughtsContainer.toggle(extensionSettings.showCharacterThoughts);
+    if ($inventoryContainer) {
+        $inventoryContainer.toggle(extensionSettings.showInventory);
+    }
 
     // Show/hide dividers intelligently
     // Divider after User Stats: shown if User Stats is visible AND at least one section after it is visible
     const showDividerAfterStats = extensionSettings.showUserStats &&
-        (extensionSettings.showInfoBox || extensionSettings.showCharacterThoughts);
+        (extensionSettings.showInfoBox || extensionSettings.showCharacterThoughts || extensionSettings.showInventory);
     $('#rpg-divider-stats').toggle(showDividerAfterStats);
 
-    // Divider after Info Box: shown if Info Box is visible AND Mind Reading is visible
+    // Divider after Info Box: shown if Info Box is visible AND at least one section after it is visible
     const showDividerAfterInfo = extensionSettings.showInfoBox &&
-        extensionSettings.showCharacterThoughts;
+        (extensionSettings.showCharacterThoughts || extensionSettings.showInventory);
     $('#rpg-divider-info').toggle(showDividerAfterInfo);
+
+    // Divider after Thoughts: shown if Thoughts is visible AND Inventory is visible
+    const showDividerAfterThoughts = extensionSettings.showCharacterThoughts &&
+        extensionSettings.showInventory;
+    $('#rpg-divider-thoughts').toggle(showDividerAfterThoughts);
 }
 
 /**

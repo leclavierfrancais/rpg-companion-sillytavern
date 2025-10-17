@@ -18,6 +18,7 @@ import {
     $userStatsContainer,
     $infoBoxContainer,
     $thoughtsContainer,
+    $inventoryContainer,
     setExtensionSettings,
     updateExtensionSettings,
     setLastGeneratedData,
@@ -31,7 +32,8 @@ import {
     setPanelContainer,
     setUserStatsContainer,
     setInfoBoxContainer,
-    setThoughtsContainer
+    setThoughtsContainer,
+    setInventoryContainer
 } from './src/core/state.js';
 import { loadSettings, saveSettings, saveChatData, loadChatData, updateMessageSwipeData } from './src/core/persistence.js';
 import { registerAllEvents } from './src/core/events.js';
@@ -58,6 +60,10 @@ import {
     updateChatThoughts,
     createThoughtPanel
 } from './src/systems/rendering/thoughts.js';
+import { renderInventory } from './src/systems/rendering/inventory.js';
+
+// Interaction modules
+import { initInventoryEventListeners } from './src/systems/interaction/inventoryActions.js';
 
 // UI Systems modules
 import {
@@ -180,6 +186,7 @@ async function initUI() {
     setUserStatsContainer($('#rpg-user-stats'));
     setInfoBoxContainer($('#rpg-info-box'));
     setThoughtsContainer($('#rpg-thoughts'));
+    setInventoryContainer($('#rpg-inventory'));
 
     // Set up event listeners (enable/disable is handled in Extensions tab)
     $('#rpg-toggle-auto-update').on('change', function() {
@@ -225,6 +232,12 @@ async function initUI() {
         updateSectionVisibility();
     });
 
+    $('#rpg-toggle-inventory').on('change', function() {
+        extensionSettings.showInventory = $(this).prop('checked');
+        saveSettings();
+        updateSectionVisibility();
+    });
+
     $('#rpg-toggle-thoughts-in-chat').on('change', function() {
         extensionSettings.showThoughtsInChat = $(this).prop('checked');
         // console.log('[RPG Companion] Toggle showThoughtsInChat changed to:', extensionSettings.showThoughtsInChat);
@@ -256,7 +269,7 @@ async function initUI() {
             // console.log('[RPG Companion] Extension is disabled. Please enable it in the Extensions tab.');
             return;
         }
-        await updateRPGData(renderUserStats, renderInfoBox, renderThoughts);
+        await updateRPGData(renderUserStats, renderInfoBox, renderThoughts, renderInventory);
     });
 
     $('#rpg-stat-bar-color-low').on('change', function() {
@@ -330,6 +343,7 @@ async function initUI() {
     $('#rpg-toggle-user-stats').prop('checked', extensionSettings.showUserStats);
     $('#rpg-toggle-info-box').prop('checked', extensionSettings.showInfoBox);
     $('#rpg-toggle-thoughts').prop('checked', extensionSettings.showCharacterThoughts);
+    $('#rpg-toggle-inventory').prop('checked', extensionSettings.showInventory);
     $('#rpg-toggle-thoughts-in-chat').prop('checked', extensionSettings.showThoughtsInChat);
     $('#rpg-toggle-html-prompt').prop('checked', extensionSettings.enableHtmlPrompt);
     $('#rpg-toggle-plot-buttons').prop('checked', extensionSettings.enablePlotButtons);
@@ -361,6 +375,7 @@ async function initUI() {
     renderUserStats();
     renderInfoBox();
     renderThoughts();
+    renderInventory();
     updateDiceDisplay();
     setupDiceRoller();
     setupClassicStatsButtons();
@@ -369,6 +384,7 @@ async function initUI() {
     setupPlotButtons(sendPlotProgression);
     setupMobileKeyboardHandling();
     setupContentEditableScrolling();
+    initInventoryEventListeners();
 }
 
 

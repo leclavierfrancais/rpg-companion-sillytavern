@@ -8,14 +8,20 @@ import {
     extensionSettings,
     lastGeneratedData,
     committedTrackerData,
-    pendingDiceRoll,
     $infoBoxContainer,
     $thoughtsContainer,
-    setPendingDiceRoll
+    setPendingDiceRoll,
+    getPendingDiceRoll
 } from '../../core/state.js';
 import { saveSettings, saveChatData } from '../../core/persistence.js';
 import { renderUserStats } from '../rendering/userStats.js';
 import { updateChatThoughts } from '../rendering/thoughts.js';
+import {
+    rollDice as rollDiceCore,
+    clearDiceRoll as clearDiceRollCore,
+    updateDiceDisplay as updateDiceDisplayCore,
+    addDiceQuickReply as addDiceQuickReplyCore
+} from '../features/dice.js';
 
 /**
  * Modern DiceModal ES6 Class
@@ -283,16 +289,17 @@ export function setupDiceRoller() {
 
     // Roll dice button
     $('#rpg-dice-roll-btn').on('click', async function() {
-        await rollDice();
+        await rollDiceCore(diceModal);
     });
 
     // Save roll button (closes popup and saves the roll)
     $('#rpg-dice-save-btn').on('click', function() {
         // Save the pending roll
-        if (pendingDiceRoll) {
-            extensionSettings.lastDiceRoll = pendingDiceRoll;
+        const roll = getPendingDiceRoll();
+        if (roll) {
+            extensionSettings.lastDiceRoll = roll;
             saveSettings();
-            updateDiceDisplay();
+            updateDiceDisplayCore();
             setPendingDiceRoll(null);
         }
         closeDicePopup();
@@ -301,14 +308,14 @@ export function setupDiceRoller() {
     // Reset on Enter key
     $('#rpg-dice-count, #rpg-dice-sides').on('keypress', function(e) {
         if (e.which === 13) {
-            rollDice();
+            rollDiceCore(diceModal);
         }
     });
 
     // Clear dice roll button
     $('#rpg-clear-dice').on('click', function(e) {
         e.stopPropagation(); // Prevent opening the dice popup
-        clearDiceRoll();
+        clearDiceRollCore();
     });
 
     return diceModal;
@@ -402,7 +409,7 @@ export function setupSettingsPopup() {
 
         // Re-render user stats and dice display
         renderUserStats();
-        updateDiceDisplay();
+        updateDiceDisplayCore();
         updateChatThoughts(); // Clear the thought bubble in chat
 
         // console.log('[RPG Companion] Chat cache cleared');
@@ -462,101 +469,26 @@ export function applyCustomThemeToPopup() {
 
 /**
  * Clears the last dice roll.
+ * Backwards compatible wrapper for dice module.
  */
 export function clearDiceRoll() {
-    extensionSettings.lastDiceRoll = null;
-    saveSettings();
-    updateDiceDisplay();
-}
-
-/**
- * Rolls the dice and displays result.
- * Refactored to use DiceModal class.
- */
-async function rollDice() {
-    if (!diceModal) return;
-
-    const count = parseInt(String($('#rpg-dice-count').val())) || 1;
-    const sides = parseInt(String($('#rpg-dice-sides').val())) || 20;
-
-    // Start rolling animation
-    diceModal.startRolling();
-
-    // Wait for animation (simulate rolling)
-    await new Promise(resolve => setTimeout(resolve, 1200));
-
-    // Execute /roll command
-    const rollCommand = `/roll ${count}d${sides}`;
-    const rollResult = await executeRollCommand(rollCommand);
-
-    // Parse result
-    const total = rollResult.total || 0;
-    const rolls = rollResult.rolls || [];
-
-    // Store result temporarily (not saved until "Save Roll" is clicked)
-    setPendingDiceRoll({
-        formula: `${count}d${sides}`,
-        total: total,
-        rolls: rolls,
-        timestamp: Date.now()
-    });
-
-    // Show result
-    diceModal.showResult(total, rolls);
-
-    // Don't update sidebar display yet - only update when user clicks "Save Roll"
-}
-
-/**
- * Executes a /roll command and returns the result.
- */
-async function executeRollCommand(command) {
-    try {
-        // Parse the dice notation (e.g., "2d20")
-        const match = command.match(/(\d+)d(\d+)/);
-        if (!match) {
-            return { total: 0, rolls: [] };
-        }
-
-        const count = parseInt(match[1]);
-        const sides = parseInt(match[2]);
-        const rolls = [];
-        let total = 0;
-
-        for (let i = 0; i < count; i++) {
-            const roll = Math.floor(Math.random() * sides) + 1;
-            rolls.push(roll);
-            total += roll;
-        }
-
-        return { total, rolls };
-    } catch (error) {
-        console.error('[RPG Companion] Error rolling dice:', error);
-        return { total: 0, rolls: [] };
-    }
+    clearDiceRollCore();
 }
 
 /**
  * Updates the dice display in the sidebar.
+ * Backwards compatible wrapper for dice module.
  */
 export function updateDiceDisplay() {
-    const lastRoll = extensionSettings.lastDiceRoll;
-    if (lastRoll) {
-        $('#rpg-last-roll-text').text(`Last Roll (${lastRoll.formula}): ${lastRoll.total}`);
-    } else {
-        $('#rpg-last-roll-text').text('Last Roll: None');
-    }
+    updateDiceDisplayCore();
 }
 
 /**
  * Adds the Roll Dice quick reply button.
+ * Backwards compatible wrapper for dice module.
  */
 export function addDiceQuickReply() {
-    // Create quick reply button if Quick Replies exist
-    if (window.quickReplyApi) {
-        // Quick Reply API integration would go here
-        // For now, the dice display in the sidebar serves as the button
-    }
+    addDiceQuickReplyCore();
 }
 
 /**

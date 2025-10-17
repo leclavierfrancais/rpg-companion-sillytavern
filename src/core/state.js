@@ -151,6 +151,10 @@ export function setPendingDiceRoll(roll) {
     pendingDiceRoll = roll;
 }
 
+export function getPendingDiceRoll() {
+    return pendingDiceRoll;
+}
+
 export function setPanelContainer($element) {
     $panelContainer = $element;
 }

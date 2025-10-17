@@ -41,12 +41,9 @@ export function renderOnPersonView(onPersonItems) {
         <div class="rpg-inventory-section" data-section="onPerson">
             <div class="rpg-inventory-header">
                 <h4>Items Currently Carried</h4>
-                <button class="rpg-inventory-edit-btn" data-action="edit-onperson" title="Edit on-person inventory">
-                    <i class="fa-solid fa-pen"></i> Edit
-                </button>
             </div>
             <div class="rpg-inventory-content">
-                <div class="rpg-inventory-text">${escapeHtml(displayText)}</div>
+                <div class="rpg-inventory-text rpg-editable" contenteditable="true" data-field="onPerson" title="Click to edit">${escapeHtml(displayText)}</div>
             </div>
         </div>
     `;
@@ -70,6 +67,17 @@ export function renderStoredView(stored, collapsedLocations = []) {
                 </button>
             </div>
             <div class="rpg-inventory-content">
+                <div class="rpg-inline-form" id="rpg-add-location-form" style="display: none;">
+                    <input type="text" class="rpg-inline-input" id="rpg-new-location-name" placeholder="Enter location name..." />
+                    <div class="rpg-inline-buttons">
+                        <button class="rpg-inline-btn rpg-inline-cancel" data-action="cancel-add-location">
+                            <i class="fa-solid fa-times"></i> Cancel
+                        </button>
+                        <button class="rpg-inline-btn rpg-inline-save" data-action="save-add-location">
+                            <i class="fa-solid fa-check"></i> Save
+                        </button>
+                    </div>
+                </div>
     `;
 
     if (locations.length === 0) {
@@ -90,16 +98,24 @@ export function renderStoredView(stored, collapsedLocations = []) {
                         </button>
                         <h5 class="rpg-storage-name">${escapeHtml(location)}</h5>
                         <div class="rpg-storage-actions">
-                            <button class="rpg-inventory-edit-btn" data-action="edit-location" data-location="${escapeHtml(location)}" title="Edit items at this location">
-                                <i class="fa-solid fa-pen"></i>
-                            </button>
                             <button class="rpg-inventory-remove-btn" data-action="remove-location" data-location="${escapeHtml(location)}" title="Remove this storage location">
                                 <i class="fa-solid fa-trash"></i>
                             </button>
                         </div>
                     </div>
                     <div class="rpg-storage-content" ${isCollapsed ? 'style="display:none;"' : ''}>
-                        <div class="rpg-inventory-text">${escapeHtml(items || 'None')}</div>
+                        <div class="rpg-inventory-text rpg-editable" contenteditable="true" data-field="stored" data-location="${escapeHtml(location)}" title="Click to edit">${escapeHtml(items || 'None')}</div>
+                    </div>
+                    <div class="rpg-inline-confirmation" id="rpg-remove-confirm-${escapeHtml(location).replace(/\s+/g, '-')}" style="display: none;">
+                        <p>Remove "${escapeHtml(location)}"? This will delete all items stored there.</p>
+                        <div class="rpg-inline-buttons">
+                            <button class="rpg-inline-btn rpg-inline-cancel" data-action="cancel-remove-location" data-location="${escapeHtml(location)}">
+                                <i class="fa-solid fa-times"></i> Cancel
+                            </button>
+                            <button class="rpg-inline-btn rpg-inline-confirm" data-action="confirm-remove-location" data-location="${escapeHtml(location)}">
+                                <i class="fa-solid fa-check"></i> Confirm
+                            </button>
+                        </div>
                     </div>
                 </div>
             `;
@@ -125,12 +141,9 @@ export function renderAssetsView(assets) {
         <div class="rpg-inventory-section" data-section="assets">
             <div class="rpg-inventory-header">
                 <h4>Vehicles, Property & Major Possessions</h4>
-                <button class="rpg-inventory-edit-btn" data-action="edit-assets" title="Edit assets">
-                    <i class="fa-solid fa-pen"></i> Edit
-                </button>
             </div>
             <div class="rpg-inventory-content">
-                <div class="rpg-inventory-text">${escapeHtml(displayText)}</div>
+                <div class="rpg-inventory-text rpg-editable" contenteditable="true" data-field="assets" title="Click to edit">${escapeHtml(displayText)}</div>
                 <div class="rpg-inventory-hint">
                     <i class="fa-solid fa-info-circle"></i>
                     Assets include vehicles (cars, motorcycles), property (homes, apartments),

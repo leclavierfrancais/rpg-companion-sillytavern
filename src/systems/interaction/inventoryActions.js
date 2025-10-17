@@ -6,7 +6,7 @@
 import { extensionSettings, lastGeneratedData } from '../../core/state.js';
 import { saveSettings, saveChatData, updateMessageSwipeData } from '../../core/persistence.js';
 import { buildInventorySummary } from '../generation/promptBuilder.js';
-import { renderInventory, updateInventoryDisplay } from '../rendering/inventory.js';
+import { renderInventory } from '../rendering/inventory.js';
 
 // Type imports
 /** @typedef {import('../../types/inventory.js').InventoryV2} InventoryV2 */
@@ -43,124 +43,151 @@ function updateLastGeneratedDataInventory() {
 }
 
 /**
- * Edits items currently on the character's person.
- * @returns {Promise<void>}
+ * Handles blur event for contenteditable "On Person" field.
+ * Saves changes when user finishes editing.
+ * @param {HTMLElement} element - The contenteditable element
  */
-export async function editOnPerson() {
+export function handleOnPersonBlur(element) {
     const inventory = extensionSettings.userStats.inventory;
-    const current = inventory.onPerson || 'None';
+    const newValue = element.textContent.trim() || 'None';
 
-    const newValue = prompt('Edit items on person (carried/worn):', current);
-    if (newValue === null) return; // User cancelled
+    // Only save if value actually changed
+    if (newValue !== inventory.onPerson) {
+        inventory.onPerson = newValue;
 
-    inventory.onPerson = newValue.trim() || 'None';
-
-    updateLastGeneratedDataInventory();
-    saveSettings();
-    saveChatData();
-    updateMessageSwipeData();
-
-    // Re-render inventory UI
-    updateInventoryDisplay('rpg-inventory-content', {
-        activeSubTab: currentActiveSubTab,
-        collapsedLocations
-    });
+        updateLastGeneratedDataInventory();
+        saveSettings();
+        saveChatData();
+        updateMessageSwipeData();
+    }
 }
 
 /**
- * Edits items stored at a specific location.
+ * Handles blur event for contenteditable stored location field.
+ * Saves changes when user finishes editing.
+ * @param {HTMLElement} element - The contenteditable element
  * @param {string} locationName - Name of the storage location
- * @returns {Promise<void>}
  */
-export async function editStoredLocation(locationName) {
+export function handleStoredLocationBlur(element, locationName) {
     const inventory = extensionSettings.userStats.inventory;
-    const current = inventory.stored[locationName] || 'None';
+    const newValue = element.textContent.trim() || 'None';
 
-    const newValue = prompt(`Edit items stored at "${locationName}":`, current);
-    if (newValue === null) return; // User cancelled
+    // Only save if value actually changed
+    if (newValue !== inventory.stored[locationName]) {
+        inventory.stored[locationName] = newValue;
 
-    inventory.stored[locationName] = newValue.trim() || 'None';
-
-    updateLastGeneratedDataInventory();
-    saveSettings();
-    saveChatData();
-    updateMessageSwipeData();
-
-    // Re-render inventory UI
-    updateInventoryDisplay('rpg-inventory-content', {
-        activeSubTab: currentActiveSubTab,
-        collapsedLocations
-    });
+        updateLastGeneratedDataInventory();
+        saveSettings();
+        saveChatData();
+        updateMessageSwipeData();
+    }
 }
 
 /**
- * Edits character's assets (vehicles, property, major possessions).
- * @returns {Promise<void>}
+ * Handles blur event for contenteditable "Assets" field.
+ * Saves changes when user finishes editing.
+ * @param {HTMLElement} element - The contenteditable element
  */
-export async function editAssets() {
+export function handleAssetsBlur(element) {
     const inventory = extensionSettings.userStats.inventory;
-    const current = inventory.assets || 'None';
+    const newValue = element.textContent.trim() || 'None';
 
-    const newValue = prompt('Edit assets (vehicles, property, equipment):', current);
-    if (newValue === null) return; // User cancelled
+    // Only save if value actually changed
+    if (newValue !== inventory.assets) {
+        inventory.assets = newValue;
 
-    inventory.assets = newValue.trim() || 'None';
-
-    updateLastGeneratedDataInventory();
-    saveSettings();
-    saveChatData();
-    updateMessageSwipeData();
-
-    // Re-render inventory UI
-    updateInventoryDisplay('rpg-inventory-content', {
-        activeSubTab: currentActiveSubTab,
-        collapsedLocations
-    });
+        updateLastGeneratedDataInventory();
+        saveSettings();
+        saveChatData();
+        updateMessageSwipeData();
+    }
 }
 
 /**
- * Adds a new storage location to the inventory.
- * @returns {Promise<void>}
+ * Shows the inline form for adding a new storage location.
  */
-export async function addStorageLocation() {
+export function showAddLocationForm() {
+    const form = $('#rpg-add-location-form');
+    const input = $('#rpg-new-location-name');
+
+    form.show();
+    input.val('').focus();
+}
+
+/**
+ * Hides the inline form for adding a new storage location.
+ */
+export function hideAddLocationForm() {
+    const form = $('#rpg-add-location-form');
+    const input = $('#rpg-new-location-name');
+
+    form.hide();
+    input.val('');
+}
+
+/**
+ * Saves a new storage location from the inline form.
+ */
+export function saveAddLocation() {
     const inventory = extensionSettings.userStats.inventory;
+    const input = $('#rpg-new-location-name');
+    const locationName = input.val().trim();
 
-    const locationName = prompt('Enter name for new storage location:');
-    if (!locationName) return; // User cancelled or entered empty string
-
-    const trimmedName = locationName.trim();
+    if (!locationName) {
+        hideAddLocationForm();
+        return;
+    }
 
     // Check for duplicate
-    if (inventory.stored[trimmedName]) {
-        alert(`Storage location "${trimmedName}" already exists.`);
+    if (inventory.stored[locationName]) {
+        alert(`Storage location "${locationName}" already exists.`);
         return;
     }
 
     // Create new location with default "None"
-    inventory.stored[trimmedName] = 'None';
+    inventory.stored[locationName] = 'None';
 
     updateLastGeneratedDataInventory();
     saveSettings();
     saveChatData();
     updateMessageSwipeData();
 
-    // Switch to stored tab and re-render
-    currentActiveSubTab = 'stored';
-    updateInventoryDisplay('rpg-inventory-content', {
-        activeSubTab: currentActiveSubTab,
-        collapsedLocations
-    });
+    // Hide form and re-render
+    hideAddLocationForm();
+    renderInventory();
 }
 
 /**
- * Removes a storage location from the inventory.
+ * Shows the inline confirmation UI for removing a storage location.
  * @param {string} locationName - Name of location to remove
- * @returns {Promise<void>}
  */
-export async function removeStorageLocation(locationName) {
-    const confirmed = confirm(`Remove storage location "${locationName}"?\n\nThis will delete all items stored there.`);
-    if (!confirmed) return;
+export function showRemoveConfirmation(locationName) {
+    const confirmId = `rpg-remove-confirm-${locationName.replace(/\s+/g, '-')}`;
+    const confirmUI = $(`#${confirmId}`);
 
+    if (confirmUI.length > 0) {
+        confirmUI.show();
+    }
+}
+
+/**
+ * Hides the inline confirmation UI for removing a storage location.
+ * @param {string} locationName - Name of location
+ */
+export function hideRemoveConfirmation(locationName) {
+    const confirmId = `rpg-remove-confirm-${locationName.replace(/\s+/g, '-')}`;
+    const confirmUI = $(`#${confirmId}`);
+
+    if (confirmUI.length > 0) {
+        confirmUI.hide();
+    }
+}
+
+/**
+ * Confirms and removes a storage location from the inventory.
+ * @param {string} locationName - Name of location to remove
+ */
+export function confirmRemoveLocation(locationName) {
     const inventory = extensionSettings.userStats.inventory;
     delete inventory.stored[locationName];
 
@@ -176,10 +203,7 @@ export async function removeStorageLocation(locationName) {
     updateMessageSwipeData();
 
     // Re-render inventory UI
-    updateInventoryDisplay('rpg-inventory-content', {
-        activeSubTab: currentActiveSubTab,
-        collapsedLocations
-    });
+    renderInventory();
 }
 
 /**
@@ -202,10 +226,7 @@ export function toggleLocationCollapse(locationName) {
     saveSettings();
 
     // Re-render inventory UI
-    updateInventoryDisplay('rpg-inventory-content', {
-        activeSubTab: currentActiveSubTab,
-        collapsedLocations
-    });
+    renderInventory();
 }
 
 /**
@@ -216,10 +237,7 @@ export function switchInventoryTab(tabName) {
     currentActiveSubTab = tabName;
 
     // Re-render inventory UI
-    updateInventoryDisplay('rpg-inventory-content', {
-        activeSubTab: currentActiveSubTab,
-        collapsedLocations
-    });
+    renderInventory();
 }
 
 /**
@@ -232,40 +250,66 @@ export function initInventoryEventListeners() {
         collapsedLocations = extensionSettings.collapsedInventoryLocations;
     }
 
-    // Event delegation for all inventory buttons
-    $(document).on('click', '.rpg-inventory-edit-btn', function(e) {
-        e.preventDefault();
-        const action = $(this).data('action');
+    // Contenteditable blur handlers (inline editing)
+    $(document).on('blur', '.rpg-inventory-text[contenteditable="true"]', function() {
+        const field = $(this).data('field');
+        const element = this;
 
-        if (action === 'edit-onperson') {
-            editOnPerson();
-        } else if (action === 'edit-location') {
+        if (field === 'onPerson') {
+            handleOnPersonBlur(element);
+        } else if (field === 'stored') {
             const location = $(this).data('location');
-            editStoredLocation(location);
-        } else if (action === 'edit-assets') {
-            editAssets();
+            handleStoredLocationBlur(element, location);
+        } else if (field === 'assets') {
+            handleAssetsBlur(element);
         }
     });
 
-    // Add location button
-    $(document).on('click', '.rpg-inventory-add-btn', function(e) {
+    // Add location button - shows inline form
+    $(document).on('click', '.rpg-inventory-add-btn[data-action="add-location"]', function(e) {
         e.preventDefault();
-        const action = $(this).data('action');
+        showAddLocationForm();
+    });
 
-        if (action === 'add-location') {
-            addStorageLocation();
+    // Add location inline form - save button
+    $(document).on('click', '.rpg-inline-btn[data-action="save-add-location"]', function(e) {
+        e.preventDefault();
+        saveAddLocation();
+    });
+
+    // Add location inline form - cancel button
+    $(document).on('click', '.rpg-inline-btn[data-action="cancel-add-location"]', function(e) {
+        e.preventDefault();
+        hideAddLocationForm();
+    });
+
+    // Add location inline form - enter key to save
+    $(document).on('keypress', '#rpg-new-location-name', function(e) {
+        if (e.which === 13) { // Enter key
+            e.preventDefault();
+            saveAddLocation();
         }
     });
 
-    // Remove location buttons
-    $(document).on('click', '.rpg-inventory-remove-btn', function(e) {
+    // Remove location button - shows inline confirmation
+    $(document).on('click', '.rpg-inventory-remove-btn[data-action="remove-location"]', function(e) {
         e.preventDefault();
-        const action = $(this).data('action');
+        const location = $(this).data('location');
+        showRemoveConfirmation(location);
+    });
 
-        if (action === 'remove-location') {
-            const location = $(this).data('location');
-            removeStorageLocation(location);
-        }
+    // Remove location inline confirmation - confirm button
+    $(document).on('click', '.rpg-inline-btn[data-action="confirm-remove-location"]', function(e) {
+        e.preventDefault();
+        const location = $(this).data('location');
+        confirmRemoveLocation(location);
+    });
+
+    // Remove location inline confirmation - cancel button
+    $(document).on('click', '.rpg-inline-btn[data-action="cancel-remove-location"]', function(e) {
+        e.preventDefault();
+        const location = $(this).data('location');
+        hideRemoveConfirmation(location);
     });
 
     // Collapse toggle buttons

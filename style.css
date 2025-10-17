@@ -4109,6 +4109,121 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     color: white;
 }
 
+/* Inline Editing Styles */
+.rpg-inventory-text.rpg-editable {
+    cursor: text;
+    transition: all 0.2s ease;
+    min-height: 2rem;
+}
+
+.rpg-inventory-text.rpg-editable:hover {
+    background: var(--SmartThemeQuoteColor);
+    border-color: var(--ac-style-color-matchedText);
+}
+
+.rpg-inventory-text.rpg-editable:focus {
+    outline: none;
+    border-color: var(--ac-style-color-matchedText);
+    background: var(--SmartThemeEmColor);
+    box-shadow: 0 0 0 2px rgba(var(--ac-style-color-matchedText-rgb, 66, 135, 245), 0.2);
+}
+
+.rpg-inventory-text.rpg-editable:empty::before {
+    content: 'Click to edit...';
+    color: var(--SmartThemeFastUISliderColColor);
+    font-style: italic;
+}
+
+/* Inline Forms */
+.rpg-inline-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: var(--SmartThemeQuoteColor);
+    border: 1px solid var(--ac-style-color-matchedText);
+    border-radius: 0.25rem;
+    margin-bottom: 0.75rem;
+}
+
+.rpg-inline-input {
+    padding: 0.5rem 0.75rem;
+    background: var(--SmartThemeBlurTintColor);
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 0.25rem;
+    color: var(--SmartThemeBodyColor);
+    font-size: 0.9rem;
+    font-family: inherit;
+}
+
+.rpg-inline-input:focus {
+    outline: none;
+    border-color: var(--ac-style-color-matchedText);
+    box-shadow: 0 0 0 2px rgba(var(--ac-style-color-matchedText-rgb, 66, 135, 245), 0.2);
+}
+
+.rpg-inline-buttons {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
+
+.rpg-inline-btn {
+    padding: 0.4rem 0.75rem;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 0.25rem;
+    background: var(--SmartThemeBlurTintColor);
+    color: var(--SmartThemeBodyColor);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.rpg-inline-btn:hover {
+    opacity: 0.85;
+}
+
+.rpg-inline-cancel {
+    background: var(--SmartThemeBlurTintColor);
+    color: var(--SmartThemeFastUISliderColColor);
+}
+
+.rpg-inline-cancel:hover {
+    background: #6c757d;
+    border-color: #6c757d;
+    color: white;
+}
+
+.rpg-inline-save,
+.rpg-inline-confirm {
+    background: var(--ac-style-color-matchedText);
+    border-color: var(--ac-style-color-matchedText);
+    color: white;
+}
+
+.rpg-inline-save:hover,
+.rpg-inline-confirm:hover {
+    opacity: 0.85;
+}
+
+/* Inline Confirmation */
+.rpg-inline-confirmation {
+    padding: 0.75rem;
+    background: var(--SmartThemeQuoteColor);
+    border: 1px solid #dc3545;
+    border-radius: 0.25rem;
+    margin-top: 0.5rem;
+}
+
+.rpg-inline-confirmation p {
+    margin: 0 0 0.75rem 0;
+    color: var(--SmartThemeBodyColor);
+    font-size: 0.9rem;
+}
+
 /* ============================================
    DESKTOP TABS SYSTEM
    ============================================ */

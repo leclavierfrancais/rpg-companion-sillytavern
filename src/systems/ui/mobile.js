@@ -512,17 +512,19 @@ export function setupMobileTabs() {
     const $userStats = $('#rpg-user-stats');
     const $infoBox = $('#rpg-info-box');
     const $thoughts = $('#rpg-thoughts');
+    const $inventory = $('#rpg-inventory');
 
     // If no sections exist, nothing to organize
-    if ($userStats.length === 0 && $infoBox.length === 0 && $thoughts.length === 0) {
+    if ($userStats.length === 0 && $infoBox.length === 0 && $thoughts.length === 0 && $inventory.length === 0) {
         return;
     }
 
     // Create tab navigation (only show tabs for sections that exist)
     const tabs = [];
     const hasInfoOrCharacters = $infoBox.length > 0 || $thoughts.length > 0;
+    const hasStatsOrInventory = $userStats.length > 0 || $inventory.length > 0;
 
-    if ($userStats.length > 0) {
+    if (hasStatsOrInventory) {
         tabs.push('<button class="rpg-mobile-tab active" data-tab="stats"><i class="fa-solid fa-chart-bar"></i><span>Stats</span></button>');
     }
     // Combine Info and Characters into one tab
@@ -534,7 +536,7 @@ export function setupMobileTabs() {
 
     // Determine which tab should be active
     let firstTab = '';
-    if ($userStats.length > 0) firstTab = 'stats';
+    if (hasStatsOrInventory) firstTab = 'stats';
     else if (hasInfoOrCharacters) firstTab = 'info-characters';
 
     // Create tab content wrappers
@@ -548,6 +550,10 @@ export function setupMobileTabs() {
     if ($userStats.length > 0) {
         $statsTab.append($userStats.detach());
         $userStats.show();
+    }
+    if ($inventory.length > 0) {
+        $statsTab.append($inventory.detach());
+        $inventory.show();
     }
     if ($infoBox.length > 0) {
         $combinedWrapper.append($infoBox.detach());
@@ -571,7 +577,7 @@ export function setupMobileTabs() {
     $mobileContainer.append($tabNav);
 
     // Only append tab content wrappers that have content
-    if ($userStats.length > 0) $mobileContainer.append($statsTab);
+    if (hasStatsOrInventory) $mobileContainer.append($statsTab);
     if (hasInfoOrCharacters) $mobileContainer.append($infoCharactersTab);
 
     // Insert mobile tab structure at the beginning of content box
@@ -599,6 +605,7 @@ export function removeMobileTabs() {
     const $userStats = $('#rpg-user-stats').detach();
     const $infoBox = $('#rpg-info-box').detach();
     const $thoughts = $('#rpg-thoughts').detach();
+    const $inventory = $('#rpg-inventory').detach();
 
     // Remove mobile tab container
     $('.rpg-mobile-container').remove();
@@ -606,17 +613,20 @@ export function removeMobileTabs() {
     // Get dividers
     const $dividerStats = $('#rpg-divider-stats');
     const $dividerInfo = $('#rpg-divider-info');
+    const $dividerThoughts = $('#rpg-divider-thoughts');
 
     // Restore original sections to content box in correct order
     const $contentBox = $('.rpg-content-box');
 
-    // Re-insert sections in original order
+    // Re-insert sections in original order: User Stats, Info Box, Thoughts, Inventory
     if ($dividerStats.length) {
         $dividerStats.before($userStats);
         $dividerInfo.before($infoBox);
-        $contentBox.append($thoughts);
+        $dividerThoughts.before($thoughts);
+        $contentBox.append($inventory);
     } else {
         // Fallback if dividers don't exist
+        $contentBox.prepend($inventory);
         $contentBox.prepend($thoughts);
         $contentBox.prepend($infoBox);
         $contentBox.prepend($userStats);
@@ -626,6 +636,7 @@ export function removeMobileTabs() {
     $userStats.show();
     $infoBox.show();
     $thoughts.show();
+    $inventory.show();
     $('.rpg-divider').show();
 }
 

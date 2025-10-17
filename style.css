@@ -3449,18 +3449,18 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
         to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Combined Info & Characters wrapper */
-    .rpg-mobile-combined-content {
-        display: flex;
+    /* Info tab contains Info Box and Characters with 50/50 split */
+    .rpg-mobile-tab-content[data-tab-content="info"].active {
         flex-direction: column;
         gap: 0;
         height: 100%;
         min-height: 0;
     }
 
-    /* Info Box takes fixed 50% of vertical space */
-    .rpg-mobile-combined-content > #rpg-info-box {
-        flex: 0 0 50%;
+    /* Info Box takes 50% of vertical space */
+    .rpg-mobile-tab-content[data-tab-content="info"] > #rpg-info-box,
+    .rpg-mobile-tab-content[data-tab-content="info"] > .rpg-info-section {
+        flex: 1 1 50% !important;
         min-height: 0;
         overflow-y: auto;
         padding-bottom: 16px;
@@ -3469,16 +3469,17 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
         gap: 0.5em;
     }
 
-    /* Characters section takes remaining 50% */
-    .rpg-mobile-combined-content > #rpg-thoughts {
-        flex: 1;
+    /* Characters section takes 50% of vertical space */
+    .rpg-mobile-tab-content[data-tab-content="info"] > #rpg-thoughts,
+    .rpg-mobile-tab-content[data-tab-content="info"] > .rpg-thoughts-section {
+        flex: 1 1 50% !important;
         min-height: 0;
         overflow-y: auto;
         padding-bottom: 16px;
     }
 
     /* Add divider between Info and Characters */
-    .rpg-mobile-combined-content > .rpg-section:not(:last-child) {
+    .rpg-mobile-tab-content[data-tab-content="info"] > .rpg-section:not(:last-child) {
         border-bottom: 1px solid var(--SmartThemeBorderColor);
         margin-bottom: 16px;
     }
@@ -3495,6 +3496,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     /* Rows scale proportionally to fill Info Box */
     .rpg-dashboard-row-1 {
         flex: 1.2 !important;  /* Slightly more space for 4 widgets */
+        height: auto !important;  /* Remove desktop height constraint */
         display: flex !important;
         gap: 0.25em;
     }

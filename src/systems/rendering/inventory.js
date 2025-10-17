@@ -3,7 +3,8 @@
  * Handles UI rendering for inventory v2 system
  */
 
-import { extensionSettings } from '../../core/state.js';
+import { extensionSettings, $inventoryContainer } from '../../core/state.js';
+import { getInventoryRenderOptions } from '../interaction/inventoryActions.js';
 
 // Type imports
 /** @typedef {import('../../types/inventory.js').InventoryV2} InventoryV2 */
@@ -141,14 +142,14 @@ export function renderAssetsView(assets) {
 }
 
 /**
- * Main inventory rendering function
+ * Generates inventory HTML (internal helper)
  * @param {InventoryV2} inventory - Inventory data to render
  * @param {Object} options - Rendering options
  * @param {string} options.activeSubTab - Currently active sub-tab ('onPerson', 'stored', 'assets')
  * @param {string[]} options.collapsedLocations - Collapsed storage locations
  * @returns {string} Complete HTML for inventory tab content
  */
-export function renderInventory(inventory, options = {}) {
+function generateInventoryHTML(inventory, options = {}) {
     const {
         activeSubTab = 'onPerson',
         collapsedLocations = []
@@ -205,9 +206,9 @@ export function renderInventory(inventory, options = {}) {
 }
 
 /**
- * Updates the inventory display in the DOM
+ * Updates the inventory display in the DOM (used by inventoryActions)
  * @param {string} containerId - ID of container element to update
- * @param {Object} options - Rendering options (passed to renderInventory)
+ * @param {Object} options - Rendering options (passed to generateInventoryHTML)
  */
 export function updateInventoryDisplay(containerId, options = {}) {
     const container = document.getElementById(containerId);
@@ -217,8 +218,30 @@ export function updateInventoryDisplay(containerId, options = {}) {
     }
 
     const inventory = extensionSettings.userStats.inventory;
-    const html = renderInventory(inventory, options);
+    const html = generateInventoryHTML(inventory, options);
     container.innerHTML = html;
+}
+
+/**
+ * Main inventory rendering function (matches pattern of other render functions)
+ * Gets data from state/settings and updates DOM directly.
+ * Call this after AI generation, character changes, or swipes.
+ */
+export function renderInventory() {
+    // Early return if container doesn't exist or section is hidden
+    if (!$inventoryContainer || !extensionSettings.showInventory) {
+        return;
+    }
+
+    // Get inventory data from settings
+    const inventory = extensionSettings.userStats.inventory;
+
+    // Get current render options (active tab, collapsed locations)
+    const options = getInventoryRenderOptions();
+
+    // Generate HTML and update DOM
+    const html = generateInventoryHTML(inventory, options);
+    $inventoryContainer.html(html);
 }
 
 /**

@@ -6,12 +6,14 @@
 /**
  * Parses a comma-separated item string into an array of trimmed item names.
  * Filters out empty strings and handles "None" gracefully.
+ * Smart handling: collapses newlines inside parentheses, preserves them outside.
  *
  * @param {string} itemString - Comma-separated items (e.g., "Sword, Shield, 3x Potions")
  * @returns {string[]} Array of item names, or empty array if none
  *
  * @example
  * parseItems("Sword, Shield, 3x Potions") // ["Sword", "Shield", "3x Potions"]
+ * parseItems("Books (magical\ntomes), Sword") // ["Books (magical tomes)", "Sword"]
  * parseItems("None") // []
  * parseItems("") // []
  * parseItems(null) // []
@@ -28,8 +30,35 @@ export function parseItems(itemString) {
         return [];
     }
 
+    // Collapse newlines inside parentheses
+    let processed = '';
+    let parenDepth = 0;
+
+    for (let i = 0; i < trimmed.length; i++) {
+        const char = trimmed[i];
+
+        if (char === '(') {
+            parenDepth++;
+            processed += char;
+        } else if (char === ')') {
+            parenDepth--;
+            processed += char;
+        } else if ((char === '\n' || char === '\r') && parenDepth > 0) {
+            // Inside parentheses: replace newline with space
+            // Skip if previous char was already a space
+            if (processed[processed.length - 1] !== ' ') {
+                processed += ' ';
+            }
+        } else {
+            processed += char;
+        }
+    }
+
+    // Clean up multiple consecutive spaces
+    processed = processed.replace(/\s+/g, ' ');
+
     // Split by comma, trim each item, filter empties
-    return itemString
+    return processed
         .split(',')
         .map(item => item.trim())
         .filter(item => item !== '' && item.toLowerCase() !== 'none');

@@ -5,7 +5,56 @@
 
 import { getContext } from '../../../../../../extensions.js';
 import { chat } from '../../../../../../../script.js';
-import { extensionSettings, committedTrackerData } from '../../core/state.js';
+import { extensionSettings, committedTrackerData, FEATURE_FLAGS } from '../../core/state.js';
+
+// Type imports
+/** @typedef {import('../../types/inventory.js').InventoryV2} InventoryV2 */
+
+/**
+ * Builds a formatted inventory summary for AI context injection.
+ * Converts v2 inventory structure to multi-line plaintext format.
+ *
+ * @param {InventoryV2|string} inventory - Current inventory (v2 or legacy string)
+ * @returns {string} Formatted inventory summary for prompt injection
+ * @example
+ * // v2 input: { onPerson: "Sword", stored: { Home: "Gold" }, assets: "Horse", version: 2 }
+ * // Returns: "On Person: Sword\nStored - Home: Gold\nAssets: Horse"
+ */
+export function buildInventorySummary(inventory) {
+    // Handle legacy v1 string format
+    if (typeof inventory === 'string') {
+        return inventory;
+    }
+
+    // Handle v2 object format
+    if (inventory && typeof inventory === 'object' && inventory.version === 2) {
+        let summary = '';
+
+        // Add On Person section
+        if (inventory.onPerson && inventory.onPerson !== 'None') {
+            summary += `On Person: ${inventory.onPerson}\n`;
+        }
+
+        // Add Stored sections for each location
+        if (inventory.stored && Object.keys(inventory.stored).length > 0) {
+            for (const [location, items] of Object.entries(inventory.stored)) {
+                if (items && items !== 'None') {
+                    summary += `Stored - ${location}: ${items}\n`;
+                }
+            }
+        }
+
+        // Add Assets section
+        if (inventory.assets && inventory.assets !== 'None') {
+            summary += `Assets: ${inventory.assets}`;
+        }
+
+        return summary.trim();
+    }
+
+    // Fallback for unknown format
+    return 'None';
+}
 
 /**
  * Generates an example block showing current tracker states in markdown code blocks.
@@ -64,7 +113,18 @@ export function generateTrackerInstructions(includeHtmlPrompt = true, includeCon
             instructions += '- Hygiene: X%\n';
             instructions += '- Arousal: X%\n';
             instructions += '[Mood Emoji]: [Conditions (up to three traits)]\n';
-            instructions += 'Inventory: [Clothing/Armor, Inventory Items (list of important items/none)]\n';
+
+            // Add inventory format based on feature flag
+            if (FEATURE_FLAGS.useNewInventory) {
+                instructions += 'On Person: [Items currently carried/worn, or "None"]\n';
+                instructions += 'Stored - [Location Name]: [Items stored at this location]\n';
+                instructions += '(Add multiple "Stored - [Location]:" lines as needed for different storage locations)\n';
+                instructions += 'Assets: [Vehicles, property, major possessions, or "None"]\n';
+            } else {
+                // Legacy v1 format
+                instructions += 'Inventory: [Clothing/Armor, Inventory Items (list of important items/none)]\n';
+            }
+
             instructions += '```\n\n';
         }
 
@@ -143,8 +203,13 @@ export function generateContextualSummary() {
         // console.log('[RPG Companion] Building stats summary with:', stats);
         summary += `${userName}'s Stats:\n`;
         summary += `Condition: Health ${stats.health}%, Satiety ${stats.satiety}%, Energy ${stats.energy}%, Hygiene ${stats.hygiene}%, Arousal ${stats.arousal}% | ${stats.mood} ${stats.conditions}\n`;
-        if (stats.inventory && stats.inventory !== 'None') {
-            summary += `Inventory: ${stats.inventory}\n`;
+
+        // Add inventory summary using v2-aware builder
+        if (stats.inventory) {
+            const inventorySummary = buildInventorySummary(stats.inventory);
+            if (inventorySummary && inventorySummary !== 'None') {
+                summary += `Inventory:\n${inventorySummary}\n`;
+            }
         }
         // Include classic stats (attributes) and dice roll only if there was a dice roll
         if (extensionSettings.lastDiceRoll) {

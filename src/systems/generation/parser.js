@@ -3,8 +3,9 @@
  * Handles parsing of AI responses to extract tracker data
  */
 
-import { extensionSettings } from '../../core/state.js';
+import { extensionSettings, FEATURE_FLAGS } from '../../core/state.js';
 import { saveSettings } from '../../core/persistence.js';
+import { extractInventory } from './inventoryParser.js';
 
 /**
  * Parses the model response to extract the different data sections.
@@ -91,8 +92,19 @@ export function parseUserStats(statsText) {
             }
         }
 
-        // Extract inventory
-        const inventoryMatch = statsText.match(/Inventory:\s*(.+)/i);
+        // Extract inventory - use v2 parser if feature flag enabled, otherwise fallback to v1
+        if (FEATURE_FLAGS.useNewInventory) {
+            const inventoryData = extractInventory(statsText);
+            if (inventoryData) {
+                extensionSettings.userStats.inventory = inventoryData;
+            }
+        } else {
+            // Legacy v1 parsing for backward compatibility
+            const inventoryMatch = statsText.match(/Inventory:\s*(.+)/i);
+            if (inventoryMatch) {
+                extensionSettings.userStats.inventory = inventoryMatch[1].trim();
+            }
+        }
 
         if (healthMatch) extensionSettings.userStats.health = parseInt(healthMatch[1]);
         if (satietyMatch) extensionSettings.userStats.satiety = parseInt(satietyMatch[1]);
@@ -102,9 +114,6 @@ export function parseUserStats(statsText) {
         if (moodMatch) {
             extensionSettings.userStats.mood = moodMatch[1].trim(); // Emoji
             extensionSettings.userStats.conditions = moodMatch[2].trim(); // Conditions
-        }
-        if (inventoryMatch) {
-            extensionSettings.userStats.inventory = inventoryMatch[1].trim();
         }
 
         saveSettings();

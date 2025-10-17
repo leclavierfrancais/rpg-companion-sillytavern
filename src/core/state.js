@@ -61,7 +61,12 @@ export let extensionSettings = {
         cha: 10
     },
     lastDiceRoll: null, // Store last dice roll result
-    collapsedInventoryLocations: [] // Array of collapsed storage location names
+    collapsedInventoryLocations: [], // Array of collapsed storage location names
+    inventoryViewModes: {
+        onPerson: 'list', // 'list' or 'grid' view mode for On Person section
+        stored: 'list',   // 'list' or 'grid' view mode for Stored section
+        assets: 'list'    // 'list' or 'grid' view mode for Assets section
+    }
 };
 
 /**

@@ -5,6 +5,7 @@
 
 import { extensionSettings, $inventoryContainer } from '../../core/state.js';
 import { getInventoryRenderOptions } from '../interaction/inventoryActions.js';
+import { parseItems } from '../../utils/itemParser.js';
 
 // Type imports
 /** @typedef {import('../../types/inventory.js').InventoryV2} InventoryV2 */
@@ -31,40 +32,108 @@ export function renderInventorySubTabs(activeTab = 'onPerson') {
 }
 
 /**
- * Renders the "On Person" inventory view
- * @param {string} onPersonItems - Current on-person items
- * @returns {string} HTML for on-person view with edit controls
+ * Renders the "On Person" inventory view with list or grid display
+ * @param {string} onPersonItems - Current on-person items (comma-separated string)
+ * @param {string} viewMode - View mode ('list' or 'grid')
+ * @returns {string} HTML for on-person view with items and add button
  */
-export function renderOnPersonView(onPersonItems) {
-    const displayText = onPersonItems || 'None';
+export function renderOnPersonView(onPersonItems, viewMode = 'list') {
+    const items = parseItems(onPersonItems);
+
+    let itemsHtml = '';
+    if (items.length === 0) {
+        itemsHtml = '<div class="rpg-inventory-empty">No items carried</div>';
+    } else {
+        if (viewMode === 'grid') {
+            // Grid view: card-style items
+            itemsHtml = items.map((item, index) => `
+                <div class="rpg-item-card" data-field="onPerson" data-index="${index}">
+                    <button class="rpg-item-remove" data-action="remove-item" data-field="onPerson" data-index="${index}" title="Remove item">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                    <span class="rpg-item-name">${escapeHtml(item)}</span>
+                </div>
+            `).join('');
+        } else {
+            // List view: full-width rows
+            itemsHtml = items.map((item, index) => `
+                <div class="rpg-item-row" data-field="onPerson" data-index="${index}">
+                    <span class="rpg-item-name">${escapeHtml(item)}</span>
+                    <button class="rpg-item-remove" data-action="remove-item" data-field="onPerson" data-index="${index}" title="Remove item">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+    }
+
+    const listViewClass = viewMode === 'list' ? 'rpg-item-list-view' : 'rpg-item-grid-view';
+
     return `
         <div class="rpg-inventory-section" data-section="onPerson">
             <div class="rpg-inventory-header">
                 <h4>Items Currently Carried</h4>
+                <div class="rpg-inventory-header-actions">
+                    <div class="rpg-view-toggle">
+                        <button class="rpg-view-btn ${viewMode === 'list' ? 'active' : ''}" data-action="switch-view" data-field="onPerson" data-view="list" title="List view">
+                            <i class="fa-solid fa-list"></i>
+                        </button>
+                        <button class="rpg-view-btn ${viewMode === 'grid' ? 'active' : ''}" data-action="switch-view" data-field="onPerson" data-view="grid" title="Grid view">
+                            <i class="fa-solid fa-th"></i>
+                        </button>
+                    </div>
+                    <button class="rpg-inventory-add-btn" data-action="add-item" data-field="onPerson" title="Add new item">
+                        <i class="fa-solid fa-plus"></i> Add Item
+                    </button>
+                </div>
             </div>
             <div class="rpg-inventory-content">
-                <div class="rpg-inventory-text rpg-editable" contenteditable="true" data-field="onPerson" title="Click to edit">${escapeHtml(displayText)}</div>
+                <div class="rpg-inline-form" id="rpg-add-item-form-onPerson" style="display: none;">
+                    <input type="text" class="rpg-inline-input" id="rpg-new-item-onPerson" placeholder="Enter item name..." />
+                    <div class="rpg-inline-buttons">
+                        <button class="rpg-inline-btn rpg-inline-cancel" data-action="cancel-add-item" data-field="onPerson">
+                            <i class="fa-solid fa-times"></i> Cancel
+                        </button>
+                        <button class="rpg-inline-btn rpg-inline-save" data-action="save-add-item" data-field="onPerson">
+                            <i class="fa-solid fa-check"></i> Add
+                        </button>
+                    </div>
+                </div>
+                <div class="rpg-item-list ${listViewClass}">
+                    ${itemsHtml}
+                </div>
             </div>
         </div>
     `;
 }
 
 /**
- * Renders the "Stored" inventory view with collapsible locations
+ * Renders the "Stored" inventory view with collapsible locations and list/grid views
  * @param {Object.<string, string>} stored - Stored items by location
  * @param {string[]} collapsedLocations - Array of collapsed location names
+ * @param {string} viewMode - View mode ('list' or 'grid')
  * @returns {string} HTML for stored inventory with all locations
  */
-export function renderStoredView(stored, collapsedLocations = []) {
+export function renderStoredView(stored, collapsedLocations = [], viewMode = 'list') {
     const locations = Object.keys(stored || {});
 
     let html = `
         <div class="rpg-inventory-section" data-section="stored">
             <div class="rpg-inventory-header">
                 <h4>Storage Locations</h4>
-                <button class="rpg-inventory-add-btn" data-action="add-location" title="Add new storage location">
-                    <i class="fa-solid fa-plus"></i> Add Location
-                </button>
+                <div class="rpg-inventory-header-actions">
+                    <div class="rpg-view-toggle">
+                        <button class="rpg-view-btn ${viewMode === 'list' ? 'active' : ''}" data-action="switch-view" data-field="stored" data-view="list" title="List view">
+                            <i class="fa-solid fa-list"></i>
+                        </button>
+                        <button class="rpg-view-btn ${viewMode === 'grid' ? 'active' : ''}" data-action="switch-view" data-field="stored" data-view="grid" title="Grid view">
+                            <i class="fa-solid fa-th"></i>
+                        </button>
+                    </div>
+                    <button class="rpg-inventory-add-btn" data-action="add-location" title="Add new storage location">
+                        <i class="fa-solid fa-plus"></i> Add Location
+                    </button>
+                </div>
             </div>
             <div class="rpg-inventory-content">
                 <div class="rpg-inline-form" id="rpg-add-location-form" style="display: none;">
@@ -88,8 +157,40 @@ export function renderStoredView(stored, collapsedLocations = []) {
         `;
     } else {
         for (const location of locations) {
-            const items = stored[location];
+            const itemString = stored[location];
+            const items = parseItems(itemString);
             const isCollapsed = collapsedLocations.includes(location);
+            const locationId = escapeHtml(location).replace(/\s+/g, '-');
+
+            let itemsHtml = '';
+            if (items.length === 0) {
+                itemsHtml = '<div class="rpg-inventory-empty">No items stored here</div>';
+            } else {
+                if (viewMode === 'grid') {
+                    // Grid view: card-style items
+                    itemsHtml = items.map((item, index) => `
+                        <div class="rpg-item-card" data-field="stored" data-location="${escapeHtml(location)}" data-index="${index}">
+                            <button class="rpg-item-remove" data-action="remove-item" data-field="stored" data-location="${escapeHtml(location)}" data-index="${index}" title="Remove item">
+                                <i class="fa-solid fa-times"></i>
+                            </button>
+                            <span class="rpg-item-name">${escapeHtml(item)}</span>
+                        </div>
+                    `).join('');
+                } else {
+                    // List view: full-width rows
+                    itemsHtml = items.map((item, index) => `
+                        <div class="rpg-item-row" data-field="stored" data-location="${escapeHtml(location)}" data-index="${index}">
+                            <span class="rpg-item-name">${escapeHtml(item)}</span>
+                            <button class="rpg-item-remove" data-action="remove-item" data-field="stored" data-location="${escapeHtml(location)}" data-index="${index}" title="Remove item">
+                                <i class="fa-solid fa-times"></i>
+                            </button>
+                        </div>
+                    `).join('');
+                }
+            }
+
+            const listViewClass = viewMode === 'list' ? 'rpg-item-list-view' : 'rpg-item-grid-view';
+
             html += `
                 <div class="rpg-storage-location ${isCollapsed ? 'collapsed' : ''}" data-location="${escapeHtml(location)}">
                     <div class="rpg-storage-header">
@@ -98,15 +199,31 @@ export function renderStoredView(stored, collapsedLocations = []) {
                         </button>
                         <h5 class="rpg-storage-name">${escapeHtml(location)}</h5>
                         <div class="rpg-storage-actions">
+                            <button class="rpg-inventory-add-btn" data-action="add-item" data-field="stored" data-location="${escapeHtml(location)}" title="Add item to this location">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
                             <button class="rpg-inventory-remove-btn" data-action="remove-location" data-location="${escapeHtml(location)}" title="Remove this storage location">
                                 <i class="fa-solid fa-trash"></i>
                             </button>
                         </div>
                     </div>
                     <div class="rpg-storage-content" ${isCollapsed ? 'style="display:none;"' : ''}>
-                        <div class="rpg-inventory-text rpg-editable" contenteditable="true" data-field="stored" data-location="${escapeHtml(location)}" title="Click to edit">${escapeHtml(items || 'None')}</div>
+                        <div class="rpg-inline-form" id="rpg-add-item-form-stored-${locationId}" style="display: none;">
+                            <input type="text" class="rpg-inline-input rpg-location-item-input" data-location="${escapeHtml(location)}" placeholder="Enter item name..." />
+                            <div class="rpg-inline-buttons">
+                                <button class="rpg-inline-btn rpg-inline-cancel" data-action="cancel-add-item" data-field="stored" data-location="${escapeHtml(location)}">
+                                    <i class="fa-solid fa-times"></i> Cancel
+                                </button>
+                                <button class="rpg-inline-btn rpg-inline-save" data-action="save-add-item" data-field="stored" data-location="${escapeHtml(location)}">
+                                    <i class="fa-solid fa-check"></i> Add
+                                </button>
+                            </div>
+                        </div>
+                        <div class="rpg-item-list ${listViewClass}">
+                            ${itemsHtml}
+                        </div>
                     </div>
-                    <div class="rpg-inline-confirmation" id="rpg-remove-confirm-${escapeHtml(location).replace(/\s+/g, '-')}" style="display: none;">
+                    <div class="rpg-inline-confirmation" id="rpg-remove-confirm-${locationId}" style="display: none;">
                         <p>Remove "${escapeHtml(location)}"? This will delete all items stored there.</p>
                         <div class="rpg-inline-buttons">
                             <button class="rpg-inline-btn rpg-inline-cancel" data-action="cancel-remove-location" data-location="${escapeHtml(location)}">
@@ -131,19 +248,76 @@ export function renderStoredView(stored, collapsedLocations = []) {
 }
 
 /**
- * Renders the "Assets" inventory view
+ * Renders the "Assets" inventory view with list or grid display
  * @param {string} assets - Current assets (vehicles, property, equipment)
- * @returns {string} HTML for assets view with edit controls
+ * @param {string} viewMode - View mode ('list' or 'grid')
+ * @returns {string} HTML for assets view with items and add button
  */
-export function renderAssetsView(assets) {
-    const displayText = assets || 'None';
+export function renderAssetsView(assets, viewMode = 'list') {
+    const items = parseItems(assets);
+
+    let itemsHtml = '';
+    if (items.length === 0) {
+        itemsHtml = '<div class="rpg-inventory-empty">No assets owned</div>';
+    } else {
+        if (viewMode === 'grid') {
+            // Grid view: card-style items
+            itemsHtml = items.map((item, index) => `
+                <div class="rpg-item-card" data-field="assets" data-index="${index}">
+                    <button class="rpg-item-remove" data-action="remove-item" data-field="assets" data-index="${index}" title="Remove asset">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                    <span class="rpg-item-name">${escapeHtml(item)}</span>
+                </div>
+            `).join('');
+        } else {
+            // List view: full-width rows
+            itemsHtml = items.map((item, index) => `
+                <div class="rpg-item-row" data-field="assets" data-index="${index}">
+                    <span class="rpg-item-name">${escapeHtml(item)}</span>
+                    <button class="rpg-item-remove" data-action="remove-item" data-field="assets" data-index="${index}" title="Remove asset">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+    }
+
+    const listViewClass = viewMode === 'list' ? 'rpg-item-list-view' : 'rpg-item-grid-view';
+
     return `
         <div class="rpg-inventory-section" data-section="assets">
             <div class="rpg-inventory-header">
                 <h4>Vehicles, Property & Major Possessions</h4>
+                <div class="rpg-inventory-header-actions">
+                    <div class="rpg-view-toggle">
+                        <button class="rpg-view-btn ${viewMode === 'list' ? 'active' : ''}" data-action="switch-view" data-field="assets" data-view="list" title="List view">
+                            <i class="fa-solid fa-list"></i>
+                        </button>
+                        <button class="rpg-view-btn ${viewMode === 'grid' ? 'active' : ''}" data-action="switch-view" data-field="assets" data-view="grid" title="Grid view">
+                            <i class="fa-solid fa-th"></i>
+                        </button>
+                    </div>
+                    <button class="rpg-inventory-add-btn" data-action="add-item" data-field="assets" title="Add new asset">
+                        <i class="fa-solid fa-plus"></i> Add Asset
+                    </button>
+                </div>
             </div>
             <div class="rpg-inventory-content">
-                <div class="rpg-inventory-text rpg-editable" contenteditable="true" data-field="assets" title="Click to edit">${escapeHtml(displayText)}</div>
+                <div class="rpg-inline-form" id="rpg-add-item-form-assets" style="display: none;">
+                    <input type="text" class="rpg-inline-input" id="rpg-new-item-assets" placeholder="Enter asset name..." />
+                    <div class="rpg-inline-buttons">
+                        <button class="rpg-inline-btn rpg-inline-cancel" data-action="cancel-add-item" data-field="assets">
+                            <i class="fa-solid fa-times"></i> Cancel
+                        </button>
+                        <button class="rpg-inline-btn rpg-inline-save" data-action="save-add-item" data-field="assets">
+                            <i class="fa-solid fa-check"></i> Add
+                        </button>
+                    </div>
+                </div>
+                <div class="rpg-item-list ${listViewClass}">
+                    ${itemsHtml}
+                </div>
                 <div class="rpg-inventory-hint">
                     <i class="fa-solid fa-info-circle"></i>
                     Assets include vehicles (cars, motorcycles), property (homes, apartments),
@@ -189,25 +363,43 @@ function generateInventoryHTML(inventory, options = {}) {
         };
     }
 
+    // Additional safety check: ensure required properties exist and are correct type
+    if (!v2Inventory.onPerson || typeof v2Inventory.onPerson !== 'string') {
+        v2Inventory.onPerson = 'None';
+    }
+    if (!v2Inventory.stored || typeof v2Inventory.stored !== 'object' || Array.isArray(v2Inventory.stored)) {
+        v2Inventory.stored = {};
+    }
+    if (!v2Inventory.assets || typeof v2Inventory.assets !== 'string') {
+        v2Inventory.assets = 'None';
+    }
+
     let html = `
         <div class="rpg-inventory-container">
             ${renderInventorySubTabs(activeSubTab)}
             <div class="rpg-inventory-views">
     `;
 
+    // Get view modes from settings (default to 'list')
+    const viewModes = extensionSettings.inventoryViewModes || {
+        onPerson: 'list',
+        stored: 'list',
+        assets: 'list'
+    };
+
     // Render the active view
     switch (activeSubTab) {
         case 'onPerson':
-            html += renderOnPersonView(v2Inventory.onPerson);
+            html += renderOnPersonView(v2Inventory.onPerson, viewModes.onPerson);
             break;
         case 'stored':
-            html += renderStoredView(v2Inventory.stored, collapsedLocations);
+            html += renderStoredView(v2Inventory.stored, collapsedLocations, viewModes.stored);
             break;
         case 'assets':
-            html += renderAssetsView(v2Inventory.assets);
+            html += renderAssetsView(v2Inventory.assets, viewModes.assets);
             break;
         default:
-            html += renderOnPersonView(v2Inventory.onPerson);
+            html += renderOnPersonView(v2Inventory.onPerson, viewModes.onPerson);
     }
 
     html += `

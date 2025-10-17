@@ -3421,9 +3421,9 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     }
 
     .rpg-mobile-tab.active {
-        color: var(--SmartThemeQuoteColor);
-        border-bottom-color: var(--SmartThemeQuoteColor);
-        background: rgba(255, 255, 255, 0.05);
+        color: var(--rpg-highlight);
+        border-bottom-color: var(--rpg-highlight);
+        background: rgba(var(--rpg-highlight-rgb, 233, 69, 96), 0.1);
     }
 
     .rpg-mobile-tab i {
@@ -3939,8 +3939,8 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 .rpg-inventory-subtab {
     flex: 1;
     padding: 0.5rem 1rem;
-    background: var(--SmartThemeBlurTintColor);
-    border: 1px solid var(--SmartThemeBorderColor);
+    background: transparent;
+    border: 2px solid var(--SmartThemeBorderColor);
     border-radius: 0.25rem;
     color: var(--SmartThemeBodyColor);
     cursor: pointer;
@@ -3949,12 +3949,15 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 }
 
 .rpg-inventory-subtab:hover {
-    background: var(--SmartThemeQuoteColor);
+    background: rgba(var(--rpg-highlight-rgb, 233, 69, 96), 0.1);
+    border-color: var(--rpg-highlight);
+    color: var(--rpg-highlight);
 }
 
 .rpg-inventory-subtab.active {
-    background: var(--SmartThemeEmColor);
-    border-color: var(--ac-style-color-matchedText);
+    background: transparent;
+    border-color: var(--rpg-highlight);
+    color: var(--rpg-highlight);
     font-weight: 600;
 }
 
@@ -4005,8 +4008,8 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 
 .rpg-inventory-hint {
     padding: 0.5rem;
-    background: var(--SmartThemeQuoteColor);
-    border-left: 3px solid var(--ac-style-color-matchedText);
+    background: transparent;
+    border: 2px solid var(--rpg-highlight);
     border-radius: 0.25rem;
     font-size: 0.85rem;
     color: var(--SmartThemeFastUISliderColColor);
@@ -4097,13 +4100,14 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 }
 
 .rpg-inventory-add-btn {
-    background: var(--ac-style-color-matchedText);
-    border-color: var(--ac-style-color-matchedText);
-    color: white;
+    background: transparent;
+    border-color: var(--rpg-highlight);
+    color: var(--rpg-highlight);
 }
 
 .rpg-inventory-add-btn:hover {
-    opacity: 0.85;
+    background: rgba(var(--rpg-highlight-rgb, 233, 69, 96), 0.1);
+    border-color: var(--rpg-highlight);
 }
 
 .rpg-inventory-remove-btn {
@@ -4233,6 +4237,178 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 }
 
 /* ============================================
+   ITEM LIST AND GRID VIEW STYLES
+   ============================================ */
+
+/* Item list container base styles */
+.rpg-item-list {
+    min-height: 2rem;
+    padding: 0.5rem;
+}
+
+/* LIST VIEW - Full-width rows */
+.rpg-item-list-view {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.rpg-item-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    background: transparent;
+    border: 2px solid var(--rpg-highlight);
+    border-radius: 0.25rem;
+    color: var(--SmartThemeBodyColor);
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+}
+
+.rpg-item-row:hover {
+    border-color: var(--rpg-highlight);
+    background: rgba(var(--rpg-highlight-rgb, 233, 69, 96), 0.1);
+}
+
+.rpg-item-row .rpg-item-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.rpg-item-row .rpg-item-remove {
+    flex-shrink: 0;
+    padding: 0.3rem 0.6rem;
+    background: transparent;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 0.25rem;
+    color: var(--SmartThemeFastUISliderColColor);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.85rem;
+}
+
+.rpg-item-row .rpg-item-remove:hover {
+    background: #dc3545;
+    border-color: #dc3545;
+    color: white;
+}
+
+/* GRID VIEW - Responsive card grid */
+.rpg-item-grid-view {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.75rem;
+}
+
+.rpg-item-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem 0.75rem;
+    background: transparent;
+    border: 2px solid var(--rpg-highlight);
+    border-radius: 0.25rem;
+    color: var(--SmartThemeBodyColor);
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    min-height: 80px;
+}
+
+.rpg-item-card:hover {
+    border-color: var(--rpg-highlight);
+    background: rgba(var(--rpg-highlight-rgb, 233, 69, 96), 0.1);
+}
+
+.rpg-item-card .rpg-item-name {
+    text-align: center;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    max-width: 100%;
+}
+
+.rpg-item-card .rpg-item-remove {
+    position: absolute;
+    top: 0.25rem;
+    right: 0.25rem;
+    padding: 0;
+    width: 1.5rem;
+    height: 1.5rem;
+    background: transparent;
+    border: none;
+    border-radius: 0.25rem;
+    color: var(--SmartThemeFastUISliderColColor);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.rpg-item-card .rpg-item-remove:hover {
+    background: #dc3545;
+    color: white;
+}
+
+/* Empty state message */
+.rpg-inventory-empty {
+    padding: 1rem;
+    text-align: center;
+    color: var(--SmartThemeFastUISliderColColor);
+    font-style: italic;
+    font-size: 0.9rem;
+}
+
+/* View Toggle Buttons */
+.rpg-inventory-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.rpg-view-toggle {
+    display: flex;
+    gap: 0.25rem;
+    background: var(--SmartThemeQuoteColor);
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 0.25rem;
+    padding: 0.15rem;
+}
+
+.rpg-view-btn {
+    padding: 0.35rem 0.6rem;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 0.15rem;
+    color: var(--SmartThemeFastUISliderColColor);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.rpg-view-btn:hover {
+    background: rgba(var(--rpg-highlight-rgb, 233, 69, 96), 0.1);
+    border-color: var(--rpg-highlight);
+    color: var(--rpg-highlight);
+}
+
+.rpg-view-btn.active {
+    background: transparent;
+    border-color: var(--rpg-highlight);
+    color: var(--rpg-highlight);
+}
+
+/* ============================================
    DESKTOP TABS SYSTEM
    ============================================ */
 
@@ -4273,14 +4449,14 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 }
 
 .rpg-tab-btn:hover {
-    background: var(--SmartThemeQuoteColor);
-    color: var(--ac-style-color-matchedText);
+    background: rgba(var(--rpg-highlight-rgb, 233, 69, 96), 0.1);
+    color: var(--rpg-highlight);
 }
 
 .rpg-tab-btn.active {
-    background: var(--SmartThemeQuoteColor);
-    border-bottom-color: var(--ac-style-color-matchedText);
-    color: var(--ac-style-color-matchedText);
+    background: transparent;
+    border-bottom-color: var(--rpg-highlight);
+    color: var(--rpg-highlight);
 }
 
 .rpg-tab-btn i {

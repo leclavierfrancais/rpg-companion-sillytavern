@@ -7,6 +7,7 @@ import { extensionSettings, lastGeneratedData } from '../../core/state.js';
 import { saveSettings, saveChatData, updateMessageSwipeData } from '../../core/persistence.js';
 import { buildInventorySummary } from '../generation/promptBuilder.js';
 import { renderInventory } from '../rendering/inventory.js';
+import { parseItems, serializeItems } from '../../utils/itemParser.js';
 
 // Type imports
 /** @typedef {import('../../types/inventory.js').InventoryV2} InventoryV2 */
@@ -43,64 +44,142 @@ function updateLastGeneratedDataInventory() {
 }
 
 /**
- * Handles blur event for contenteditable "On Person" field.
- * Saves changes when user finishes editing.
- * @param {HTMLElement} element - The contenteditable element
+ * Shows the inline form for adding a new item.
+ * @param {string} field - Field name ('onPerson', 'stored', 'assets')
+ * @param {string} [location] - Location name (required for 'stored' field)
  */
-export function handleOnPersonBlur(element) {
-    const inventory = extensionSettings.userStats.inventory;
-    const newValue = element.textContent.trim() || 'None';
+export function showAddItemForm(field, location) {
+    let formId;
+    let inputId;
 
-    // Only save if value actually changed
-    if (newValue !== inventory.onPerson) {
-        inventory.onPerson = newValue;
-
-        updateLastGeneratedDataInventory();
-        saveSettings();
-        saveChatData();
-        updateMessageSwipeData();
+    if (field === 'stored') {
+        const locationId = location.replace(/\s+/g, '-');
+        formId = `rpg-add-item-form-stored-${locationId}`;
+        inputId = `.rpg-location-item-input[data-location="${location}"]`;
+    } else {
+        formId = `rpg-add-item-form-${field}`;
+        inputId = `#rpg-new-item-${field}`;
     }
+
+    const form = $(`#${formId}`);
+    const input = $(inputId);
+
+    form.show();
+    input.val('').focus();
 }
 
 /**
- * Handles blur event for contenteditable stored location field.
- * Saves changes when user finishes editing.
- * @param {HTMLElement} element - The contenteditable element
- * @param {string} locationName - Name of the storage location
+ * Hides the inline form for adding a new item.
+ * @param {string} field - Field name ('onPerson', 'stored', 'assets')
+ * @param {string} [location] - Location name (required for 'stored' field)
  */
-export function handleStoredLocationBlur(element, locationName) {
-    const inventory = extensionSettings.userStats.inventory;
-    const newValue = element.textContent.trim() || 'None';
+export function hideAddItemForm(field, location) {
+    let formId;
+    let inputId;
 
-    // Only save if value actually changed
-    if (newValue !== inventory.stored[locationName]) {
-        inventory.stored[locationName] = newValue;
-
-        updateLastGeneratedDataInventory();
-        saveSettings();
-        saveChatData();
-        updateMessageSwipeData();
+    if (field === 'stored') {
+        const locationId = location.replace(/\s+/g, '-');
+        formId = `rpg-add-item-form-stored-${locationId}`;
+        inputId = `.rpg-location-item-input[data-location="${location}"]`;
+    } else {
+        formId = `rpg-add-item-form-${field}`;
+        inputId = `#rpg-new-item-${field}`;
     }
+
+    const form = $(`#${formId}`);
+    const input = $(inputId);
+
+    form.hide();
+    input.val('');
 }
 
 /**
- * Handles blur event for contenteditable "Assets" field.
- * Saves changes when user finishes editing.
- * @param {HTMLElement} element - The contenteditable element
+ * Adds a new item to the inventory.
+ * @param {string} field - Field name ('onPerson', 'stored', 'assets')
+ * @param {string} [location] - Location name (required for 'stored' field)
  */
-export function handleAssetsBlur(element) {
+export function saveAddItem(field, location) {
     const inventory = extensionSettings.userStats.inventory;
-    const newValue = element.textContent.trim() || 'None';
+    let inputId;
 
-    // Only save if value actually changed
-    if (newValue !== inventory.assets) {
-        inventory.assets = newValue;
-
-        updateLastGeneratedDataInventory();
-        saveSettings();
-        saveChatData();
-        updateMessageSwipeData();
+    if (field === 'stored') {
+        inputId = `.rpg-location-item-input[data-location="${location}"]`;
+    } else {
+        inputId = `#rpg-new-item-${field}`;
     }
+
+    const input = $(inputId);
+    const itemName = input.val().trim();
+
+    if (!itemName) {
+        hideAddItemForm(field, location);
+        return;
+    }
+
+    // Get current items, add new one, serialize back
+    let currentString;
+    if (field === 'stored') {
+        currentString = inventory.stored[location] || 'None';
+    } else {
+        currentString = inventory[field] || 'None';
+    }
+
+    const items = parseItems(currentString);
+    items.push(itemName);
+    const newString = serializeItems(items);
+
+    // Save back to inventory
+    if (field === 'stored') {
+        inventory.stored[location] = newString;
+    } else {
+        inventory[field] = newString;
+    }
+
+    updateLastGeneratedDataInventory();
+    saveSettings();
+    saveChatData();
+    updateMessageSwipeData();
+
+    // Hide form and re-render
+    hideAddItemForm(field, location);
+    renderInventory();
+}
+
+/**
+ * Removes an item from the inventory.
+ * @param {string} field - Field name ('onPerson', 'stored', 'assets')
+ * @param {number} itemIndex - Index of item to remove
+ * @param {string} [location] - Location name (required for 'stored' field)
+ */
+export function removeItem(field, itemIndex, location) {
+    const inventory = extensionSettings.userStats.inventory;
+
+    // Get current items, remove the one at index, serialize back
+    let currentString;
+    if (field === 'stored') {
+        currentString = inventory.stored[location] || 'None';
+    } else {
+        currentString = inventory[field] || 'None';
+    }
+
+    const items = parseItems(currentString);
+    items.splice(itemIndex, 1); // Remove item at index
+    const newString = serializeItems(items);
+
+    // Save back to inventory
+    if (field === 'stored') {
+        inventory.stored[location] = newString;
+    } else {
+        inventory[field] = newString;
+    }
+
+    updateLastGeneratedDataInventory();
+    saveSettings();
+    saveChatData();
+    updateMessageSwipeData();
+
+    // Re-render
+    renderInventory();
 }
 
 /**
@@ -241,6 +320,31 @@ export function switchInventoryTab(tabName) {
 }
 
 /**
+ * Switches the view mode for an inventory section.
+ * @param {string} field - Field name ('onPerson', 'stored', 'assets')
+ * @param {string} mode - View mode ('list' or 'grid')
+ */
+export function switchViewMode(field, mode) {
+    // Ensure inventoryViewModes exists
+    if (!extensionSettings.inventoryViewModes) {
+        extensionSettings.inventoryViewModes = {
+            onPerson: 'list',
+            stored: 'list',
+            assets: 'list'
+        };
+    }
+
+    // Update view mode
+    extensionSettings.inventoryViewModes[field] = mode;
+
+    // Save settings
+    saveSettings();
+
+    // Re-render inventory UI
+    renderInventory();
+}
+
+/**
  * Initializes all event listeners for inventory interactions.
  * Uses event delegation to handle dynamically created elements.
  */
@@ -250,19 +354,50 @@ export function initInventoryEventListeners() {
         collapsedLocations = extensionSettings.collapsedInventoryLocations;
     }
 
-    // Contenteditable blur handlers (inline editing)
-    $(document).on('blur', '.rpg-inventory-text[contenteditable="true"]', function() {
+    // Add item button - shows inline form
+    $(document).on('click', '.rpg-inventory-add-btn[data-action="add-item"]', function(e) {
+        e.preventDefault();
         const field = $(this).data('field');
-        const element = this;
+        const location = $(this).data('location');
+        showAddItemForm(field, location);
+    });
 
-        if (field === 'onPerson') {
-            handleOnPersonBlur(element);
-        } else if (field === 'stored') {
-            const location = $(this).data('location');
-            handleStoredLocationBlur(element, location);
-        } else if (field === 'assets') {
-            handleAssetsBlur(element);
+    // Add item inline form - save button
+    $(document).on('click', '.rpg-inline-btn[data-action="save-add-item"]', function(e) {
+        e.preventDefault();
+        const field = $(this).data('field');
+        const location = $(this).data('location');
+        saveAddItem(field, location);
+    });
+
+    // Add item inline form - cancel button
+    $(document).on('click', '.rpg-inline-btn[data-action="cancel-add-item"]', function(e) {
+        e.preventDefault();
+        const field = $(this).data('field');
+        const location = $(this).data('location');
+        hideAddItemForm(field, location);
+    });
+
+    // Add item inline form - enter key to save
+    $(document).on('keypress', '.rpg-inline-input', function(e) {
+        if (e.which === 13) { // Enter key
+            e.preventDefault();
+            const $btn = $(this).closest('.rpg-inline-form').find('[data-action="save-add-item"]');
+            if ($btn.length > 0) {
+                const field = $btn.data('field');
+                const location = $btn.data('location');
+                saveAddItem(field, location);
+            }
         }
+    });
+
+    // Remove item button
+    $(document).on('click', '.rpg-item-remove[data-action="remove-item"]', function(e) {
+        e.preventDefault();
+        const field = $(this).data('field');
+        const itemIndex = parseInt($(this).data('index'));
+        const location = $(this).data('location');
+        removeItem(field, itemIndex, location);
     });
 
     // Add location button - shows inline form
@@ -324,6 +459,14 @@ export function initInventoryEventListeners() {
         e.preventDefault();
         const tab = $(this).data('tab');
         switchInventoryTab(tab);
+    });
+
+    // View mode switching
+    $(document).on('click', '.rpg-view-btn[data-action="switch-view"]', function(e) {
+        e.preventDefault();
+        const field = $(this).data('field');
+        const view = $(this).data('view');
+        switchViewMode(field, view);
     });
 
     console.log('[RPG Companion] Inventory event listeners initialized');

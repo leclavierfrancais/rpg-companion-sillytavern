@@ -252,3 +252,16 @@ export function applyPanelPosition() {
     // Update collapse toggle icon direction for new position
     updateCollapseToggleIcon();
 }
+
+/**
+ * Updates the UI based on generation mode selection.
+ */
+export function updateGenerationModeUI() {
+    if (extensionSettings.generationMode === 'together') {
+        // In "together" mode, manual update button is hidden
+        $('#rpg-manual-update').hide();
+    } else {
+        // In "separate" mode, manual update button is visible
+        $('#rpg-manual-update').show();
+    }
+}

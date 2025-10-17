@@ -94,6 +94,9 @@ import {
     setupContentEditableScrolling
 } from './src/systems/ui/mobile.js';
 
+// Feature modules
+import { setupPlotButtons } from './src/systems/features/plotProgression.js';
+
 // Old state variable declarations removed - now imported from core modules
 // (extensionSettings, lastGeneratedData, committedTrackerData, etc. are now in src/core/state.js)
 
@@ -349,64 +352,41 @@ async function initUI() {
     setupClassicStatsButtons();
     setupSettingsPopup();
     addDiceQuickReply();
-    setupPlotButtons();
+    setupPlotButtons(sendPlotProgression);
     setupMobileKeyboardHandling();
     setupContentEditableScrolling();
 }
 
 /**
- * Sets up the plot progression buttons inside the send form area.
+ * Sets up event listeners for classic stat +/- buttons using delegation.
+ * Uses delegated events to persist across re-renders of the stats section.
  */
-function setupPlotButtons() {
-    // Remove existing buttons if any
-    $('#rpg-plot-buttons').remove();
+function setupClassicStatsButtons() {
+    if (!$userStatsContainer) return;
 
-    // Create wrapper if it doesn't exist (shared with other extensions like Spotify)
-    if ($('#extension-buttons-wrapper').length === 0) {
-        $('#send_form').prepend('<div id="extension-buttons-wrapper" style="text-align: center; margin: 5px auto;"></div>');
-    }
+    // Delegated event listener for increase buttons
+    $userStatsContainer.on('click', '.rpg-stat-increase', function() {
+        const stat = $(this).data('stat');
+        if (extensionSettings.classicStats[stat] < 100) {
+            extensionSettings.classicStats[stat]++;
+            saveSettings();
+            saveChatData();
+            // Update only the specific stat value, not the entire stats panel
+            $(this).closest('.rpg-classic-stat').find('.rpg-classic-stat-value').text(extensionSettings.classicStats[stat]);
+        }
+    });
 
-    // Create the button container
-    const buttonHtml = `
-        <span id="rpg-plot-buttons" style="display: none;">
-            <button id="rpg-plot-random" class="menu_button interactable" style="
-                background-color: #e94560;
-                color: white;
-                border: none;
-                padding: 8px 12px;
-                border-radius: 4px;
-                font-size: 13px;
-                cursor: pointer;
-                margin: 0 4px;
-                display: inline-block;
-            " tabindex="0" role="button">
-                <i class="fa-solid fa-dice"></i> Randomized Plot
-            </button>
-            <button id="rpg-plot-natural" class="menu_button interactable" style="
-                background-color: #4a90e2;
-                color: white;
-                border: none;
-                padding: 8px 12px;
-                border-radius: 4px;
-                font-size: 13px;
-                cursor: pointer;
-                margin: 0 4px;
-                display: inline-block;
-            " tabindex="0" role="button">
-                <i class="fa-solid fa-forward"></i> Natural Plot
-            </button>
-        </span>
-    `;
-
-    // Insert into the wrapper
-    $('#extension-buttons-wrapper').append(buttonHtml);
-
-    // Add event handlers for buttons
-    $('#rpg-plot-random').on('click', () => sendPlotProgression('random'));
-    $('#rpg-plot-natural').on('click', () => sendPlotProgression('natural'));
-
-    // Show/hide based on setting
-    togglePlotButtons();
+    // Delegated event listener for decrease buttons
+    $userStatsContainer.on('click', '.rpg-stat-decrease', function() {
+        const stat = $(this).data('stat');
+        if (extensionSettings.classicStats[stat] > 1) {
+            extensionSettings.classicStats[stat]--;
+            saveSettings();
+            saveChatData();
+            // Update only the specific stat value, not the entire stats panel
+            $(this).closest('.rpg-classic-stat').find('.rpg-classic-stat-value').text(extensionSettings.classicStats[stat]);
+        }
+    });
 }
 
 /**
@@ -450,7 +430,7 @@ async function sendPlotProgression(type) {
 
         // Set flag to indicate we're doing plot progression
         // This will be used by onMessageReceived to clear the prompt after generation completes
-        isPlotProgression = true;
+        setIsPlotProgression(true);
 
         // console.log('[RPG Companion] Calling Generate with continuation and plot prompt');
         // console.log('[RPG Companion] Full prompt:', prompt);
@@ -468,7 +448,7 @@ async function sendPlotProgression(type) {
         // console.log('[RPG Companion] Plot progression generation triggered');
     } catch (error) {
         console.error('[RPG Companion] Error sending plot progression:', error);
-        isPlotProgression = false;
+        setIsPlotProgression(false);
     } finally {
         // Restore original enabled state and re-enable buttons after a delay
         setTimeout(() => {
@@ -476,38 +456,6 @@ async function sendPlotProgression(type) {
             $('#rpg-plot-random, #rpg-plot-natural').prop('disabled', false).css('opacity', '1');
         }, 1000);
     }
-}
-
-/**
- * Sets up event listeners for classic stat +/- buttons using delegation.
- * Uses delegated events to persist across re-renders of the stats section.
- */
-function setupClassicStatsButtons() {
-    if (!$userStatsContainer) return;
-
-    // Delegated event listener for increase buttons
-    $userStatsContainer.on('click', '.rpg-stat-increase', function() {
-        const stat = $(this).data('stat');
-        if (extensionSettings.classicStats[stat] < 100) {
-            extensionSettings.classicStats[stat]++;
-            saveSettings();
-            saveChatData();
-            // Update only the specific stat value, not the entire stats panel
-            $(this).closest('.rpg-classic-stat').find('.rpg-classic-stat-value').text(extensionSettings.classicStats[stat]);
-        }
-    });
-
-    // Delegated event listener for decrease buttons
-    $userStatsContainer.on('click', '.rpg-stat-decrease', function() {
-        const stat = $(this).data('stat');
-        if (extensionSettings.classicStats[stat] > 1) {
-            extensionSettings.classicStats[stat]--;
-            saveSettings();
-            saveChatData();
-            // Update only the specific stat value, not the entire stats panel
-            $(this).closest('.rpg-classic-stat').find('.rpg-classic-stat-value').text(extensionSettings.classicStats[stat]);
-        }
-    });
 }
 
 /**

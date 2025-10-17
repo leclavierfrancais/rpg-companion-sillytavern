@@ -3593,6 +3593,12 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
         display: contents !important;
     }
 
+    /* Center the avatar wrapper on mobile */
+    .rpg-stats-left > div:first-child {
+        grid-column: 1 / 3;
+        justify-content: center !important;
+    }
+
     .rpg-stats-grid {
         grid-column: 1 / 3;
         grid-row: 2;

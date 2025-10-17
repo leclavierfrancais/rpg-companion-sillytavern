@@ -3906,3 +3906,245 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
         font-size: 2.2vw;
     }
 }
+
+/* ========================================
+   Inventory System v2 Styles
+   ======================================== */
+
+/* Inventory Container */
+.rpg-inventory-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0.5rem;
+    font-size: 0.9rem;
+}
+
+/* Sub-tabs Navigation */
+.rpg-inventory-subtabs {
+    display: flex;
+    gap: 0.5rem;
+    border-bottom: 2px solid var(--SmartThemeBorderColor);
+    padding-bottom: 0.5rem;
+}
+
+.rpg-inventory-subtab {
+    flex: 1;
+    padding: 0.5rem 1rem;
+    background: var(--SmartThemeBlurTintColor);
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 0.25rem;
+    color: var(--SmartThemeBodyColor);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.rpg-inventory-subtab:hover {
+    background: var(--SmartThemeQuoteColor);
+}
+
+.rpg-inventory-subtab.active {
+    background: var(--SmartThemeEmColor);
+    border-color: var(--ac-style-color-matchedText);
+    font-weight: 600;
+}
+
+/* Inventory Sections */
+.rpg-inventory-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.rpg-inventory-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--SmartThemeBorderColor);
+}
+
+.rpg-inventory-header h4 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: var(--SmartThemeBodyColor);
+}
+
+.rpg-inventory-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.rpg-inventory-text {
+    padding: 0.75rem;
+    background: var(--SmartThemeBlurTintColor);
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 0.25rem;
+    color: var(--SmartThemeBodyColor);
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.rpg-inventory-empty {
+    padding: 2rem;
+    text-align: center;
+    color: var(--SmartThemeFastUISliderColColor);
+    font-style: italic;
+}
+
+.rpg-inventory-hint {
+    padding: 0.5rem;
+    background: var(--SmartThemeQuoteColor);
+    border-left: 3px solid var(--ac-style-color-matchedText);
+    border-radius: 0.25rem;
+    font-size: 0.85rem;
+    color: var(--SmartThemeFastUISliderColColor);
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+}
+
+.rpg-inventory-hint i {
+    margin-top: 0.1rem;
+}
+
+/* Storage Locations */
+.rpg-storage-location {
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 0.25rem;
+    overflow: hidden;
+}
+
+.rpg-storage-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: var(--SmartThemeQuoteColor);
+    cursor: pointer;
+}
+
+.rpg-storage-toggle {
+    background: none;
+    border: none;
+    color: var(--SmartThemeBodyColor);
+    cursor: pointer;
+    padding: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease;
+}
+
+.rpg-storage-toggle:hover {
+    color: var(--ac-style-color-matchedText);
+}
+
+.rpg-storage-name {
+    flex: 1;
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--SmartThemeBodyColor);
+}
+
+.rpg-storage-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.rpg-storage-content {
+    padding: 0.75rem;
+    background: var(--SmartThemeBlurTintColor);
+}
+
+.rpg-storage-location.collapsed .rpg-storage-content {
+    display: none;
+}
+
+/* Buttons */
+.rpg-inventory-edit-btn,
+.rpg-inventory-add-btn,
+.rpg-inventory-remove-btn {
+    padding: 0.4rem 0.75rem;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 0.25rem;
+    background: var(--SmartThemeBlurTintColor);
+    color: var(--SmartThemeBodyColor);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.rpg-inventory-edit-btn:hover {
+    background: var(--ac-style-color-matchedText);
+    border-color: var(--ac-style-color-matchedText);
+    color: white;
+}
+
+.rpg-inventory-add-btn {
+    background: var(--ac-style-color-matchedText);
+    border-color: var(--ac-style-color-matchedText);
+    color: white;
+}
+
+.rpg-inventory-add-btn:hover {
+    opacity: 0.85;
+}
+
+.rpg-inventory-remove-btn {
+    background: transparent;
+    color: var(--SmartThemeFastUISliderColColor);
+}
+
+.rpg-inventory-remove-btn:hover {
+    background: #dc3545;
+    border-color: #dc3545;
+    color: white;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+    .rpg-inventory-subtabs {
+        flex-direction: column;
+        gap: 0.35rem;
+    }
+
+    .rpg-inventory-subtab {
+        font-size: 1rem;
+        padding: 0.75rem;
+    }
+
+    .rpg-inventory-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .rpg-inventory-header h4 {
+        font-size: 1rem;
+    }
+
+    .rpg-inventory-edit-btn,
+    .rpg-inventory-add-btn,
+    .rpg-inventory-remove-btn {
+        padding: 0.6rem 1rem;
+        font-size: 0.95rem;
+        min-height: 2.5rem;
+    }
+
+    .rpg-storage-header {
+        padding: 0.75rem;
+    }
+
+    .rpg-storage-toggle {
+        min-width: 2rem;
+        min-height: 2rem;
+    }
+}

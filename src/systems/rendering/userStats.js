@@ -55,11 +55,6 @@ export function renderUserStats() {
             <div class="rpg-stats-left">
                 <div style="display: flex; gap: clamp(4px, 0.8vh, 8px); align-items: center; flex-shrink: 0;">
                     <img src="${userPortrait}" alt="${userName}" class="rpg-user-portrait" onerror="this.style.opacity='0.5';this.onerror=null;" />
-                    <div class="rpg-inventory-box">
-                        <div class="rpg-inventory-items rpg-editable" contenteditable="true" data-field="inventory" title="Click to edit">
-                            ${stats.inventory || 'None'}
-                        </div>
-                    </div>
                 </div>
                 <div class="rpg-stats-grid">
                     <div class="rpg-stat-row">
@@ -197,20 +192,6 @@ export function renderUserStats() {
 
         // Re-render to update the bar
         renderUserStats();
-    });
-
-    // Add event listener for inventory editing
-    $('.rpg-inventory-items.rpg-editable').on('blur', function() {
-        const value = $(this).text().trim();
-        extensionSettings.userStats.inventory = value || 'None';
-
-        // Update lastGeneratedData
-        const statsText = `Health: ${extensionSettings.userStats.health}%\nSatiety: ${extensionSettings.userStats.satiety}%\nEnergy: ${extensionSettings.userStats.energy}%\nHygiene: ${extensionSettings.userStats.hygiene}%\nArousal: ${extensionSettings.userStats.arousal}%\n${extensionSettings.userStats.mood}: ${extensionSettings.userStats.conditions}\nInventory: ${extensionSettings.userStats.inventory}`;
-        lastGeneratedData.userStats = statsText;
-
-        saveSettings();
-        saveChatData();
-        updateMessageSwipeData();
     });
 
     // Add event listeners for mood/conditions editing

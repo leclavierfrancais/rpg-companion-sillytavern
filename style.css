@@ -3361,7 +3361,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     /* Mobile icon styling - use chevrons for drawer UX */
     .rpg-collapse-toggle i {
         transform: none !important;
-        font-size: 20px;
+        font-size: clamp(20px, 5.1vw, 24px);
     }
 
     /* ========================================
@@ -3398,7 +3398,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
         align-items: center;
         justify-content: center;
         gap: 6px;
-        font-size: 14px;
+        font-size: clamp(14px, 3.6vw, 18px);
         font-weight: 500;
         color: var(--SmartThemeBodyColor);
         background: transparent;
@@ -3422,7 +3422,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     }
 
     .rpg-mobile-tab i {
-        font-size: 16px;
+        font-size: clamp(16px, 4.1vw, 20px);
     }
 
     /* Tab content sections */
@@ -3517,7 +3517,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     .rpg-stats-section {
         display: grid !important;
         grid-template-columns: 40% 60%; /* Left for inventory/mood, right for attributes */
-        grid-template-rows: auto auto auto auto; /* Portrait, stat bars, inventory, mood */
+        grid-template-rows: auto auto auto auto auto; /* Portrait, bars, inventory, mood, attributes */
         gap: 12px;
         padding: 16px 12px;
     }
@@ -3560,36 +3560,58 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
         grid-row: 2;
     }
 
-    /* Inventory - bottom left */
-    .rpg-inventory-box {
-        grid-column: 1;
-        grid-row: 3;
-        margin: 0;
-        min-height: auto;
-        max-height: none;
-        max-width: 100%; /* Override 12.5rem restriction */
+    /* Make the avatar+inventory flex container grow to full width */
+    .rpg-stats-left > div[style*="display: flex"] {
+        width: 100% !important; /* Force full width in grid cell */
+        flex: 1 !important; /* Allow it to grow */
+        grid-column: 1 / 3 !important; /* Take full grid width */
+        grid-row: 1 !important; /* Position in row 1 */
     }
 
-    /* Mood - below inventory on left */
+    /* Inventory - expand to fill horizontal space in flex container */
+    .rpg-inventory-box {
+        flex: 1 !important; /* Grow to fill all available space */
+        min-width: 0 !important; /* Allow flexbox to work properly */
+        max-width: none !important; /* Remove desktop width restrictions */
+        width: auto !important; /* Don't force a specific width */
+        min-height: 60px; /* Give it decent height */
+        max-height: none; /* Remove height restriction */
+    }
+
+    /* Increase inventory text size for readability on mobile */
+    .rpg-inventory-items {
+        font-size: clamp(11px, 2.8vw, 14px) !important;
+        line-height: 1.4;
+        width: 100% !important; /* Fill the inventory box */
+        white-space: normal !important; /* Allow text wrapping */
+    }
+
+    /* Mood - row 4, aligned with attributes top */
     .rpg-mood {
         grid-column: 1;
-        grid-row: 4;
+        grid-row: 4 / 6; /* Span 2 rows to match attributes height */
         display: flex;
         flex-direction: column;
         gap: 6px;
         min-width: 0;
     }
 
-    /* Attributes - right side, spanning rows 3-4 */
+    /* Make mood text readable on mobile */
+    .rpg-mood-conditions {
+        font-size: clamp(11px, 2.8vw, 14px);
+        line-height: 1.3;
+    }
+
+    /* Attributes - right side, rows 4-6 aligned with mood */
     .rpg-stats-right {
         grid-column: 2;
-        grid-row: 3 / 5;
+        grid-row: 4 / 6;
         display: contents !important;
     }
 
     .rpg-classic-stats {
         grid-column: 2;
-        grid-row: 3 / 5;
+        grid-row: 4 / 6; /* Start at row 4, aligned with mood top */
     }
 
     /* Attributes as ultra-compact 2x3 grid for mobile */
@@ -3625,7 +3647,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     .rpg-classic-stat-label {
         grid-column: 1;
         grid-row: 1;
-        font-size: 9px;
+        font-size: clamp(9px, 2.3vw, 12px);
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.3px;
@@ -3637,7 +3659,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     .rpg-classic-stat-value {
         grid-column: 2;
         grid-row: 1;
-        font-size: 14px;
+        font-size: clamp(14px, 3.6vw, 18px);
         font-weight: 700;
         color: var(--SmartThemeQuoteColor);
         text-align: center;
@@ -3664,7 +3686,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
         min-height: 24px !important;
         width: 24px;
         height: 24px;
-        font-size: 14px;
+        font-size: clamp(14px, 3.6vw, 18px);
         font-weight: 700;
         border-radius: 4px;
         display: flex !important;
@@ -3710,10 +3732,29 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     .rpg-relationship-badge {
         width: 18px !important;
         height: 18px !important;
-        font-size: 10px !important;
+        font-size: clamp(10px, 2.6vw, 13px) !important;
         padding: 0 !important;
         min-height: unset !important;
         line-height: 18px !important;
+    }
+
+    /* ========================================
+       MOBILE CHARACTER INFO TEXT SIZES
+       ======================================== */
+
+    /* Larger character emoji for mobile readability */
+    .rpg-character-emoji {
+        font-size: clamp(16px, 4.1vw, 20px) !important;
+    }
+
+    /* Readable character names on mobile */
+    .rpg-character-name {
+        font-size: clamp(12px, 3.1vw, 16px) !important;
+    }
+
+    /* Readable character traits on mobile */
+    .rpg-character-traits {
+        font-size: clamp(11px, 2.8vw, 14px) !important;
     }
 }
 

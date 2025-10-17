@@ -569,7 +569,7 @@ class DiceModal {
             this.isAnimating = false;
 
             // Clear pending roll
-            pendingDiceRoll = null;
+            setPendingDiceRoll(null);
         }, 200);
     }
 
@@ -688,7 +688,7 @@ function setupDiceRoller() {
             extensionSettings.lastDiceRoll = pendingDiceRoll;
             saveSettings();
             updateDiceDisplay();
-            pendingDiceRoll = null;
+            setPendingDiceRoll(null);
         }
         closeDicePopup();
     });
@@ -770,12 +770,12 @@ async function rollDice() {
     const rolls = rollResult.rolls || [];
 
     // Store result temporarily (not saved until "Save Roll" is clicked)
-    pendingDiceRoll = {
+    setPendingDiceRoll({
         formula: `${count}d${sides}`,
         total: total,
         rolls: rolls,
         timestamp: Date.now()
-    };
+    });
 
     // Show result
     diceModal.showResult(total, rolls);

@@ -4059,7 +4059,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     margin: 0;
     font-size: 1rem;
     font-weight: 600;
-    color: var(--SmartThemeBodyColor);
+    color: #000000;
 }
 
 .rpg-storage-actions {
@@ -4376,17 +4376,13 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 .rpg-view-toggle {
     display: flex;
     gap: 0.25rem;
-    background: var(--SmartThemeQuoteColor);
-    border: 1px solid var(--SmartThemeBorderColor);
-    border-radius: 0.25rem;
-    padding: 0.15rem;
 }
 
 .rpg-view-btn {
     padding: 0.35rem 0.6rem;
-    background: transparent;
-    border: 1px solid transparent;
-    border-radius: 0.15rem;
+    background: var(--SmartThemeBlurTintColor);
+    border: 2px solid var(--SmartThemeBorderColor);
+    border-radius: 0.25rem;
     color: var(--SmartThemeFastUISliderColColor);
     cursor: pointer;
     transition: all 0.2s ease;
@@ -4403,7 +4399,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 }
 
 .rpg-view-btn.active {
-    background: transparent;
+    background: var(--SmartThemeBlurTintColor);
     border-color: var(--rpg-highlight);
     color: var(--rpg-highlight);
 }

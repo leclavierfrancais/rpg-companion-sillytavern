@@ -2850,7 +2850,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     position: fixed;
     z-index: 1000; /* Lower z-index to stay below dropdown menus */
     pointer-events: auto;
-    max-width: 21.875rem;
+    max-width: 15.3rem; /* 30% smaller than 21.875rem (350px → 245px) */
     transform: translateY(-50%);
     animation: thoughtPanelFadeIn 0.4s ease-out;
 }
@@ -3132,7 +3132,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     }
 
     .rpg-thought-content {
-        font-size: clamp(9px, 1.2vw, 11px);
+        font-size: clamp(12px, 3.5vw, 16px);
     }
 }
 
@@ -3774,6 +3774,10 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     /* Position thought icon above avatar on mobile to prevent off-screen clipping */
     /* JavaScript will calculate position, but add transform to move it above and right */
     #rpg-thought-icon {
+        /* 20% larger than desktop for better visibility on mobile */
+        width: 2.7rem !important;
+        height: 2.7rem !important;
+        font-size: 2.2vw !important;
         /* Use transform to shift icon above and to the right of avatar */
         transform: translate(50px, -45px) !important;
         /* Smooth animation for position changes during scroll */

@@ -223,8 +223,8 @@ If you enjoy this extension, consider supporting development:
 - Info Box prompt inspiration: MidnightSleeper
 - Stats Tracker concept: Community feedback
 - Special thanks to Quack for helping me with the CSS
-- Massive kudos to Paperboy for making the mobile version work and for fixing bugs
-- Thanks to IDeathByte, for solving some CSS scaling issues
+- Massive kudos to Paperboy for making the mobile version work, fixing bugs, and adding the inventory system
+- Thanks to IDeathByte for solving some CSS scaling issues
 
 ## 🚀 Planned Features
 
@@ -232,7 +232,7 @@ If you enjoy this extension, consider supporting development:
 
 ## 💡 Tips
 
-1. **Context Messages**: Start with 4 messages and adjust based on your needs. More messages = better context but slower updates
+1. **Context Messages**: Start with 4 messages and adjust based on your needs. More messages = better context, but slower updates
 2. **Performance**: If updates are slow, consider reducing the context depth or using a faster model
 3. **Customization**: You can modify the prompts in index.js to add your own stat categories or change the format
 

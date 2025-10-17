@@ -11,13 +11,16 @@ import {
     lastGeneratedData,
     setExtensionSettings,
     updateExtensionSettings,
-    setLastGeneratedData
+    setLastGeneratedData,
+    FEATURE_FLAGS
 } from './state.js';
+import { migrateInventory } from '../utils/migration.js';
 
 const extensionName = 'third-party/rpg-companion-sillytavern';
 
 /**
  * Loads the extension settings from the global settings object.
+ * Automatically migrates v1 inventory to v2 format if needed.
  */
 export function loadSettings() {
     if (power_user.extensions && power_user.extensions[extensionName]) {
@@ -25,6 +28,16 @@ export function loadSettings() {
         // console.log('[RPG Companion] Settings loaded:', extensionSettings);
     } else {
         // console.log('[RPG Companion] No saved settings found, using defaults');
+    }
+
+    // Migrate inventory if feature flag enabled
+    if (FEATURE_FLAGS.useNewInventory) {
+        const migrationResult = migrateInventory(extensionSettings.userStats.inventory);
+        if (migrationResult.migrated) {
+            console.log(`[RPG Companion] Inventory migrated from ${migrationResult.source} to v2 format`);
+            extensionSettings.userStats.inventory = migrationResult.inventory;
+            saveSettings(); // Persist migrated inventory
+        }
     }
 }
 
@@ -94,6 +107,7 @@ export function updateMessageSwipeData() {
 
 /**
  * Loads RPG data from the current chat's metadata.
+ * Automatically migrates v1 inventory to v2 format if needed.
  */
 export function loadChatData() {
     if (!chat_metadata || !chat_metadata.rpg_companion) {
@@ -107,7 +121,13 @@ export function loadChatData() {
                 arousal: 0,
                 mood: '😐',
                 conditions: 'None',
-                inventory: 'None'
+                // Use v2 inventory format for defaults
+                inventory: {
+                    version: 2,
+                    onPerson: "None",
+                    stored: {},
+                    assets: "None"
+                }
             }
         });
         setLastGeneratedData({
@@ -134,6 +154,16 @@ export function loadChatData() {
     // Restore last generated data
     if (savedData.lastGeneratedData) {
         setLastGeneratedData({ ...savedData.lastGeneratedData });
+    }
+
+    // Migrate inventory in chat data if feature flag enabled
+    if (FEATURE_FLAGS.useNewInventory && extensionSettings.userStats.inventory) {
+        const migrationResult = migrateInventory(extensionSettings.userStats.inventory);
+        if (migrationResult.migrated) {
+            console.log(`[RPG Companion] Chat inventory migrated from ${migrationResult.source} to v2 format`);
+            extensionSettings.userStats.inventory = migrationResult.inventory;
+            saveChatData(); // Persist migrated inventory to chat metadata
+        }
     }
 
     // console.log('[RPG Companion] Loaded chat data:', savedData);

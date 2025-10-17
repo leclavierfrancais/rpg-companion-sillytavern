@@ -6,6 +6,7 @@
 import { extensionSettings } from '../../core/state.js';
 import { saveSettings } from '../../core/persistence.js';
 import { closeMobilePanelWithAnimation, updateCollapseToggleIcon } from './layout.js';
+import { setupDesktopTabs, removeDesktopTabs } from './desktop.js';
 
 /**
  * Sets up the mobile toggle button (FAB) with drag functionality.
@@ -331,6 +332,9 @@ export function setupMobileToggle() {
         if (!wasMobile && isMobile) {
             console.log('[RPG Mobile] Transitioning desktop -> mobile');
 
+            // Remove desktop tabs first
+            removeDesktopTabs();
+
             // Remove desktop positioning classes
             $panel.removeClass('rpg-position-right rpg-position-left rpg-position-top');
 
@@ -383,6 +387,9 @@ export function setupMobileToggle() {
 
                 // Remove mobile tabs structure
                 removeMobileTabs();
+
+                // Setup desktop tabs
+                setupDesktopTabs();
 
                 // Force reflow to apply position instantly
                 $panel[0].offsetHeight;
@@ -519,54 +526,59 @@ export function setupMobileTabs() {
         return;
     }
 
-    // Create tab navigation (only show tabs for sections that exist)
+    // Create tab navigation (3 tabs for mobile)
     const tabs = [];
-    const hasInfoOrCharacters = $infoBox.length > 0 || $thoughts.length > 0;
-    const hasStatsOrInventory = $userStats.length > 0 || $inventory.length > 0;
+    const hasStats = $userStats.length > 0;
+    const hasInfo = $infoBox.length > 0 || $thoughts.length > 0;
+    const hasInventory = $inventory.length > 0;
 
-    if (hasStatsOrInventory) {
+    // Tab 1: Stats (User Stats only)
+    if (hasStats) {
         tabs.push('<button class="rpg-mobile-tab active" data-tab="stats"><i class="fa-solid fa-chart-bar"></i><span>Stats</span></button>');
     }
-    // Combine Info and Characters into one tab
-    if (hasInfoOrCharacters) {
-        tabs.push('<button class="rpg-mobile-tab ' + (tabs.length === 0 ? 'active' : '') + '" data-tab="info-characters"><i class="fa-solid fa-book"></i><span>Info</span></button>');
+    // Tab 2: Info (Info Box + Character Thoughts)
+    if (hasInfo) {
+        tabs.push('<button class="rpg-mobile-tab ' + (tabs.length === 0 ? 'active' : '') + '" data-tab="info"><i class="fa-solid fa-book"></i><span>Info</span></button>');
+    }
+    // Tab 3: Inventory
+    if (hasInventory) {
+        tabs.push('<button class="rpg-mobile-tab ' + (tabs.length === 0 ? 'active' : '') + '" data-tab="inventory"><i class="fa-solid fa-box"></i><span>Inventory</span></button>');
     }
 
     const $tabNav = $('<div class="rpg-mobile-tabs">' + tabs.join('') + '</div>');
 
     // Determine which tab should be active
     let firstTab = '';
-    if (hasStatsOrInventory) firstTab = 'stats';
-    else if (hasInfoOrCharacters) firstTab = 'info-characters';
+    if (hasStats) firstTab = 'stats';
+    else if (hasInfo) firstTab = 'info';
+    else if (hasInventory) firstTab = 'inventory';
 
     // Create tab content wrappers
     const $statsTab = $('<div class="rpg-mobile-tab-content ' + (firstTab === 'stats' ? 'active' : '') + '" data-tab-content="stats"></div>');
-    const $infoCharactersTab = $('<div class="rpg-mobile-tab-content ' + (firstTab === 'info-characters' ? 'active' : '') + '" data-tab-content="info-characters"></div>');
-
-    // Create combined content wrapper for Info and Characters
-    const $combinedWrapper = $('<div class="rpg-mobile-combined-content"></div>');
+    const $infoTab = $('<div class="rpg-mobile-tab-content ' + (firstTab === 'info' ? 'active' : '') + '" data-tab-content="info"></div>');
+    const $inventoryTab = $('<div class="rpg-mobile-tab-content ' + (firstTab === 'inventory' ? 'active' : '') + '" data-tab-content="inventory"></div>');
 
     // Move sections into their respective tabs (detach to preserve event handlers)
+    // Stats tab: User Stats only
     if ($userStats.length > 0) {
         $statsTab.append($userStats.detach());
         $userStats.show();
     }
-    if ($inventory.length > 0) {
-        $statsTab.append($inventory.detach());
-        $inventory.show();
-    }
+
+    // Info tab: Info Box + Character Thoughts
     if ($infoBox.length > 0) {
-        $combinedWrapper.append($infoBox.detach());
+        $infoTab.append($infoBox.detach());
         $infoBox.show();
     }
     if ($thoughts.length > 0) {
-        $combinedWrapper.append($thoughts.detach());
+        $infoTab.append($thoughts.detach());
         $thoughts.show();
     }
 
-    // Add combined wrapper to the info-characters tab
-    if (hasInfoOrCharacters) {
-        $infoCharactersTab.append($combinedWrapper);
+    // Inventory tab: Inventory only
+    if ($inventory.length > 0) {
+        $inventoryTab.append($inventory.detach());
+        $inventory.show();
     }
 
     // Hide dividers on mobile
@@ -577,8 +589,9 @@ export function setupMobileTabs() {
     $mobileContainer.append($tabNav);
 
     // Only append tab content wrappers that have content
-    if (hasStatsOrInventory) $mobileContainer.append($statsTab);
-    if (hasInfoOrCharacters) $mobileContainer.append($infoCharactersTab);
+    if (hasStats) $mobileContainer.append($statsTab);
+    if (hasInfo) $mobileContainer.append($infoTab);
+    if (hasInventory) $mobileContainer.append($inventoryTab);
 
     // Insert mobile tab structure at the beginning of content box
     $contentBox.prepend($mobileContainer);

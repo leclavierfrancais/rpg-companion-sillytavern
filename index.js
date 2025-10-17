@@ -100,6 +100,10 @@ import {
     setupMobileKeyboardHandling,
     setupContentEditableScrolling
 } from './src/systems/ui/mobile.js';
+import {
+    setupDesktopTabs,
+    removeDesktopTabs
+} from './src/systems/ui/desktop.js';
 
 // Feature modules
 import { setupPlotButtons, sendPlotProgression } from './src/systems/features/plotProgression.js';
@@ -367,6 +371,11 @@ async function initUI() {
 
     // Setup mobile toggle button
     setupMobileToggle();
+
+    // Setup desktop tabs (only on desktop viewport)
+    if (window.innerWidth > 1000) {
+        setupDesktopTabs();
+    }
 
     // Setup collapse/expand toggle button
     setupCollapseToggle();

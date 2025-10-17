@@ -978,7 +978,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     border-radius: 0.75em;
     padding: 0.375em;
     margin-bottom: 0;
-    flex: 1;
+    flex: 0 0 auto;
     min-height: 0;
     display: flex;
     flex-direction: column;

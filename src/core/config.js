@@ -3,6 +3,9 @@
  * Extension metadata and configuration constants
  */
 
+// Type imports
+/** @typedef {import('../types/inventory.js').InventoryV2} InventoryV2 */
+
 export const extensionName = 'third-party/rpg-companion-sillytavern';
 
 /**
@@ -52,7 +55,13 @@ export const defaultSettings = {
         arousal: 0,
         mood: '😐',
         conditions: 'None',
-        inventory: 'None'
+        /** @type {InventoryV2} */
+        inventory: {
+            version: 2,
+            onPerson: "None",
+            stored: {},
+            assets: "None"
+        }
     },
     classicStats: {
         str: 10,

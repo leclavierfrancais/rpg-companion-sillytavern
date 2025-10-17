@@ -3,6 +3,9 @@
  * Centralizes all extension state variables
  */
 
+// Type imports
+/** @typedef {import('../types/inventory.js').InventoryV2} InventoryV2 */
+
 /**
  * Extension settings - persisted to SillyTavern settings
  */
@@ -40,7 +43,13 @@ export let extensionSettings = {
         arousal: 0,
         mood: '😐',
         conditions: 'None',
-        inventory: 'None'
+        /** @type {InventoryV2} */
+        inventory: {
+            version: 2,
+            onPerson: "None",
+            stored: {},
+            assets: "None"
+        }
     },
     classicStats: {
         str: 10,
@@ -93,6 +102,13 @@ export let isPlotProgression = false;
  * Temporary storage for pending dice roll (not saved until user clicks "Save Roll")
  */
 export let pendingDiceRoll = null;
+
+/**
+ * Feature flags for gradual rollout of new features
+ */
+export const FEATURE_FLAGS = {
+    useNewInventory: true // Enable v2 inventory system with categorized storage
+};
 
 /**
  * Fallback avatar image (base64-encoded SVG with "?" icon)

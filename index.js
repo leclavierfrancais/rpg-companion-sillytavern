@@ -108,7 +108,7 @@ import {
 // Feature modules
 import { setupPlotButtons, sendPlotProgression } from './src/systems/features/plotProgression.js';
 import { setupClassicStatsButtons } from './src/systems/features/classicStats.js';
-import { ensureHtmlCleaningRegex } from './src/systems/features/htmlCleaning.js';
+import { ensureHtmlCleaningRegex, detectConflictingRegexScripts } from './src/systems/features/htmlCleaning.js';
 
 // Integration modules
 import {
@@ -419,30 +419,92 @@ async function initUI() {
  */
 jQuery(async () => {
     try {
-        loadSettings();
-        await addExtensionSettings();
-        await initUI();
+        console.log('[RPG Companion] Starting initialization...');
+
+        // Load settings with validation
+        try {
+            loadSettings();
+        } catch (error) {
+            console.error('[RPG Companion] Settings load failed, continuing with defaults:', error);
+        }
+
+        // Add extension settings to Extensions tab
+        try {
+            await addExtensionSettings();
+        } catch (error) {
+            console.error('[RPG Companion] Failed to add extension settings tab:', error);
+            // Don't throw - extension can still work without settings tab
+        }
+
+        // Initialize UI
+        try {
+            await initUI();
+        } catch (error) {
+            console.error('[RPG Companion] UI initialization failed:', error);
+            throw error; // This is critical - can't continue without UI
+        }
 
         // Load chat-specific data for current chat
-        loadChatData();
+        try {
+            loadChatData();
+        } catch (error) {
+            console.error('[RPG Companion] Chat data load failed, using defaults:', error);
+        }
 
         // Import the HTML cleaning regex if needed
-        await ensureHtmlCleaningRegex(st_extension_settings, saveSettingsDebounced);
+        try {
+            await ensureHtmlCleaningRegex(st_extension_settings, saveSettingsDebounced);
+        } catch (error) {
+            console.error('[RPG Companion] HTML regex import failed:', error);
+            // Non-critical - continue without it
+        }
+
+        // Detect conflicting regex scripts from old manual formatters
+        try {
+            const conflicts = detectConflictingRegexScripts(st_extension_settings);
+            if (conflicts.length > 0) {
+                console.warn('[RPG Companion] ⚠️ Detected old manual formatting regex scripts that may conflict:');
+                conflicts.forEach(name => console.warn(`  - ${name}`));
+                console.warn('[RPG Companion] Consider disabling these regexes as the extension now handles formatting automatically.');
+
+                // Show user-friendly warning (non-blocking)
+                toastr.warning(
+                    `Found ${conflicts.length} old RPG formatting regex script(s). These may conflict with the extension. Check console for details.`,
+                    'RPG Companion Warning',
+                    { timeOut: 8000 }
+                );
+            }
+        } catch (error) {
+            console.error('[RPG Companion] Conflict detection failed:', error);
+            // Non-critical - continue anyway
+        }
 
         // Register all event listeners
-        registerAllEvents({
-            [event_types.MESSAGE_SENT]: onMessageSent,
-            [event_types.GENERATION_STARTED]: onGenerationStarted,
-            [event_types.MESSAGE_RECEIVED]: onMessageReceived,
-            [event_types.CHAT_CHANGED]: [onCharacterChanged, updatePersonaAvatar],
-            [event_types.MESSAGE_SWIPED]: onMessageSwiped,
-            [event_types.USER_MESSAGE_RENDERED]: updatePersonaAvatar,
-            [event_types.SETTINGS_UPDATED]: updatePersonaAvatar
-        });
+        try {
+            registerAllEvents({
+                [event_types.MESSAGE_SENT]: onMessageSent,
+                [event_types.GENERATION_STARTED]: onGenerationStarted,
+                [event_types.MESSAGE_RECEIVED]: onMessageReceived,
+                [event_types.CHAT_CHANGED]: [onCharacterChanged, updatePersonaAvatar],
+                [event_types.MESSAGE_SWIPED]: onMessageSwiped,
+                [event_types.USER_MESSAGE_RENDERED]: updatePersonaAvatar,
+                [event_types.SETTINGS_UPDATED]: updatePersonaAvatar
+            });
+        } catch (error) {
+            console.error('[RPG Companion] Event registration failed:', error);
+            throw error; // This is critical - can't continue without events
+        }
 
-        // console.log('[RPG Companion] Extension loaded successfully');
+        console.log('[RPG Companion] ✅ Extension loaded successfully');
     } catch (error) {
-        console.error('[RPG Companion] Failed to initialize:', error);
-        throw error;
+        console.error('[RPG Companion] ❌ Critical initialization failure:', error);
+        console.error('[RPG Companion] Error details:', error.message, error.stack);
+
+        // Show user-friendly error message
+        toastr.error(
+            'RPG Companion failed to initialize. Check console for details. Please try refreshing the page or resetting extension settings.',
+            'RPG Companion Error',
+            { timeOut: 10000 }
+        );
     }
 });

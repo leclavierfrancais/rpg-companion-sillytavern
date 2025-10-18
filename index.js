@@ -146,9 +146,33 @@ import {
 /**
  * Adds the extension settings to the Extensions tab.
  */
-async function addExtensionSettings() {
-    const settingsHtml = await renderExtensionTemplateAsync(extensionName, 'settings');
-    $('#rpg_companion_container').append(settingsHtml);
+function addExtensionSettings() {
+    const settingsHtml = `
+        <div class="inline-drawer">
+            <div class="inline-drawer-toggle inline-drawer-header">
+                <b><i class="fa-solid fa-dice-d20"></i> RPG Companion</b>
+                <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
+            </div>
+            <div class="inline-drawer-content">
+                <label class="checkbox_label" for="rpg-extension-enabled">
+                    <input type="checkbox" id="rpg-extension-enabled" />
+                    <span>Enable RPG Companion</span>
+                </label>
+                <small class="notes">Toggle to enable/disable the RPG Companion extension. Configure additional settings within the panel itself.</small>
+
+                <div style="margin-top: 10px; display: flex; gap: 10px;">
+                    <a href="https://discord.com/invite/KdAkTg94ME" target="_blank" class="menu_button" style="flex: 1; text-align: center; text-decoration: none;">
+                        <i class="fa-brands fa-discord"></i> Discord
+                    </a>
+                    <a href="https://ko-fi.com/marinara_spaghetti" target="_blank" class="menu_button" style="flex: 1; text-align: center; text-decoration: none;">
+                        <i class="fa-solid fa-heart"></i> Support Creator
+                    </a>
+                </div>
+            </div>
+        </div>
+    `;
+
+    $('#extensions_settings2').append(settingsHtml);
 
     // Set up the enable/disable toggle
     $('#rpg-extension-enabled').prop('checked', extensionSettings.enabled).on('change', function() {
@@ -430,7 +454,7 @@ jQuery(async () => {
 
         // Add extension settings to Extensions tab
         try {
-            await addExtensionSettings();
+            addExtensionSettings();
         } catch (error) {
             console.error('[RPG Companion] Failed to add extension settings tab:', error);
             // Don't throw - extension can still work without settings tab

@@ -9,9 +9,11 @@ import { getContext } from '../../../../../extensions.js';
 import {
     extensionSettings,
     lastGeneratedData,
+    committedTrackerData,
     setExtensionSettings,
     updateExtensionSettings,
     setLastGeneratedData,
+    setCommittedTrackerData,
     FEATURE_FLAGS
 } from './state.js';
 import { migrateInventory } from '../utils/migration.js';
@@ -123,6 +125,7 @@ export function saveChatData() {
         userStats: extensionSettings.userStats,
         classicStats: extensionSettings.classicStats,
         lastGeneratedData: lastGeneratedData,
+        committedTrackerData: committedTrackerData,
         timestamp: Date.now()
     };
 
@@ -195,6 +198,11 @@ export function loadChatData() {
             characterThoughts: null,
             html: null
         });
+        setCommittedTrackerData({
+            userStats: null,
+            infoBox: null,
+            characterThoughts: null
+        });
         return;
     }
 
@@ -213,6 +221,11 @@ export function loadChatData() {
     // Restore last generated data
     if (savedData.lastGeneratedData) {
         setLastGeneratedData({ ...savedData.lastGeneratedData });
+    }
+
+    // Restore committed tracker data
+    if (savedData.committedTrackerData) {
+        setCommittedTrackerData({ ...savedData.committedTrackerData });
     }
 
     // Migrate inventory in chat data if feature flag enabled

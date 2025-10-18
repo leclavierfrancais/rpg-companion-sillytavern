@@ -19,25 +19,84 @@ import { migrateInventory } from '../utils/migration.js';
 const extensionName = 'third-party/rpg-companion-sillytavern';
 
 /**
+ * Validates extension settings structure
+ * @param {Object} settings - Settings object to validate
+ * @returns {boolean} True if valid, false otherwise
+ */
+function validateSettings(settings) {
+    if (!settings || typeof settings !== 'object') {
+        return false;
+    }
+
+    // Check for required top-level properties
+    if (typeof settings.enabled !== 'boolean' ||
+        typeof settings.autoUpdate !== 'boolean' ||
+        !settings.userStats || typeof settings.userStats !== 'object') {
+        console.warn('[RPG Companion] Settings validation failed: missing required properties');
+        return false;
+    }
+
+    // Validate userStats structure
+    const stats = settings.userStats;
+    if (typeof stats.health !== 'number' ||
+        typeof stats.satiety !== 'number' ||
+        typeof stats.energy !== 'number') {
+        console.warn('[RPG Companion] Settings validation failed: invalid userStats structure');
+        return false;
+    }
+
+    return true;
+}
+
+/**
  * Loads the extension settings from the global settings object.
  * Automatically migrates v1 inventory to v2 format if needed.
  */
 export function loadSettings() {
-    if (power_user.extensions && power_user.extensions[extensionName]) {
-        updateExtensionSettings(power_user.extensions[extensionName]);
-        // console.log('[RPG Companion] Settings loaded:', extensionSettings);
-    } else {
-        // console.log('[RPG Companion] No saved settings found, using defaults');
-    }
-
-    // Migrate inventory if feature flag enabled
-    if (FEATURE_FLAGS.useNewInventory) {
-        const migrationResult = migrateInventory(extensionSettings.userStats.inventory);
-        if (migrationResult.migrated) {
-            console.log(`[RPG Companion] Inventory migrated from ${migrationResult.source} to v2 format`);
-            extensionSettings.userStats.inventory = migrationResult.inventory;
-            saveSettings(); // Persist migrated inventory
+    try {
+        // Validate power_user structure
+        if (!power_user || typeof power_user !== 'object') {
+            console.warn('[RPG Companion] power_user is not available, using default settings');
+            return;
         }
+
+        if (!power_user.extensions) {
+            power_user.extensions = {};
+            console.log('[RPG Companion] Created power_user.extensions object');
+        }
+
+        if (power_user.extensions[extensionName]) {
+            const savedSettings = power_user.extensions[extensionName];
+
+            // Validate loaded settings
+            if (!validateSettings(savedSettings)) {
+                console.warn('[RPG Companion] Loaded settings failed validation, using defaults');
+                console.warn('[RPG Companion] Invalid settings:', savedSettings);
+                // Save valid defaults to replace corrupt data
+                saveSettings();
+                return;
+            }
+
+            updateExtensionSettings(savedSettings);
+            // console.log('[RPG Companion] Settings loaded:', extensionSettings);
+        } else {
+            // console.log('[RPG Companion] No saved settings found, using defaults');
+        }
+
+        // Migrate inventory if feature flag enabled
+        if (FEATURE_FLAGS.useNewInventory) {
+            const migrationResult = migrateInventory(extensionSettings.userStats.inventory);
+            if (migrationResult.migrated) {
+                console.log(`[RPG Companion] Inventory migrated from ${migrationResult.source} to v2 format`);
+                extensionSettings.userStats.inventory = migrationResult.inventory;
+                saveSettings(); // Persist migrated inventory
+            }
+        }
+    } catch (error) {
+        console.error('[RPG Companion] Error loading settings:', error);
+        console.error('[RPG Companion] Error details:', error.message, error.stack);
+        console.warn('[RPG Companion] Using default settings due to load error');
+        // Settings will remain at defaults from state.js
     }
 }
 

@@ -8,6 +8,7 @@ import { saveSettings, saveChatData, updateMessageSwipeData } from '../../core/p
 import { buildInventorySummary } from '../generation/promptBuilder.js';
 import { renderInventory } from '../rendering/inventory.js';
 import { parseItems, serializeItems } from '../../utils/itemParser.js';
+import { sanitizeLocationName, sanitizeItemName } from '../../utils/security.js';
 
 // Type imports
 /** @typedef {import('../../types/inventory.js').InventoryV2} InventoryV2 */
@@ -139,9 +140,17 @@ export function saveAddItem(field, location) {
     }
 
     const input = $(inputId);
-    const itemName = input.val().trim();
+    const rawItemName = input.val().trim();
 
+    if (!rawItemName) {
+        hideAddItemForm(field, location);
+        return;
+    }
+
+    // Security: Validate and sanitize item name
+    const itemName = sanitizeItemName(rawItemName);
     if (!itemName) {
+        alert('Invalid item name.');
         hideAddItemForm(field, location);
         return;
     }
@@ -246,9 +255,17 @@ export function hideAddLocationForm() {
 export function saveAddLocation() {
     const inventory = extensionSettings.userStats.inventory;
     const input = $('#rpg-new-location-name');
-    const locationName = input.val().trim();
+    const rawLocationName = input.val().trim();
 
+    if (!rawLocationName) {
+        hideAddLocationForm();
+        return;
+    }
+
+    // Security: Validate and sanitize location name
+    const locationName = sanitizeLocationName(rawLocationName);
     if (!locationName) {
+        alert('Invalid location name. Avoid special names like "__proto__" or "constructor".');
         hideAddLocationForm();
         return;
     }

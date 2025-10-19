@@ -3,6 +3,8 @@
  * Utilities for parsing item strings into arrays and vice versa
  */
 
+import { sanitizeItemName, MAX_ITEMS_PER_SECTION } from './security.js';
+
 /**
  * Parses item strings from AI responses into clean arrays.
  * Handles numerous AI formatting quirks and edge cases.
@@ -124,7 +126,7 @@ export function parseItems(itemString) {
     processed = processed.replace(/\s+/g, ' ');
 
     // STEP 6: Smart comma splitting (only split on commas OUTSIDE parentheses)
-    // Also handles list markers and quotes per-item
+    // Also handles list markers, quotes, and security validation per-item
     const items = [];
     let currentItem = '';
     parenDepth = 0;
@@ -147,7 +149,17 @@ export function parseItems(itemString) {
             // Comma outside parentheses - this is a separator
             const cleaned = cleanSingleItem(currentItem);
             if (cleaned) {
-                items.push(cleaned);
+                // Security check: validate and sanitize item name
+                const sanitized = sanitizeItemName(cleaned);
+                if (sanitized) {
+                    items.push(sanitized);
+                }
+
+                // DoS protection: enforce max items limit
+                if (items.length >= MAX_ITEMS_PER_SECTION) {
+                    console.warn(`[RPG Companion] Reached max items limit (${MAX_ITEMS_PER_SECTION}), truncating list`);
+                    return items;
+                }
             }
             currentItem = ''; // Start new item
         } else {
@@ -158,7 +170,11 @@ export function parseItems(itemString) {
     // Don't forget the last item
     const cleaned = cleanSingleItem(currentItem);
     if (cleaned) {
-        items.push(cleaned);
+        // Security check: validate and sanitize item name
+        const sanitized = sanitizeItemName(cleaned);
+        if (sanitized) {
+            items.push(sanitized);
+        }
     }
 
     // Warn if parentheses were unmatched

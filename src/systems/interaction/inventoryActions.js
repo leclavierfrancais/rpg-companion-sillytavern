@@ -6,7 +6,7 @@
 import { extensionSettings, lastGeneratedData } from '../../core/state.js';
 import { saveSettings, saveChatData, updateMessageSwipeData } from '../../core/persistence.js';
 import { buildInventorySummary } from '../generation/promptBuilder.js';
-import { renderInventory } from '../rendering/inventory.js';
+import { renderInventory, getLocationId } from '../rendering/inventory.js';
 import { parseItems, serializeItems } from '../../utils/itemParser.js';
 
 // Type imports
@@ -53,7 +53,7 @@ export function showAddItemForm(field, location) {
     let inputId;
 
     if (field === 'stored') {
-        const locationId = location.replace(/\s+/g, '-');
+        const locationId = getLocationId(location);
         formId = `rpg-add-item-form-stored-${locationId}`;
         inputId = `.rpg-location-item-input[data-location="${location}"]`;
     } else {
@@ -78,7 +78,7 @@ export function hideAddItemForm(field, location) {
     let inputId;
 
     if (field === 'stored') {
-        const locationId = location.replace(/\s+/g, '-');
+        const locationId = getLocationId(location);
         formId = `rpg-add-item-form-stored-${locationId}`;
         inputId = `.rpg-location-item-input[data-location="${location}"]`;
     } else {
@@ -154,6 +154,8 @@ export function saveAddItem(field, location) {
 export function removeItem(field, itemIndex, location) {
     const inventory = extensionSettings.userStats.inventory;
 
+    // console.log('[RPG Companion] DEBUG removeItem called:', { field, itemIndex, location });
+
     // Get current items, remove the one at index, serialize back
     let currentString;
     if (field === 'stored') {
@@ -162,9 +164,16 @@ export function removeItem(field, itemIndex, location) {
         currentString = inventory[field] || 'None';
     }
 
+    // console.log('[RPG Companion] DEBUG currentString before removal:', currentString);
+
     const items = parseItems(currentString);
+    // console.log('[RPG Companion] DEBUG items array before removal:', items);
+    
     items.splice(itemIndex, 1); // Remove item at index
+    // console.log('[RPG Companion] DEBUG items array after removal:', items);
+    
     const newString = serializeItems(items);
+    // console.log('[RPG Companion] DEBUG newString after removal:', newString);
 
     // Save back to inventory
     if (field === 'stored') {
@@ -173,6 +182,8 @@ export function removeItem(field, itemIndex, location) {
         inventory[field] = newString;
     }
 
+    // console.log('[RPG Companion] DEBUG inventory after save:', inventory);
+
     updateLastGeneratedDataInventory();
     saveSettings();
     saveChatData();
@@ -180,9 +191,7 @@ export function removeItem(field, itemIndex, location) {
 
     // Re-render
     renderInventory();
-}
-
-/**
+}/**
  * Shows the inline form for adding a new storage location.
  */
 export function showAddLocationForm() {
@@ -241,11 +250,17 @@ export function saveAddLocation() {
  * @param {string} locationName - Name of location to remove
  */
 export function showRemoveConfirmation(locationName) {
-    const confirmId = `rpg-remove-confirm-${locationName.replace(/\s+/g, '-')}`;
+    // console.log('[RPG Companion] DEBUG showRemoveConfirmation called for:', locationName);
+    const confirmId = `rpg-remove-confirm-${getLocationId(locationName)}`;
+    // console.log('[RPG Companion] DEBUG confirmId:', confirmId);
     const confirmUI = $(`#${confirmId}`);
+    // console.log('[RPG Companion] DEBUG confirmUI element found:', confirmUI.length);
 
     if (confirmUI.length > 0) {
         confirmUI.show();
+        // console.log('[RPG Companion] DEBUG confirmation shown');
+    } else {
+        console.warn('[RPG Companion] DEBUG confirmation element not found!');
     }
 }
 
@@ -254,7 +269,7 @@ export function showRemoveConfirmation(locationName) {
  * @param {string} locationName - Name of location
  */
 export function hideRemoveConfirmation(locationName) {
-    const confirmId = `rpg-remove-confirm-${locationName.replace(/\s+/g, '-')}`;
+    const confirmId = `rpg-remove-confirm-${getLocationId(locationName)}`;
     const confirmUI = $(`#${confirmId}`);
 
     if (confirmUI.length > 0) {
@@ -267,8 +282,12 @@ export function hideRemoveConfirmation(locationName) {
  * @param {string} locationName - Name of location to remove
  */
 export function confirmRemoveLocation(locationName) {
+    // console.log('[RPG Companion] DEBUG confirmRemoveLocation called for:', locationName);
     const inventory = extensionSettings.userStats.inventory;
+    // console.log('[RPG Companion] DEBUG inventory.stored before deletion:', inventory.stored);
+    
     delete inventory.stored[locationName];
+    // console.log('[RPG Companion] DEBUG inventory.stored after deletion:', inventory.stored);
 
     // Remove from collapsed list if present
     const index = collapsedLocations.indexOf(locationName);
@@ -282,10 +301,9 @@ export function confirmRemoveLocation(locationName) {
     updateMessageSwipeData();
 
     // Re-render inventory UI
+    // console.log('[RPG Companion] DEBUG calling renderInventory()');
     renderInventory();
-}
-
-/**
+}/**
  * Toggles the collapsed state of a storage location section.
  * @param {string} locationName - Name of location to toggle
  */

@@ -11,6 +11,17 @@ import { parseItems } from '../../utils/itemParser.js';
 /** @typedef {import('../../types/inventory.js').InventoryV2} InventoryV2 */
 
 /**
+ * Converts a location name to a safe ID for use in HTML element IDs.
+ * Must match the logic used in inventoryActions.js.
+ * @param {string} locationName - The location name
+ * @returns {string} Safe ID string
+ */
+export function getLocationId(locationName) {
+    // Remove all non-alphanumeric characters except spaces, then replace spaces with hyphens
+    return locationName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '-');
+}
+
+/**
  * Renders the inventory sub-tab navigation (On Person, Stored, Assets)
  * @param {string} activeTab - Currently active sub-tab ('onPerson', 'stored', 'assets')
  * @returns {string} HTML for sub-tab navigation
@@ -160,7 +171,7 @@ export function renderStoredView(stored, collapsedLocations = [], viewMode = 'li
             const itemString = stored[location];
             const items = parseItems(itemString);
             const isCollapsed = collapsedLocations.includes(location);
-            const locationId = escapeHtml(location).replace(/\s+/g, '-');
+            const locationId = getLocationId(location);
 
             let itemsHtml = '';
             if (items.length === 0) {

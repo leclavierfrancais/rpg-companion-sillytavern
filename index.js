@@ -558,16 +558,16 @@ jQuery(async () => {
         try {
             const conflicts = detectConflictingRegexScripts(st_extension_settings);
             if (conflicts.length > 0) {
-                console.warn('[RPG Companion] ⚠️ Detected old manual formatting regex scripts that may conflict:');
-                conflicts.forEach(name => console.warn(`  - ${name}`));
-                console.warn('[RPG Companion] Consider disabling these regexes as the extension now handles formatting automatically.');
+                console.log('[RPG Companion] ⚠️ Detected old manual formatting regex scripts that may conflict:');
+                conflicts.forEach(name => console.log(`  - ${name}`));
+                console.log('[RPG Companion] Consider disabling these regexes as the extension now handles formatting automatically.');
 
                 // Show user-friendly warning (non-blocking)
-                toastr.warning(
-                    `Found ${conflicts.length} old RPG formatting regex script(s). These may conflict with the extension. Check console for details.`,
-                    'RPG Companion Warning',
-                    { timeOut: 8000 }
-                );
+                // toastr.warning(
+                //     `Found ${conflicts.length} old RPG formatting regex script(s). These may conflict with the extension. Check console for details.`,
+                //     'RPG Companion Warning',
+                //     { timeOut: 8000 }
+                // );
             }
         } catch (error) {
             console.error('[RPG Companion] Conflict detection failed:', error);

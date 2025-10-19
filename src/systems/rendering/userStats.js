@@ -53,7 +53,7 @@ export function renderUserStats() {
     const html = `
         <div class="rpg-stats-content">
             <div class="rpg-stats-left">
-                <div style="display: flex; gap: clamp(4px, 0.8vh, 8px); align-items: center; flex-shrink: 0;">
+                <div style="display: flex; gap: clamp(4px, 0.8vh, 8px); align-items: center; justify-content: center; flex-shrink: 0;">
                     <img src="${userPortrait}" alt="${userName}" class="rpg-user-portrait" onerror="this.style.opacity='0.5';this.onerror=null;" />
                 </div>
                 <div class="rpg-stats-grid">

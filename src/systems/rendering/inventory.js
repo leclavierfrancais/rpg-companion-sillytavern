@@ -199,9 +199,6 @@ export function renderStoredView(stored, collapsedLocations = [], viewMode = 'li
                         </button>
                         <h5 class="rpg-storage-name">${escapeHtml(location)}</h5>
                         <div class="rpg-storage-actions">
-                            <button class="rpg-inventory-add-btn" data-action="add-item" data-field="stored" data-location="${escapeHtml(location)}" title="Add item to this location">
-                                <i class="fa-solid fa-plus"></i>
-                            </button>
                             <button class="rpg-inventory-remove-btn" data-action="remove-location" data-location="${escapeHtml(location)}" title="Remove this storage location">
                                 <i class="fa-solid fa-trash"></i>
                             </button>
@@ -221,6 +218,11 @@ export function renderStoredView(stored, collapsedLocations = [], viewMode = 'li
                         </div>
                         <div class="rpg-item-list ${listViewClass}">
                             ${itemsHtml}
+                        </div>
+                        <div class="rpg-storage-add-item-container">
+                            <button class="rpg-inventory-add-btn" data-action="add-item" data-field="stored" data-location="${escapeHtml(location)}" title="Add item to this location">
+                                <i class="fa-solid fa-plus"></i> Add Item
+                            </button>
                         </div>
                     </div>
                     <div class="rpg-inline-confirmation" id="rpg-remove-confirm-${locationId}" style="display: none;">

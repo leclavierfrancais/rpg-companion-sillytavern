@@ -102,6 +102,7 @@ export function sanitizeItemName(name) {
  * Validates and cleans a stored inventory object.
  * Ensures all keys are safe property names and all values are strings.
  * Cleans items within each location (removes corrupted/dangerous items).
+ * Preserves empty locations (with "None") so users can add items later.
  * Prevents prototype pollution attacks via object keys.
  *
  * @param {Object} stored - Raw stored inventory object
@@ -112,13 +113,16 @@ export function sanitizeItemName(name) {
  * // → { "Home": "Sword, Shield" }
  *
  * validateStoredInventory({ "Home": "Sword, __proto__, Shield" })
- * // → { "Home": "Sword, Shield" } (dangerous item removed)
+ * // → { "Home": "Sword, Shield" } (dangerous item removed, logged)
+ *
+ * validateStoredInventory({ "Home": "None" })
+ * // → { "Home": "None" } (empty location preserved)
  *
  * validateStoredInventory({ "__proto__": "malicious" })
  * // → {} (dangerous key removed, logged)
  *
  * validateStoredInventory({ "BadLocation": "__proto__, constructor" })
- * // → {} (location removed because all items were invalid, logged)
+ * // → { "BadLocation": "None" } (all items removed, location kept empty)
  *
  * validateStoredInventory(null)
  * // → {} (invalid input, returns empty object)
@@ -155,11 +159,13 @@ export function validateStoredInventory(stored) {
         // Clean items within this location (removes corrupted/dangerous items)
         const cleanedValue = cleanItemString(value);
 
-        // Only add location if it has valid items remaining
-        if (cleanedValue && cleanedValue !== 'None' && cleanedValue.toLowerCase() !== 'none') {
-            cleaned[sanitizedKey] = cleanedValue;
-        } else {
-            console.warn(`[RPG Companion] Location "${sanitizedKey}" had no valid items after cleaning, removing location`);
+        // Always keep the location (even if empty/"None")
+        // "None" is a valid state - it means the location exists but has no items yet
+        cleaned[sanitizedKey] = cleanedValue;
+
+        // Warn if we had to clean corrupted items (but only if original wasn't just "None")
+        if (value !== cleanedValue && value.toLowerCase() !== 'none') {
+            console.warn(`[RPG Companion] Cleaned corrupted items from location "${sanitizedKey}": "${value}" → "${cleanedValue}"`);
         }
     }
 

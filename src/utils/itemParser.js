@@ -187,7 +187,7 @@ export function parseItems(itemString) {
 
 /**
  * Cleans a single item string (helper for parseItems)
- * Removes list markers, wrapping quotes, and trims
+ * Removes list markers, wrapping quotes, trims, and capitalizes first letter
  *
  * @param {string} item - Single item string to clean
  * @returns {string|null} Cleaned item or null if empty/invalid
@@ -220,6 +220,12 @@ function cleanSingleItem(item) {
     // Final empty check
     if (cleaned === '' || cleaned.toLowerCase() === 'none') {
         return null;
+    }
+
+    // Capitalize first letter for consistency
+    // Preserves rest of string case (e.g., "iPhone" stays "iPhone", not "Iphone")
+    if (cleaned.length > 0) {
+        cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
     }
 
     return cleaned;

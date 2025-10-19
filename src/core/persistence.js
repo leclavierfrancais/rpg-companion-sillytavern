@@ -15,7 +15,7 @@ import {
     FEATURE_FLAGS
 } from './state.js';
 import { migrateInventory } from '../utils/migration.js';
-import { validateStoredInventory } from '../utils/security.js';
+import { validateStoredInventory, cleanItemString } from '../utils/security.js';
 
 const extensionName = 'third-party/rpg-companion-sillytavern';
 
@@ -212,6 +212,14 @@ function validateInventoryStructure(inventory, source) {
         console.warn(`[RPG Companion] Invalid onPerson from ${source}, resetting to "None"`);
         inventory.onPerson = "None";
         needsSave = true;
+    } else {
+        // Clean items in onPerson (removes corrupted/dangerous items)
+        const cleanedOnPerson = cleanItemString(inventory.onPerson);
+        if (cleanedOnPerson !== inventory.onPerson) {
+            console.warn(`[RPG Companion] Cleaned corrupted items from onPerson inventory (${source})`);
+            inventory.onPerson = cleanedOnPerson;
+            needsSave = true;
+        }
     }
 
     // Validate stored field (CRITICAL for Bug #3)
@@ -234,6 +242,14 @@ function validateInventoryStructure(inventory, source) {
         console.warn(`[RPG Companion] Invalid assets from ${source}, resetting to "None"`);
         inventory.assets = "None";
         needsSave = true;
+    } else {
+        // Clean items in assets (removes corrupted/dangerous items)
+        const cleanedAssets = cleanItemString(inventory.assets);
+        if (cleanedAssets !== inventory.assets) {
+            console.warn(`[RPG Companion] Cleaned corrupted items from assets inventory (${source})`);
+            inventory.assets = cleanedAssets;
+            needsSave = true;
+        }
     }
 
     // Persist repairs if needed

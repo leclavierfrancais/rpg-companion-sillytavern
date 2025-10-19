@@ -5,6 +5,7 @@
 
 import { extensionSettings, $inventoryContainer } from '../../core/state.js';
 import { getInventoryRenderOptions, restoreFormStates } from '../interaction/inventoryActions.js';
+import { updateInventoryItem } from '../interaction/inventoryEdit.js';
 import { parseItems } from '../../utils/itemParser.js';
 
 // Type imports
@@ -51,14 +52,14 @@ export function renderOnPersonView(onPersonItems, viewMode = 'list') {
                     <button class="rpg-item-remove" data-action="remove-item" data-field="onPerson" data-index="${index}" title="Remove item">
                         <i class="fa-solid fa-times"></i>
                     </button>
-                    <span class="rpg-item-name">${escapeHtml(item)}</span>
+                    <span class="rpg-item-name rpg-editable" contenteditable="true" data-field="onPerson" data-index="${index}" title="Click to edit">${escapeHtml(item)}</span>
                 </div>
             `).join('');
         } else {
             // List view: full-width rows
             itemsHtml = items.map((item, index) => `
                 <div class="rpg-item-row" data-field="onPerson" data-index="${index}">
-                    <span class="rpg-item-name">${escapeHtml(item)}</span>
+                    <span class="rpg-item-name rpg-editable" contenteditable="true" data-field="onPerson" data-index="${index}" title="Click to edit">${escapeHtml(item)}</span>
                     <button class="rpg-item-remove" data-action="remove-item" data-field="onPerson" data-index="${index}" title="Remove item">
                         <i class="fa-solid fa-times"></i>
                     </button>
@@ -173,14 +174,14 @@ export function renderStoredView(stored, collapsedLocations = [], viewMode = 'li
                             <button class="rpg-item-remove" data-action="remove-item" data-field="stored" data-location="${escapeHtml(location)}" data-index="${index}" title="Remove item">
                                 <i class="fa-solid fa-times"></i>
                             </button>
-                            <span class="rpg-item-name">${escapeHtml(item)}</span>
+                            <span class="rpg-item-name rpg-editable" contenteditable="true" data-field="stored" data-location="${escapeHtml(location)}" data-index="${index}" title="Click to edit">${escapeHtml(item)}</span>
                         </div>
                     `).join('');
                 } else {
                     // List view: full-width rows
                     itemsHtml = items.map((item, index) => `
                         <div class="rpg-item-row" data-field="stored" data-location="${escapeHtml(location)}" data-index="${index}">
-                            <span class="rpg-item-name">${escapeHtml(item)}</span>
+                            <span class="rpg-item-name rpg-editable" contenteditable="true" data-field="stored" data-location="${escapeHtml(location)}" data-index="${index}" title="Click to edit">${escapeHtml(item)}</span>
                             <button class="rpg-item-remove" data-action="remove-item" data-field="stored" data-location="${escapeHtml(location)}" data-index="${index}" title="Remove item">
                                 <i class="fa-solid fa-times"></i>
                             </button>
@@ -269,14 +270,14 @@ export function renderAssetsView(assets, viewMode = 'list') {
                     <button class="rpg-item-remove" data-action="remove-item" data-field="assets" data-index="${index}" title="Remove asset">
                         <i class="fa-solid fa-times"></i>
                     </button>
-                    <span class="rpg-item-name">${escapeHtml(item)}</span>
+                    <span class="rpg-item-name rpg-editable" contenteditable="true" data-field="assets" data-index="${index}" title="Click to edit">${escapeHtml(item)}</span>
                 </div>
             `).join('');
         } else {
             // List view: full-width rows
             itemsHtml = items.map((item, index) => `
                 <div class="rpg-item-row" data-field="assets" data-index="${index}">
-                    <span class="rpg-item-name">${escapeHtml(item)}</span>
+                    <span class="rpg-item-name rpg-editable" contenteditable="true" data-field="assets" data-index="${index}" title="Click to edit">${escapeHtml(item)}</span>
                     <button class="rpg-item-remove" data-action="remove-item" data-field="assets" data-index="${index}" title="Remove asset">
                         <i class="fa-solid fa-times"></i>
                     </button>
@@ -455,6 +456,15 @@ export function renderInventory() {
 
     // Restore form states after re-rendering (fixes Bug #1)
     restoreFormStates();
+
+    // Event listener for editing item names (mobile-friendly contenteditable)
+    $inventoryContainer.find('.rpg-item-name.rpg-editable').on('blur', function() {
+        const field = $(this).data('field');
+        const index = parseInt($(this).data('index'));
+        const location = $(this).data('location');
+        const newName = $(this).text().trim();
+        updateInventoryItem(field, index, newName, location);
+    });
 }
 
 /**

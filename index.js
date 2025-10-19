@@ -1,5 +1,5 @@
 import { getContext, renderExtensionTemplateAsync, extension_settings as st_extension_settings } from '../../../extensions.js';
-import { eventSource, event_types, substituteParams, chat, generateRaw, saveSettingsDebounced, chat_metadata, saveChatDebounced, user_avatar, getThumbnailUrl, characters, this_chid, extension_prompt_types, extension_prompt_roles, setExtensionPrompt, reloadCurrentChat, Generate } from '../../../../script.js';
+import { eventSource, event_types, substituteParams, chat, generateRaw, saveSettingsDebounced, chat_metadata, saveChatDebounced, user_avatar, getThumbnailUrl, characters, this_chid, extension_prompt_types, extension_prompt_roles, setExtensionPrompt, reloadCurrentChat, Generate, getRequestHeaders } from '../../../../script.js';
 import { selected_group, getGroupMembers } from '../../../group-chats.js';
 import { power_user } from '../../../power-user.js';
 
@@ -468,11 +468,12 @@ async function ensureTrackerPresetExists() {
 
         const presetData = await presetResponse.json();
 
-        // Save preset to user's OpenAI Settings folder
-        const saveResponse = await fetch('/api/presets/save-openai', {
+        // Save preset to user's OpenAI Settings folder using SillyTavern's API
+        const saveResponse = await fetch('/api/presets/save', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getRequestHeaders(),
             body: JSON.stringify({
+                apiId: 'openai',
                 name: presetName,
                 preset: presetData
             })

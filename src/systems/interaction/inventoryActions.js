@@ -539,6 +539,7 @@ export function getInventoryRenderOptions() {
 /**
  * Restores the state of inline forms after re-rendering.
  * This ensures forms that were open before re-render are shown again.
+ * Also cleans up orphaned form states for deleted locations (Bug #3 fix).
  */
 export function restoreFormStates() {
     // Restore add location form
@@ -570,15 +571,31 @@ export function restoreFormStates() {
     }
 
     // Restore add item stored forms (for each location)
+    // Clean up orphaned states for deleted locations (Bug #3 fix)
     if (openForms.addItemStored && typeof openForms.addItemStored === 'object') {
+        const inventory = extensionSettings.userStats.inventory;
+        const locationsToDelete = [];
+
         for (const location in openForms.addItemStored) {
             if (openForms.addItemStored[location]) {
-                const locationId = location.replace(/\s+/g, '-');
-                const form = $(`#rpg-add-item-form-stored-${locationId}`);
-                if (form.length > 0) {
-                    form.show();
+                // Check if location still exists in inventory
+                if (inventory?.stored && inventory.stored.hasOwnProperty(location)) {
+                    // Location exists, restore form
+                    const locationId = location.replace(/\s+/g, '-');
+                    const form = $(`#rpg-add-item-form-stored-${locationId}`);
+                    if (form.length > 0) {
+                        form.show();
+                    }
+                } else {
+                    // Location was deleted, mark for cleanup
+                    locationsToDelete.push(location);
                 }
             }
+        }
+
+        // Clean up orphaned form states
+        for (const location of locationsToDelete) {
+            delete openForms.addItemStored[location];
         }
     }
 }

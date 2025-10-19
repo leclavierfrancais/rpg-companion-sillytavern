@@ -15,6 +15,7 @@ import {
     FEATURE_FLAGS
 } from './state.js';
 import { migrateInventory } from '../utils/migration.js';
+import { validateStoredInventory } from '../utils/security.js';
 
 const extensionName = 'third-party/rpg-companion-sillytavern';
 
@@ -39,6 +40,9 @@ export function loadSettings() {
             saveSettings(); // Persist migrated inventory
         }
     }
+
+    // Validate inventory structure (Bug #3 fix)
+    validateInventoryStructure(extensionSettings.userStats.inventory, 'settings');
 }
 
 /**
@@ -166,5 +170,78 @@ export function loadChatData() {
         }
     }
 
+    // Validate inventory structure (Bug #3 fix)
+    validateInventoryStructure(extensionSettings.userStats.inventory, 'chat');
+
     // console.log('[RPG Companion] Loaded chat data:', savedData);
+}
+
+/**
+ * Validates and repairs inventory structure to prevent corruption.
+ * Ensures all v2 fields exist and are the correct type.
+ * Fixes Bug #3: Location disappears when switching tabs
+ *
+ * @param {Object} inventory - Inventory object to validate
+ * @param {string} source - Source of load ('settings' or 'chat') for logging
+ * @private
+ */
+function validateInventoryStructure(inventory, source) {
+    if (!inventory || typeof inventory !== 'object') {
+        console.error(`[RPG Companion] Invalid inventory from ${source}, resetting to defaults`);
+        extensionSettings.userStats.inventory = {
+            version: 2,
+            onPerson: "None",
+            stored: {},
+            assets: "None"
+        };
+        saveSettings();
+        return;
+    }
+
+    let needsSave = false;
+
+    // Ensure v2 structure
+    if (inventory.version !== 2) {
+        console.warn(`[RPG Companion] Inventory from ${source} missing version, setting to 2`);
+        inventory.version = 2;
+        needsSave = true;
+    }
+
+    // Validate onPerson field
+    if (typeof inventory.onPerson !== 'string') {
+        console.warn(`[RPG Companion] Invalid onPerson from ${source}, resetting to "None"`);
+        inventory.onPerson = "None";
+        needsSave = true;
+    }
+
+    // Validate stored field (CRITICAL for Bug #3)
+    if (!inventory.stored || typeof inventory.stored !== 'object' || Array.isArray(inventory.stored)) {
+        console.error(`[RPG Companion] Corrupted stored inventory from ${source}, resetting to empty object`);
+        inventory.stored = {};
+        needsSave = true;
+    } else {
+        // Validate stored object keys/values
+        const cleanedStored = validateStoredInventory(inventory.stored);
+        if (JSON.stringify(cleanedStored) !== JSON.stringify(inventory.stored)) {
+            console.warn(`[RPG Companion] Cleaned dangerous/invalid stored locations from ${source}`);
+            inventory.stored = cleanedStored;
+            needsSave = true;
+        }
+    }
+
+    // Validate assets field
+    if (typeof inventory.assets !== 'string') {
+        console.warn(`[RPG Companion] Invalid assets from ${source}, resetting to "None"`);
+        inventory.assets = "None";
+        needsSave = true;
+    }
+
+    // Persist repairs if needed
+    if (needsSave) {
+        console.log(`[RPG Companion] Repaired inventory structure from ${source}, saving...`);
+        saveSettings();
+        if (source === 'chat') {
+            saveChatData();
+        }
+    }
 }

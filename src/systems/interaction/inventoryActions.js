@@ -25,6 +25,17 @@ let currentActiveSubTab = 'onPerson';
 let collapsedLocations = [];
 
 /**
+ * Tracks which inline forms are currently open
+ * @type {Object}
+ */
+let openForms = {
+    addLocation: false,
+    addItemOnPerson: false,
+    addItemStored: {}, // { [locationName]: true/false }
+    addItemAssets: false
+};
+
+/**
  * Updates lastGeneratedData.userStats to include current inventory in text format.
  * This ensures the AI context stays synced with manual edits.
  */
@@ -56,9 +67,18 @@ export function showAddItemForm(field, location) {
         const locationId = location.replace(/\s+/g, '-');
         formId = `rpg-add-item-form-stored-${locationId}`;
         inputId = `.rpg-location-item-input[data-location="${location}"]`;
+        // Track in state
+        if (!openForms.addItemStored) openForms.addItemStored = {};
+        openForms.addItemStored[location] = true;
     } else {
         formId = `rpg-add-item-form-${field}`;
         inputId = `#rpg-new-item-${field}`;
+        // Track in state
+        if (field === 'onPerson') {
+            openForms.addItemOnPerson = true;
+        } else if (field === 'assets') {
+            openForms.addItemAssets = true;
+        }
     }
 
     const form = $(`#${formId}`);
@@ -81,9 +101,19 @@ export function hideAddItemForm(field, location) {
         const locationId = location.replace(/\s+/g, '-');
         formId = `rpg-add-item-form-stored-${locationId}`;
         inputId = `.rpg-location-item-input[data-location="${location}"]`;
+        // Clear from state
+        if (openForms.addItemStored && openForms.addItemStored[location]) {
+            delete openForms.addItemStored[location];
+        }
     } else {
         formId = `rpg-add-item-form-${field}`;
         inputId = `#rpg-new-item-${field}`;
+        // Clear from state
+        if (field === 'onPerson') {
+            openForms.addItemOnPerson = false;
+        } else if (field === 'assets') {
+            openForms.addItemAssets = false;
+        }
     }
 
     const form = $(`#${formId}`);
@@ -189,6 +219,9 @@ export function showAddLocationForm() {
     const form = $('#rpg-add-location-form');
     const input = $('#rpg-new-location-name');
 
+    // Track in state
+    openForms.addLocation = true;
+
     form.show();
     input.val('').focus();
 }
@@ -199,6 +232,9 @@ export function showAddLocationForm() {
 export function hideAddLocationForm() {
     const form = $('#rpg-add-location-form');
     const input = $('#rpg-new-location-name');
+
+    // Clear from state
+    openForms.addLocation = false;
 
     form.hide();
     input.val('');
@@ -481,4 +517,51 @@ export function getInventoryRenderOptions() {
         activeSubTab: currentActiveSubTab,
         collapsedLocations
     };
+}
+
+/**
+ * Restores the state of inline forms after re-rendering.
+ * This ensures forms that were open before re-render are shown again.
+ */
+export function restoreFormStates() {
+    // Restore add location form
+    if (openForms.addLocation) {
+        const form = $('#rpg-add-location-form');
+        const input = $('#rpg-new-location-name');
+        if (form.length > 0) {
+            form.show();
+            // Don't refocus to avoid disrupting user interaction
+        }
+    }
+
+    // Restore add item on person form
+    if (openForms.addItemOnPerson) {
+        const form = $('#rpg-add-item-form-onPerson');
+        const input = $('#rpg-new-item-onPerson');
+        if (form.length > 0) {
+            form.show();
+        }
+    }
+
+    // Restore add item assets form
+    if (openForms.addItemAssets) {
+        const form = $('#rpg-add-item-form-assets');
+        const input = $('#rpg-new-item-assets');
+        if (form.length > 0) {
+            form.show();
+        }
+    }
+
+    // Restore add item stored forms (for each location)
+    if (openForms.addItemStored && typeof openForms.addItemStored === 'object') {
+        for (const location in openForms.addItemStored) {
+            if (openForms.addItemStored[location]) {
+                const locationId = location.replace(/\s+/g, '-');
+                const form = $(`#rpg-add-item-form-stored-${locationId}`);
+                if (form.length > 0) {
+                    form.show();
+                }
+            }
+        }
+    }
 }

@@ -4,7 +4,7 @@
  */
 
 import { extensionSettings, $inventoryContainer } from '../../core/state.js';
-import { getInventoryRenderOptions } from '../interaction/inventoryActions.js';
+import { getInventoryRenderOptions, restoreFormStates } from '../interaction/inventoryActions.js';
 import { parseItems } from '../../utils/itemParser.js';
 
 // Type imports
@@ -425,6 +425,9 @@ export function updateInventoryDisplay(containerId, options = {}) {
     const inventory = extensionSettings.userStats.inventory;
     const html = generateInventoryHTML(inventory, options);
     container.innerHTML = html;
+
+    // Restore form states after re-rendering
+    restoreFormStates();
 }
 
 /**
@@ -447,6 +450,9 @@ export function renderInventory() {
     // Generate HTML and update DOM
     const html = generateInventoryHTML(inventory, options);
     $inventoryContainer.html(html);
+
+    // Restore form states after re-rendering (fixes Bug #1)
+    restoreFormStates();
 }
 
 /**

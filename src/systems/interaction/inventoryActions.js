@@ -3,7 +3,7 @@
  * Handles all user interactions with the inventory v2 system
  */
 
-import { extensionSettings, lastGeneratedData } from '../../core/state.js';
+import { extensionSettings, lastGeneratedData, committedTrackerData } from '../../core/state.js';
 import { saveSettings, saveChatData, updateMessageSwipeData } from '../../core/persistence.js';
 import { buildInventorySummary } from '../generation/promptBuilder.js';
 import { renderInventory } from '../rendering/inventory.js';
@@ -37,15 +37,16 @@ let openForms = {
 };
 
 /**
- * Updates lastGeneratedData.userStats to include current inventory in text format.
- * This ensures the AI context stays synced with manual edits.
+ * Updates lastGeneratedData.userStats AND committedTrackerData.userStats to include
+ * current inventory in text format.
+ * This ensures manual edits are immediately visible to AI in next generation.
  */
 function updateLastGeneratedDataInventory() {
     const stats = extensionSettings.userStats;
     const inventorySummary = buildInventorySummary(stats.inventory);
 
-    // Rebuild the lastGeneratedData.userStats text format
-    lastGeneratedData.userStats =
+    // Rebuild the userStats text format
+    const statsText =
         `Health: ${stats.health}%\n` +
         `Satiety: ${stats.satiety}%\n` +
         `Energy: ${stats.energy}%\n` +
@@ -53,6 +54,11 @@ function updateLastGeneratedDataInventory() {
         `Arousal: ${stats.arousal}%\n` +
         `${stats.mood}: ${stats.conditions}\n` +
         `${inventorySummary}`;
+
+    // Update BOTH lastGeneratedData AND committedTrackerData
+    // This makes manual edits immediately visible to AI
+    lastGeneratedData.userStats = statsText;
+    committedTrackerData.userStats = statsText;
 }
 
 /**

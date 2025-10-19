@@ -9,6 +9,7 @@ import { selected_group, getGroupMembers } from '../../../../../../group-chats.j
 import {
     extensionSettings,
     lastGeneratedData,
+    committedTrackerData,
     $thoughtsContainer,
     FALLBACK_AVATAR_DATA_URI
 } from '../../core/state.js';
@@ -319,6 +320,10 @@ export function updateCharacterField(characterName, field, value) {
 
     lastGeneratedData.characterThoughts = updatedLines.join('\n');
     // console.log('[RPG Companion] 💾 Updated lastGeneratedData.characterThoughts:', lastGeneratedData.characterThoughts);
+
+    // Update BOTH lastGeneratedData AND committedTrackerData
+    // This makes manual edits immediately visible to AI
+    committedTrackerData.characterThoughts = updatedLines.join('\n');
 
     // Also update the last assistant message's swipe data
     const chat = getContext().chat;

@@ -8,6 +8,7 @@ import { user_avatar } from '../../../../../../../script.js';
 import {
     extensionSettings,
     lastGeneratedData,
+    committedTrackerData,
     $userStatsContainer,
     FALLBACK_AVATAR_DATA_URI
 } from '../../core/state.js';
@@ -17,6 +18,7 @@ import {
     updateMessageSwipeData
 } from '../../core/persistence.js';
 import { getSafeThumbnailUrl } from '../../utils/avatars.js';
+import { buildInventorySummary } from '../generation/promptBuilder.js';
 
 /**
  * Renders the user stats panel with health bars, mood, inventory, and classic stats.
@@ -178,13 +180,15 @@ export function renderUserStats() {
         // Update the setting
         extensionSettings.userStats[field] = value;
 
-        // Also update lastGeneratedData to keep it in sync
-        if (!lastGeneratedData.userStats) {
-            lastGeneratedData.userStats = '';
-        }
-        // Regenerate the userStats text with updated value
-        const statsText = `Health: ${extensionSettings.userStats.health}%\nSatiety: ${extensionSettings.userStats.satiety}%\nEnergy: ${extensionSettings.userStats.energy}%\nHygiene: ${extensionSettings.userStats.hygiene}%\nArousal: ${extensionSettings.userStats.arousal}%\n${extensionSettings.userStats.mood}: ${extensionSettings.userStats.conditions}\nInventory: ${extensionSettings.userStats.inventory}`;
+        // Rebuild userStats text with proper inventory format
+        const stats = extensionSettings.userStats;
+        const inventorySummary = buildInventorySummary(stats.inventory);
+        const statsText = `Health: ${stats.health}%\nSatiety: ${stats.satiety}%\nEnergy: ${stats.energy}%\nHygiene: ${stats.hygiene}%\nArousal: ${stats.arousal}%\n${stats.mood}: ${stats.conditions}\n${inventorySummary}`;
+
+        // Update BOTH lastGeneratedData AND committedTrackerData
+        // This makes manual edits immediately visible to AI
         lastGeneratedData.userStats = statsText;
+        committedTrackerData.userStats = statsText;
 
         saveSettings();
         saveChatData();
@@ -199,9 +203,15 @@ export function renderUserStats() {
         const value = $(this).text().trim();
         extensionSettings.userStats.mood = value || '😐';
 
-        // Update lastGeneratedData
-        const statsText = `Health: ${extensionSettings.userStats.health}%\nSatiety: ${extensionSettings.userStats.satiety}%\nEnergy: ${extensionSettings.userStats.energy}%\nHygiene: ${extensionSettings.userStats.hygiene}%\nArousal: ${extensionSettings.userStats.arousal}%\n${extensionSettings.userStats.mood}: ${extensionSettings.userStats.conditions}\nInventory: ${extensionSettings.userStats.inventory}`;
+        // Rebuild userStats text with proper inventory format
+        const stats = extensionSettings.userStats;
+        const inventorySummary = buildInventorySummary(stats.inventory);
+        const statsText = `Health: ${stats.health}%\nSatiety: ${stats.satiety}%\nEnergy: ${stats.energy}%\nHygiene: ${stats.hygiene}%\nArousal: ${stats.arousal}%\n${stats.mood}: ${stats.conditions}\n${inventorySummary}`;
+
+        // Update BOTH lastGeneratedData AND committedTrackerData
+        // This makes manual edits immediately visible to AI
         lastGeneratedData.userStats = statsText;
+        committedTrackerData.userStats = statsText;
 
         saveSettings();
         saveChatData();
@@ -212,9 +222,15 @@ export function renderUserStats() {
         const value = $(this).text().trim();
         extensionSettings.userStats.conditions = value || 'None';
 
-        // Update lastGeneratedData
-        const statsText = `Health: ${extensionSettings.userStats.health}%\nSatiety: ${extensionSettings.userStats.satiety}%\nEnergy: ${extensionSettings.userStats.energy}%\nHygiene: ${extensionSettings.userStats.hygiene}%\nArousal: ${extensionSettings.userStats.arousal}%\n${extensionSettings.userStats.mood}: ${extensionSettings.userStats.conditions}\nInventory: ${extensionSettings.userStats.inventory}`;
+        // Rebuild userStats text with proper inventory format
+        const stats = extensionSettings.userStats;
+        const inventorySummary = buildInventorySummary(stats.inventory);
+        const statsText = `Health: ${stats.health}%\nSatiety: ${stats.satiety}%\nEnergy: ${stats.energy}%\nHygiene: ${stats.hygiene}%\nArousal: ${stats.arousal}%\n${stats.mood}: ${stats.conditions}\n${inventorySummary}`;
+
+        // Update BOTH lastGeneratedData AND committedTrackerData
+        // This makes manual edits immediately visible to AI
         lastGeneratedData.userStats = statsText;
+        committedTrackerData.userStats = statsText;
 
         saveSettings();
         saveChatData();

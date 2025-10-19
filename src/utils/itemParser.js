@@ -6,7 +6,10 @@
 /**
  * Parses a comma-separated item string into an array of trimmed item names.
  * Filters out empty strings and handles "None" gracefully.
- * Smart handling: collapses newlines inside parentheses, preserves them outside.
+ * Smart handling:
+ * - Strips wrapping square brackets that AI sometimes adds
+ * - Collapses newlines inside parentheses to spaces
+ * - Only splits on commas OUTSIDE parentheses (commas inside parentheses are preserved)
  *
  * @param {string} itemString - Comma-separated items (e.g., "Sword, Shield, 3x Potions")
  * @returns {string[]} Array of item names, or empty array if none
@@ -14,6 +17,8 @@
  * @example
  * parseItems("Sword, Shield, 3x Potions") // ["Sword", "Shield", "3x Potions"]
  * parseItems("Books (magical\ntomes), Sword") // ["Books (magical tomes)", "Sword"]
+ * parseItems("Potato (Cursed, Sexy, Your Mum & Dick, Etc), Sword") // ["Potato (Cursed, Sexy, Your Mum & Dick, Etc)", "Sword"]
+ * parseItems("[Sword, Shield]") // ["Sword", "Shield"]
  * parseItems("None") // []
  * parseItems("") // []
  * parseItems(null) // []
@@ -25,12 +30,21 @@ export function parseItems(itemString) {
     }
 
     // Trim and check for "None" (case-insensitive)
-    const trimmed = itemString.trim();
+    let trimmed = itemString.trim();
     if (trimmed === '' || trimmed.toLowerCase() === 'none') {
         return [];
     }
 
-    // Collapse newlines inside parentheses
+    // Strip wrapping square brackets if present (AI sometimes adds these)
+    if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+        trimmed = trimmed.slice(1, -1).trim();
+        // Check again for empty after stripping brackets
+        if (trimmed === '' || trimmed.toLowerCase() === 'none') {
+            return [];
+        }
+    }
+
+    // First pass: Collapse newlines inside parentheses
     let processed = '';
     let parenDepth = 0;
 
@@ -57,11 +71,39 @@ export function parseItems(itemString) {
     // Clean up multiple consecutive spaces
     processed = processed.replace(/\s+/g, ' ');
 
-    // Split by comma, trim each item, filter empties
-    return processed
-        .split(',')
-        .map(item => item.trim())
-        .filter(item => item !== '' && item.toLowerCase() !== 'none');
+    // Second pass: Smart comma splitting (only split on commas outside parentheses)
+    const items = [];
+    let currentItem = '';
+    parenDepth = 0;
+
+    for (let i = 0; i < processed.length; i++) {
+        const char = processed[i];
+
+        if (char === '(') {
+            parenDepth++;
+            currentItem += char;
+        } else if (char === ')') {
+            parenDepth--;
+            currentItem += char;
+        } else if (char === ',' && parenDepth === 0) {
+            // Comma outside parentheses - this is a separator
+            const trimmedItem = currentItem.trim();
+            if (trimmedItem !== '' && trimmedItem.toLowerCase() !== 'none') {
+                items.push(trimmedItem);
+            }
+            currentItem = ''; // Start new item
+        } else {
+            currentItem += char;
+        }
+    }
+
+    // Don't forget the last item
+    const trimmedItem = currentItem.trim();
+    if (trimmedItem !== '' && trimmedItem.toLowerCase() !== 'none') {
+        items.push(trimmedItem);
+    }
+
+    return items;
 }
 
 /**

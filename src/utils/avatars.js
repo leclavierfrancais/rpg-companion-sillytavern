@@ -16,7 +16,7 @@ import { getThumbnailUrl } from '../../../../../../script.js';
 export function getSafeThumbnailUrl(type, filename) {
     // Return null if no filename provided
     if (!filename || filename === 'none') {
-        console.log(`[RPG Companion] No valid filename provided for ${type} thumbnail`);
+        // console.log(`[RPG Companion] No valid filename provided for ${type} thumbnail`);
         return null;
     }
 
@@ -30,7 +30,7 @@ export function getSafeThumbnailUrl(type, filename) {
             return null;
         }
 
-        console.log(`[RPG Companion] Successfully generated ${type} thumbnail URL for: ${filename}`);
+        // console.log(`[RPG Companion] Successfully generated ${type} thumbnail URL for: ${filename}`);
         return url;
     } catch (error) {
         // Log detailed error information for debugging

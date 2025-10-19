@@ -469,7 +469,7 @@ export function initInventoryEventListeners() {
         switchViewMode(field, view);
     });
 
-    console.log('[RPG Companion] Inventory event listeners initialized');
+    // console.log('[RPG Companion] Inventory event listeners initialized');
 }
 
 /**

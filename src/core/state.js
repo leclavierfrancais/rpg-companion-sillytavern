@@ -14,6 +14,7 @@ export let extensionSettings = {
     autoUpdate: true,
     updateDepth: 4, // How many messages to include in the context
     generationMode: 'together', // 'separate' or 'together' - whether to generate with main response or separately
+    useSeparatePreset: false, // Use 'RPG Companion Trackers' preset for tracker generation instead of main API model
     showUserStats: true,
     showInfoBox: true,
     showCharacterThoughts: true,

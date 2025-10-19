@@ -64,7 +64,7 @@ export function loadSettings() {
 
         if (!power_user.extensions) {
             power_user.extensions = {};
-            console.log('[RPG Companion] Created power_user.extensions object');
+            // console.log('[RPG Companion] Created power_user.extensions object');
         }
 
         if (power_user.extensions[extensionName]) {

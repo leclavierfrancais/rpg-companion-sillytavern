@@ -215,6 +215,14 @@
                     <small>Number of recent messages to include (Separate mode only)</small>
                 </div>
 
+                <label class="checkbox_label">
+                    <input type="checkbox" id="rpg-use-separate-preset" />
+                    <span>Use model connected to RPG Companion Trackers preset</span>
+                </label>
+                <small style="display: block; margin-left: 24px; margin-top: -8px; color: #888; font-size: 11px;">
+                    Separate mode only. When enabled, tracker generation will use the model from the "RPG Companion Trackers" preset instead of your main API model. The preset will be switched automatically during generation and restored afterward. Select the desired model in that preset and make sure the "Bind presets to API connections" toggle is on (next to the import/export preset buttons).
+                </small>
+
                 <!-- Clear Cache Button -->
                 <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--rpg-border);">
                     <button id="rpg-clear-cache" class="rpg-btn-clear-cache">

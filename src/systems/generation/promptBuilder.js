@@ -100,7 +100,7 @@ export function generateTrackerInstructions(includeHtmlPrompt = true, includeCon
     // Only add tracker instructions if at least one tracker is enabled
     if (hasAnyTrackers) {
         // Universal instruction header
-        instructions += `\nYou must start your response with an appropriate update to the trackers in EXACTLY the same format as below, enclosed in separate Markdown code fences. Replace X with proper numbers and placeholders in [brackets] (while removing the brackets themselves) with in-world details ${userName} perceives about the current scene and the present characters. Consider the last trackers in the conversation (if they exist). Manage them accordingly and realistically; raise, lower, change, or keep the values unchanged based on the user's actions, the passage of time, and logical consequences:\n`;
+        instructions += `\nAt the start of every reply, you must attach update to the trackers in EXACTLY the same format as below, enclosed in separate Markdown code fences. Replace X with proper numbers and [placeholders] with in-world details ${userName} perceives about the current scene and the present characters. Consider the last trackers in the conversation (if they exist). Manage them accordingly and realistically; raise, lower, change, or keep the values unchanged based on the user's actions, the passage of time, and logical consequences:\n`;
 
         // Add format specifications for each enabled tracker
         if (extensionSettings.showUserStats) {
@@ -150,7 +150,7 @@ export function generateTrackerInstructions(includeHtmlPrompt = true, includeCon
 
         // Only add continuation instruction if includeContinuation is true
         if (includeContinuation) {
-            instructions += `After updating the trackers, continue directly from where the last message in the chat history left off. Ensure the trackers you provide naturally reflect and influence the narrative. Character behavior, dialogue, and story events should acknowledge these conditions when relevant, such as fatigue affecting performance, low hygiene influencing social interactions, environmental factors shaping the scene, a character's emotional state coloring their responses, and so on.\n\n`;
+            instructions += `After updating the trackers, continue directly from where the last message in the chat history left off. Ensure the trackers you provide naturally reflect and influence the narrative. Character behavior, dialogue, and story events should acknowledge these conditions when relevant, such as fatigue affecting the protagonist's performance, low hygiene influencing their social interactions, environmental factors shaping the scene, a character's emotional state coloring their responses, and so on. Do not render brackets.\n\n`;
         }
 
         // Include attributes and dice roll only if there was a dice roll
@@ -373,7 +373,7 @@ export function generateSeparateUpdatePrompt() {
     // Build the instruction message
     let instructionMessage = `</history>\n\n`;
     instructionMessage += generateRPGPromptText().replace('start your response with', 'respond with');
-    instructionMessage += `Provide ONLY the requested data in the exact formats specified above. Do not include any roleplay response, other text, or commentary.`;
+    instructionMessage += `Provide ONLY the requested data in the exact formats specified above. Do not include any roleplay response, other text, or commentary. Do not render brackets.`;
 
     messages.push({
         role: 'user',

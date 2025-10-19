@@ -242,6 +242,11 @@ async function initUI() {
         updateGenerationModeUI();
     });
 
+    $('#rpg-use-separate-preset').on('change', function() {
+        extensionSettings.useSeparatePreset = $(this).prop('checked');
+        saveSettings();
+    });
+
     $('#rpg-toggle-user-stats').on('change', function() {
         extensionSettings.showUserStats = $(this).prop('checked');
         saveSettings();
@@ -367,7 +372,7 @@ async function initUI() {
     $('#rpg-toggle-auto-update').prop('checked', extensionSettings.autoUpdate);
     $('#rpg-position-select').val(extensionSettings.panelPosition);
     $('#rpg-update-depth').val(extensionSettings.updateDepth);
-    $('#rpg-use-main-model').prop('checked', extensionSettings.useMainModel);
+    $('#rpg-use-separate-preset').prop('checked', extensionSettings.useSeparatePreset);
     $('#rpg-toggle-user-stats').prop('checked', extensionSettings.showUserStats);
     $('#rpg-toggle-info-box').prop('checked', extensionSettings.showInfoBox);
     $('#rpg-toggle-thoughts').prop('checked', extensionSettings.showCharacterThoughts);
@@ -432,11 +437,62 @@ async function initUI() {
 // (commitTrackerData, onMessageSent, onMessageReceived, onCharacterChanged,
 //  onMessageSwiped, updatePersonaAvatar, clearExtensionPrompts)
 
+/**
+ * Ensures the "RPG Companion Trackers" preset exists in the user's OpenAI Settings.
+ * Imports the preset file from the extension folder if it doesn't exist.
+ */
+async function ensureTrackerPresetExists() {
+    try {
+        const presetName = 'RPG Companion Trackers';
+        const presetPath = `data/default-user/OpenAI Settings/${presetName}.json`;
 
+        // Check if preset already exists
+        const checkResponse = await fetch(`/${presetPath}`, { method: 'HEAD' });
 
+        if (checkResponse.ok) {
+            console.log(`[RPG Companion] Preset "${presetName}" already exists`);
+            return;
+        }
 
+        // Preset doesn't exist - import it from extension folder
+        console.log(`[RPG Companion] Importing preset "${presetName}"...`);
 
+        // Load preset from extension folder
+        const extensionPresetPath = `${extensionFolderPath}/${presetName}.json`;
+        const presetResponse = await fetch(`/${extensionPresetPath}`);
 
+        if (!presetResponse.ok) {
+            console.warn(`[RPG Companion] Could not load preset template from ${extensionPresetPath}`);
+            return;
+        }
+
+        const presetData = await presetResponse.json();
+
+        // Save preset to user's OpenAI Settings folder
+        const saveResponse = await fetch('/api/presets/save-openai', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: presetName,
+                preset: presetData
+            })
+        });
+
+        if (saveResponse.ok) {
+            console.log(`[RPG Companion] ✅ Successfully imported preset "${presetName}"`);
+            toastr.success(
+                `The "RPG Companion Trackers" preset has been imported to your OpenAI Settings.`,
+                'RPG Companion',
+                { timeOut: 5000 }
+            );
+        } else {
+            console.warn(`[RPG Companion] Failed to save preset: ${saveResponse.statusText}`);
+        }
+    } catch (error) {
+        console.error('[RPG Companion] Error importing tracker preset:', error);
+        // Non-critical - users can manually import if needed
+    }
+}
 
 /**
  * Main initialization function.
@@ -481,6 +537,14 @@ jQuery(async () => {
         } catch (error) {
             console.error('[RPG Companion] HTML regex import failed:', error);
             // Non-critical - continue without it
+        }
+
+        // Import the RPG Companion Trackers preset if needed
+        try {
+            await ensureTrackerPresetExists();
+        } catch (error) {
+            console.error('[RPG Companion] Preset import failed:', error);
+            // Non-critical - users can manually import if needed
         }
 
         // Detect conflicting regex scripts from old manual formatters

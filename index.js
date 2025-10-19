@@ -444,14 +444,25 @@ async function initUI() {
 async function ensureTrackerPresetExists() {
     try {
         const presetName = 'RPG Companion Trackers';
-        const presetPath = `data/default-user/OpenAI Settings/${presetName}.json`;
-
-        // Check if preset already exists
-        const checkResponse = await fetch(`/${presetPath}`, { method: 'HEAD' });
-
-        if (checkResponse.ok) {
-            console.log(`[RPG Companion] Preset "${presetName}" already exists`);
-            return;
+        
+        // Check if preset already exists by fetching the preset list from the API
+        const presetsResponse = await fetch('/api/settings/get', {
+            method: 'POST',
+            headers: getRequestHeaders(),
+        });
+        
+        if (presetsResponse.ok) {
+            const settings = await presetsResponse.json();
+            const openaiSettings = settings?.openai;
+            
+            // Check if the preset exists in openai_setting_names
+            if (openaiSettings && openaiSettings.openai_setting_names) {
+                const presetExists = Object.keys(openaiSettings.openai_setting_names).includes(presetName);
+                if (presetExists) {
+                    // console.log(`[RPG Companion] Preset "${presetName}" already exists`);
+                    return;
+                }
+            }
         }
 
         // Preset doesn't exist - import it from extension folder

@@ -672,17 +672,97 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     gap: clamp(4px, 0.8vh, 8px);
     flex: 1;
     min-height: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow: hidden;
 }
 
-/* Stats Left - Portrait, Inventory, Bars and mood */
+/* Stats Left - Portrait, Bars and mood */
 .rpg-stats-left {
     flex: 1;
     display: flex;
     flex-direction: column;
     gap: clamp(3px, 0.6vh, 6px);
     min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.rpg-stats-left::-webkit-scrollbar {
+    width: 0.188rem;
+}
+
+.rpg-stats-left::-webkit-scrollbar-track {
+    background: var(--rpg-bg);
+    border-radius: 2px;
+}
+
+.rpg-stats-left::-webkit-scrollbar-thumb {
+    background: var(--rpg-highlight);
+    border-radius: 2px;
+}
+
+.rpg-stats-left::-webkit-scrollbar-thumb:hover {
+    background: var(--rpg-text);
+}
+
+/* User info row (portrait, name, separator, level) */
+.rpg-user-info-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375em;
+    font-size: clamp(0.4vw, 0.5vw, 0.6vw);
+    flex-shrink: 0;
+}
+
+/* User portrait */
+.rpg-user-portrait {
+    width: clamp(12px, 1.8vw, 16px);
+    height: clamp(12px, 1.8vw, 16px);
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+/* User name and level - inline with portrait */
+.rpg-user-name {
+    font-weight: 600;
+    font-size: 1em;
+    color: var(--rpg-text-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.rpg-level-label {
+    font-size: 1em;
+    font-weight: 600;
+    color: var(--rpg-text-color);
+    opacity: 0.7;
+}
+
+.rpg-level-value {
+    font-size: 1em;
+    font-weight: 700;
+    color: var(--rpg-highlight-color);
+    padding: clamp(1px, 0.2vh, 2px) 0.375em;
+    background: var(--rpg-accent-color);
+    border-radius: clamp(2px, 0.3vh, 3px);
+    border: 1px solid var(--rpg-highlight-color);
+    min-width: 1.5em;
+    text-align: center;
+    cursor: text;
+    transition: all 0.2s ease;
+}
+
+.rpg-level-value:hover {
+    background: var(--rpg-highlight-color);
+    color: var(--rpg-bg-color);
+}
+
+.rpg-level-value:focus {
+    outline: 2px solid var(--rpg-highlight-color);
+    outline-offset: 1px;
+    background: var(--rpg-bg-color);
 }
 
 /* Portrait and Inventory row at top of stats-left */
@@ -711,11 +791,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     display: flex;
     flex-direction: column;
     gap: clamp(3px, 0.5vh, 6px);
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
-    justify-content: space-evenly;
+    flex: 1 1 auto;
 }
 
 .rpg-stats-grid::-webkit-scrollbar {
@@ -736,11 +812,29 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     background: var(--rpg-text);
 }
 
+.rpg-classic-stats-grid::-webkit-scrollbar {
+    width: 0.188rem;
+}
+
+.rpg-classic-stats-grid::-webkit-scrollbar-track {
+    background: var(--rpg-bg);
+    border-radius: 2px;
+}
+
+.rpg-classic-stats-grid::-webkit-scrollbar-thumb {
+    background: var(--rpg-highlight);
+    border-radius: 2px;
+}
+
+.rpg-classic-stats-grid::-webkit-scrollbar-thumb:hover {
+    background: var(--rpg-text);
+}
+
 .rpg-stat-row {
     display: flex;
     align-items: center;
     gap: 0.25em;
-    flex: 0 0 auto;
+    flex: 1 1 0;
     min-height: clamp(12px, 1.8vh, 16px);
 }
 
@@ -819,8 +913,6 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 }
 
 .rpg-mood {
-    margin: 0 !important;
-    margin-top: clamp(2px, 0.4vh, 4px) !important;
     display: flex;
     align-items: center;
     gap: 0.375em;
@@ -852,6 +944,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     flex-direction: column;
     flex: 1;
     min-height: 0;
+    overflow: hidden;
 }
 
 .rpg-classic-stats-title {
@@ -870,23 +963,23 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     grid-template-columns: repeat(2, 1fr);
     gap: clamp(2px, 0.4vh, 4px);
     flex: 1;
-    align-content: stretch;
+    grid-auto-rows: 1fr;
     min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .rpg-classic-stat {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: space-evenly;
+    justify-content: center;
     gap: clamp(1px, 0.15vh, 2px);
     padding: clamp(3px, 0.5vh, 5px);
     background: rgba(0, 0, 0, 0.3);
     border-radius: 0.25em;
     border: 1px solid var(--rpg-border);
     box-sizing: border-box;
-    min-height: 0;
-    height: 100%;
 }
 
 .rpg-classic-stat-label {
@@ -3595,10 +3688,29 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
         display: contents !important;
     }
 
-    /* Center the avatar wrapper on mobile */
-    .rpg-stats-left > div:first-child {
+    /* User info row on mobile */
+    .rpg-user-info-row {
         grid-column: 1 / 3;
+        grid-row: 1;
         justify-content: center !important;
+        font-size: clamp(11px, 2.8vw, 14px) !important;
+        gap: clamp(6px, 1.5vw, 10px) !important;
+    }
+
+    /* Make user portrait larger on mobile */
+    .rpg-user-portrait {
+        width: clamp(24px, 6vw, 32px) !important;
+        height: clamp(24px, 6vw, 32px) !important;
+    }
+
+    /* Make user name and level more readable on mobile */
+    .rpg-user-name {
+        font-size: clamp(12px, 3vw, 16px) !important;
+    }
+
+    .rpg-level-label,
+    .rpg-level-value {
+        font-size: clamp(11px, 2.8vw, 14px) !important;
     }
 
     .rpg-stats-grid {
@@ -3615,14 +3727,6 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 
     .rpg-stat-value {
         font-size: clamp(12px, 3.1vw, 16px) !important;
-    }
-
-    /* Make the avatar+inventory flex container grow to full width */
-    .rpg-stats-left > div[style*="display: flex"] {
-        width: 100% !important; /* Force full width in grid cell */
-        flex: 1 !important; /* Allow it to grow */
-        grid-column: 1 / 3 !important; /* Take full grid width */
-        grid-row: 1 !important; /* Position in row 1 */
     }
 
     /* Inventory - expand to fill horizontal space in flex container */
@@ -3646,7 +3750,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     /* Mood - row 4, aligned with attributes top */
     .rpg-mood {
         grid-column: 1;
-        grid-row: 4 / 6; /* Span 2 rows to match attributes height */
+        grid-row: 3;
         display: flex;
         flex-direction: column;
         gap: 6px;
@@ -3662,13 +3766,13 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     /* Attributes - right side, rows 4-6 aligned with mood */
     .rpg-stats-right {
         grid-column: 2;
-        grid-row: 4 / 6;
+        grid-row: 3;
         display: contents !important;
     }
 
     .rpg-classic-stats {
         grid-column: 2;
-        grid-row: 4 / 6; /* Start at row 4, aligned with mood top */
+        grid-row: 3; /* Align with mood */
     }
 
     /* Attributes as ultra-compact 2x3 grid for mobile */
@@ -3889,6 +3993,50 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     /* Readable clear cache button */
     .rpg-btn-clear-cache {
         font-size: clamp(13px, 3.3vw, 17px) !important;
+    }
+}
+
+/* Very narrow screens - single column layout for all stats */
+@media (max-width: 600px) {
+    /* Change grid to single column */
+    .rpg-stats-section {
+        grid-template-columns: 1fr !important; /* Single column */
+        grid-template-rows: auto !important; /* Auto rows */
+    }
+
+    /* User info row - full width, row 1 */
+    .rpg-user-info-row {
+        grid-column: 1 !important;
+        grid-row: 1 !important;
+    }
+
+    /* Stats grid - full width, row 2 */
+    .rpg-stats-grid {
+        grid-column: 1 !important;
+        grid-row: 2 !important;
+    }
+
+    /* Mood - full width, row 3 */
+    .rpg-mood {
+        grid-column: 1 !important;
+        grid-row: 3 !important;
+    }
+
+    /* Attributes - full width, row 4 */
+    .rpg-stats-right {
+        grid-column: 1 !important;
+        grid-row: 4 !important;
+    }
+
+    .rpg-classic-stats {
+        grid-column: 1 !important;
+        grid-row: 4 !important;
+    }
+
+    /* Make attributes grid single column too for readability */
+    .rpg-classic-stats-grid {
+        grid-template-columns: repeat(3, 1fr) !important; /* 3 columns for attributes */
+        grid-template-rows: repeat(2, 1fr) !important; /* 2 rows */
     }
 }
 
@@ -4433,7 +4581,6 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     gap: 0;
     background: var(--SmartThemeBlurTintColor);
     border-bottom: 2px solid var(--SmartThemeBorderColor);
-    margin-bottom: 1rem;
 }
 
 /* Desktop tab button */

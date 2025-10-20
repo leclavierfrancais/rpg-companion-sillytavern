@@ -100,7 +100,7 @@ export function generateTrackerInstructions(includeHtmlPrompt = true, includeCon
     // Only add tracker instructions if at least one tracker is enabled
     if (hasAnyTrackers) {
         // Universal instruction header
-        instructions += `\nAt the start of every reply, you must attach update to the trackers in EXACTLY the same format as below, enclosed in separate Markdown code fences. Replace X with proper numbers and [placeholders] with in-world details ${userName} perceives about the current scene and the present characters. Consider the last trackers in the conversation (if they exist). Manage them accordingly and realistically; raise, lower, change, or keep the values unchanged based on the user's actions, the passage of time, and logical consequences:\n`;
+        instructions += `\nAt the start of every reply, you must attach an update to the trackers in EXACTLY the same format as below, enclosed in separate Markdown code fences. Replace X with actual numbers (e.g., 69) and replace all [placeholders] with concrete in-world details that ${userName} perceives about the current scene and the present characters. Do NOT keep the brackets or placeholder text in your response. For example: [Location] becomes Forest Clearing, [Mood Emoji] becomes 😊. Consider the last trackers in the conversation (if they exist). Manage them accordingly and realistically; raise, lower, change, or keep the values unchanged based on the user's actions, the passage of time, and logical consequences:\n`;
 
         // Add format specifications for each enabled tracker
         if (extensionSettings.showUserStats) {
@@ -112,7 +112,7 @@ export function generateTrackerInstructions(includeHtmlPrompt = true, includeCon
             instructions += '- Energy: X%\n';
             instructions += '- Hygiene: X%\n';
             instructions += '- Arousal: X%\n';
-            instructions += '[Mood Emoji]: [Conditions (up to three traits)]\n';
+            instructions += 'Status: [Mood Emoji, Conditions (up to three traits)]\n';
 
             // Add inventory format based on feature flag
             if (FEATURE_FLAGS.useNewInventory) {
@@ -132,11 +132,11 @@ export function generateTrackerInstructions(includeHtmlPrompt = true, includeCon
             instructions += '```\n';
             instructions += 'Info Box\n';
             instructions += '---\n';
-            instructions += '🗓️: [Weekday, Month, Year]\n';
-            instructions += '[Weather Emoji]: [Forecast]\n';
-            instructions += '🌡️: [Temperature in °C]\n';
-            instructions += '🕒: [Time Start → Time End]\n';
-            instructions += '🗺️: [Location]\n';
+            instructions += 'Date: [Weekday, Month, Year]\n';
+            instructions += 'Weather: [Weather Emoji, Forecast]\n';
+            instructions += 'Temperature: [Temperature in °C]\n';
+            instructions += 'Time: [Time Start → Time End]\n';
+            instructions += 'Location: [Location]\n';
             instructions += '```\n\n';
         }
 
@@ -150,13 +150,13 @@ export function generateTrackerInstructions(includeHtmlPrompt = true, includeCon
 
         // Only add continuation instruction if includeContinuation is true
         if (includeContinuation) {
-            instructions += `After updating the trackers, continue directly from where the last message in the chat history left off. Ensure the trackers you provide naturally reflect and influence the narrative. Character behavior, dialogue, and story events should acknowledge these conditions when relevant, such as fatigue affecting the protagonist's performance, low hygiene influencing their social interactions, environmental factors shaping the scene, a character's emotional state coloring their responses, and so on. Do not render brackets.\n\n`;
+            instructions += `After updating the trackers, continue directly from where the last message in the chat history left off. Ensure the trackers you provide naturally reflect and influence the narrative. Character behavior, dialogue, and story events should acknowledge these conditions when relevant, such as fatigue affecting the protagonist's performance, low hygiene influencing their social interactions, environmental factors shaping the scene, a character's emotional state coloring their responses, and so on. Remember, all bracketed placeholders (e.g., [Location], [Mood Emoji]) MUST be replaced with actual content without the square brackets.\n\n`;
         }
 
         // Include attributes and dice roll only if there was a dice roll
         if (extensionSettings.lastDiceRoll) {
             const roll = extensionSettings.lastDiceRoll;
-            instructions += `${userName}'s attributes: STR ${classicStats.str}, DEX ${classicStats.dex}, CON ${classicStats.con}, INT ${classicStats.int}, WIS ${classicStats.wis}, CHA ${classicStats.cha}\n`;
+            instructions += `${userName}'s attributes: STR ${classicStats.str}, DEX ${classicStats.dex}, CON ${classicStats.con}, INT ${classicStats.int}, WIS ${classicStats.wis}, CHA ${classicStats.cha}, LVL ${extensionSettings.level}\n`;
             instructions += `${userName} rolled ${roll.total} on the last ${roll.formula} roll. Based on their attributes, decide whether they succeeded or failed the action they attempted.\n\n`;
         }
     }
@@ -215,14 +215,14 @@ export function generateContextualSummary() {
         if (extensionSettings.lastDiceRoll) {
             const classicStats = extensionSettings.classicStats;
             const roll = extensionSettings.lastDiceRoll;
-            summary += `Attributes: STR ${classicStats.str}, DEX ${classicStats.dex}, CON ${classicStats.con}, INT ${classicStats.int}, WIS ${classicStats.wis}, CHA ${classicStats.cha}\n`;
+            summary += `Attributes: STR ${classicStats.str}, DEX ${classicStats.dex}, CON ${classicStats.con}, INT ${classicStats.int}, WIS ${classicStats.wis}, CHA ${classicStats.cha}, LVL ${extensionSettings.level}\n`;
             summary += `${userName} rolled ${roll.total} on the last ${roll.formula} roll. Based on their attributes, decide whether they succeed or fail the action they attempt.\n`;
         }
         summary += `\n`;
     }
 
     if (extensionSettings.showInfoBox && committedTrackerData.infoBox) {
-        // Parse info box data
+        // Parse info box data - support both new and legacy formats
         const lines = committedTrackerData.infoBox.split('\n');
         let date = '', weather = '', temp = '', time = '', location = '';
 
@@ -230,30 +230,35 @@ export function generateContextualSummary() {
 
         for (const line of lines) {
             // console.log('[RPG Companion] 🔍 Processing line:', line);
-            // Use separate if statements (not else if) so each line is checked against all conditions
-            if (line.includes('🗓️:')) {
+
+            // New format with text labels
+            if (line.startsWith('Date:')) {
+                date = line.replace('Date:', '').trim();
+            } else if (line.startsWith('Weather:')) {
+                weather = line.replace('Weather:', '').trim();
+            } else if (line.startsWith('Temperature:')) {
+                temp = line.replace('Temperature:', '').trim();
+            } else if (line.startsWith('Time:')) {
+                time = line.replace('Time:', '').trim();
+            } else if (line.startsWith('Location:')) {
+                location = line.replace('Location:', '').trim();
+            }
+            // Legacy format with emojis (for backward compatibility)
+            else if (line.includes('🗓️:')) {
                 date = line.replace('🗓️:', '').trim();
-                // console.log('[RPG Companion] 📅 Found date:', date);
-            }
-            if (line.includes('🌡️:')) {
+            } else if (line.includes('🌡️:')) {
                 temp = line.replace('🌡️:', '').trim();
-                // console.log('[RPG Companion] 🌡️ Found temp:', temp);
-            }
-            if (line.includes('🕒:')) {
+            } else if (line.includes('🕒:')) {
                 time = line.replace('🕒:', '').trim();
-                // console.log('[RPG Companion] 🕒 Found time:', time);
-            }
-            if (line.includes('🗺️:')) {
+            } else if (line.includes('🗺️:')) {
                 location = line.replace('🗺️:', '').trim();
-                // console.log('[RPG Companion] 🗺️ Found location:', location);
-            }
-            // Check for weather emojis - use a simpler approach
-            const weatherEmojis = ['🌤️', '☀️', '⛅', '🌦️', '🌧️', '⛈️', '🌩️', '🌨️', '❄️', '🌫️'];
-            const startsWithWeatherEmoji = weatherEmojis.some(emoji => line.startsWith(emoji + ':'));
-            if (startsWithWeatherEmoji && !line.includes('🌡️') && !line.includes('🗺️')) {
-                // Extract weather description (remove emoji and colon)
-                weather = line.substring(line.indexOf(':') + 1).trim();
-                // console.log('[RPG Companion] 🌧️ Found weather:', weather);
+            } else {
+                // Check for weather emojis in legacy format
+                const weatherEmojis = ['🌤️', '☀️', '⛅', '🌦️', '🌧️', '⛈️', '🌩️', '🌨️', '❄️', '🌫️'];
+                const startsWithWeatherEmoji = weatherEmojis.some(emoji => line.startsWith(emoji + ':'));
+                if (startsWithWeatherEmoji && !line.includes('🌡️') && !line.includes('🗺️')) {
+                    weather = line.substring(line.indexOf(':') + 1).trim();
+                }
             }
         }
 
@@ -373,7 +378,7 @@ export function generateSeparateUpdatePrompt() {
     // Build the instruction message
     let instructionMessage = `</history>\n\n`;
     instructionMessage += generateRPGPromptText().replace('start your response with', 'respond with');
-    instructionMessage += `Provide ONLY the requested data in the exact formats specified above. Do not include any roleplay response, other text, or commentary. Do not render brackets.`;
+    instructionMessage += `Provide ONLY the requested data in the exact formats specified above. Do not include any roleplay response, other text, or commentary. Remember, all bracketed placeholders (e.g., [Location], [Mood Emoji]) MUST be replaced with actual content without the square brackets.`;
 
     messages.push({
         role: 'user',

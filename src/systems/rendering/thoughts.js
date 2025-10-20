@@ -71,6 +71,7 @@ export function renderThoughts() {
     // console.log('[RPG Companion] Split into lines:', lines);
 
     // Parse format: [Emoji]: [Name, Status, Demeanor] | [Relationship] | [Thoughts]
+    // Also supports 4-part format: [Emoji]: [Name, Status] | [Demeanor] | [Relationship] | [Thoughts]
     for (const line of lines) {
         // Skip empty lines, headers, dividers, and code fences
         if (line.trim() &&
@@ -89,17 +90,40 @@ export function renderThoughts() {
                 if (emojiMatch) {
                     const emoji = emojiMatch[1].trim();
                     const info = emojiMatch[2].trim();
-                    const relationship = parts[1].trim(); // Enemy/Neutral/Friend/Lover
-                    const thoughts = parts[2] ? parts[2].trim() : '';
+
+                    // Handle both 3-part and 4-part formats
+                    let relationship, thoughts, traits;
+
+                    if (parts.length === 3) {
+                        // 3-part format: Emoji:Name,traits | Relationship | Thoughts
+                        relationship = parts[1].trim();
+                        thoughts = parts[2].trim();
+                        const infoParts = info.split(',').map(p => p.trim());
+                        traits = infoParts.slice(1).join(', ');
+                    } else if (parts.length >= 4) {
+                        // 4-part format: Emoji:Name,traits | Demeanor | Relationship | Thoughts
+                        // Add the demeanor to traits and use last two parts for relationship/thoughts
+                        const demeanor = parts[1].trim();
+                        relationship = parts[2].trim();
+                        thoughts = parts[3].trim();
+                        const infoParts = info.split(',').map(p => p.trim());
+                        const baseTraits = infoParts.slice(1).join(', ');
+                        traits = baseTraits ? `${baseTraits}, ${demeanor}` : demeanor;
+                    } else {
+                        // Fallback for 2-part format
+                        relationship = parts[1].trim();
+                        thoughts = '';
+                        const infoParts = info.split(',').map(p => p.trim());
+                        traits = infoParts.slice(1).join(', ');
+                    }
 
                     // Parse name from info (first part before comma)
                     const infoParts = info.split(',').map(p => p.trim());
                     const name = infoParts[0] || '';
-                    const traits = infoParts.slice(1).join(', ');
 
                     if (name && name.toLowerCase() !== 'unavailable') {
                         presentCharacters.push({ emoji, name, traits, relationship, thoughts });
-                        // console.log('[RPG Companion] Parsed character:', { name, relationship });
+                        // console.log('[RPG Companion] Parsed character:', { name, relationship, thoughts });
                     }
                 }
             }
@@ -429,6 +453,7 @@ export function updateChatThoughts() {
             const parts = line.split('|').map(p => p.trim());
             // console.log('[RPG Companion] Line parts:', parts);
 
+            // Handle both 3-part and 4-part formats
             if (parts.length >= 3) {
                 const firstPart = parts[0].trim();
                 const emojiMatch = firstPart.match(/^(.+?):\s*(.+)$/);
@@ -436,7 +461,15 @@ export function updateChatThoughts() {
                 if (emojiMatch) {
                     const emoji = emojiMatch[1].trim();
                     const info = emojiMatch[2].trim();
-                    const thoughts = parts[2] ? parts[2].trim() : '';
+
+                    let thoughts;
+                    if (parts.length === 3) {
+                        // 3-part format: Emoji:Name,traits | Relationship | Thoughts
+                        thoughts = parts[2].trim();
+                    } else if (parts.length >= 4) {
+                        // 4-part format: Emoji:Name,traits | Demeanor | Relationship | Thoughts
+                        thoughts = parts[3].trim();
+                    }
 
                     const infoParts = info.split(',').map(p => p.trim());
                     const name = infoParts[0] || '';

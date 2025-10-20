@@ -213,10 +213,10 @@ export function removeItem(field, itemIndex, location) {
 
     const items = parseItems(currentString);
     // console.log('[RPG Companion] DEBUG items array before removal:', items);
-    
+
     items.splice(itemIndex, 1); // Remove item at index
     // console.log('[RPG Companion] DEBUG items array after removal:', items);
-    
+
     const newString = serializeItems(items);
     // console.log('[RPG Companion] DEBUG newString after removal:', newString);
 
@@ -344,7 +344,7 @@ export function confirmRemoveLocation(locationName) {
     // console.log('[RPG Companion] DEBUG confirmRemoveLocation called for:', locationName);
     const inventory = extensionSettings.userStats.inventory;
     // console.log('[RPG Companion] DEBUG inventory.stored before deletion:', inventory.stored);
-    
+
     delete inventory.stored[locationName];
     // console.log('[RPG Companion] DEBUG inventory.stored after deletion:', inventory.stored);
 

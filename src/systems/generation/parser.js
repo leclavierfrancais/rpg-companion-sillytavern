@@ -75,20 +75,26 @@ export function parseUserStats(statsText) {
         const hygieneMatch = statsText.match(/Hygiene:\s*(\d+)%/);
         const arousalMatch = statsText.match(/Arousal:\s*(\d+)%/);
 
-        // Match new format: [Emoji]: [Conditions]
-        // Look for a line after Arousal that has format [something]: [text]
-        // Split by lines and find the line after percentages
-        const lines = statsText.split('\n');
+        // Match new format: Status: [Emoji, Conditions]
+        // Also support legacy format: [Emoji]: [Conditions] for backward compatibility
         let moodMatch = null;
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i].trim();
-            // Skip lines with percentages or "Inventory:"
-            if (line.includes('%') || line.toLowerCase().startsWith('inventory:')) continue;
-            // Match emoji followed by colon and conditions
-            const match = line.match(/^(.+?):\s*(.+)$/);
-            if (match) {
-                moodMatch = match;
-                break;
+        const statusMatch = statsText.match(/Status:\s*(.+?),\s*(.+)/i);
+        if (statusMatch) {
+            // New format: Status: [Emoji, Conditions]
+            moodMatch = [null, statusMatch[1].trim(), statusMatch[2].trim()];
+        } else {
+            // Legacy format: [Emoji]: [Conditions]
+            const lines = statsText.split('\n');
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                // Skip lines with percentages or "Inventory:" or "Status:"
+                if (line.includes('%') || line.toLowerCase().startsWith('inventory:') || line.toLowerCase().startsWith('status:')) continue;
+                // Match emoji followed by colon and conditions
+                const match = line.match(/^(.+?):\s*(.+)$/);
+                if (match) {
+                    moodMatch = match;
+                    break;
+                }
             }
         }
 

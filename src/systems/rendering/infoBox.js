@@ -66,35 +66,42 @@ export function renderInfoBox() {
     for (const line of lines) {
         // console.log('[RPG Companion] Processing line:', line);
 
-        if (line.includes('🗓️:')) {
+        // Support both new text format (Date:) and legacy emoji format (🗓️:)
+        if (line.startsWith('Date:') || line.includes('🗓️:')) {
             // console.log('[RPG Companion] → Matched DATE');
-            const dateStr = line.replace('🗓️:', '').trim();
+            const dateStr = line.replace('Date:', '').replace('🗓️:', '').trim();
             // Parse format: "Weekday, Month Day, Year" or "Weekday, Month, Year"
             const dateParts = dateStr.split(',').map(p => p.trim());
             data.weekday = dateParts[0] || '';
             data.month = dateParts[1] || '';
             data.year = dateParts[2] || '';
             data.date = dateStr;
-        } else if (line.includes('🌡️:')) {
+        } else if (line.startsWith('Temperature:') || line.includes('🌡️:')) {
             // console.log('[RPG Companion] → Matched TEMPERATURE');
-            const tempStr = line.replace('🌡️:', '').trim();
+            const tempStr = line.replace('Temperature:', '').replace('🌡️:', '').trim();
             data.temperature = tempStr;
             // Extract numeric value
             const tempMatch = tempStr.match(/(-?\d+)/);
             if (tempMatch) {
                 data.tempValue = parseInt(tempMatch[1]);
             }
-        } else if (line.includes('🕒:')) {
+        } else if (line.startsWith('Time:') || line.includes('🕒:')) {
             // console.log('[RPG Companion] → Matched TIME');
-            const timeStr = line.replace('🕒:', '').trim();
+            const timeStr = line.replace('Time:', '').replace('🕒:', '').trim();
             data.time = timeStr;
             // Parse "HH:MM → HH:MM" format
             const timeParts = timeStr.split('→').map(t => t.trim());
             data.timeStart = timeParts[0] || '';
             data.timeEnd = timeParts[1] || '';
-        } else if (line.includes('🗺️:')) {
+        } else if (line.startsWith('Location:') || line.includes('🗺️:')) {
             // console.log('[RPG Companion] → Matched LOCATION');
-            data.location = line.replace('🗺️:', '').trim();
+            data.location = line.replace('Location:', '').replace('🗺️:', '').trim();
+        } else if (line.startsWith('Weather:')) {
+            // New text format: Weather: [Emoji], [Forecast]
+            const weatherStr = line.replace('Weather:', '').trim();
+            const weatherParts = weatherStr.split(',').map(p => p.trim());
+            data.weatherEmoji = weatherParts[0] || '';
+            data.weatherForecast = weatherParts[1] || '';
         } else {
             // Check if it's a weather line
             // Since \p{Emoji} doesn't work reliably, use a simpler approach

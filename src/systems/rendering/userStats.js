@@ -55,8 +55,12 @@ export function renderUserStats() {
     const html = `
         <div class="rpg-stats-content">
             <div class="rpg-stats-left">
-                <div style="display: flex; gap: clamp(4px, 0.8vh, 8px); align-items: center; justify-content: center; flex-shrink: 0;">
+                <div class="rpg-user-info-row">
                     <img src="${userPortrait}" alt="${userName}" class="rpg-user-portrait" onerror="this.style.opacity='0.5';this.onerror=null;" />
+                    <span class="rpg-user-name">${userName}</span>
+                    <span style="opacity: 0.5;">|</span>
+                    <span class="rpg-level-label">LVL</span>
+                    <span class="rpg-level-value rpg-editable" contenteditable="true" data-field="level" title="Click to edit level">${extensionSettings.level}</span>
                 </div>
                 <div class="rpg-stats-grid">
                     <div class="rpg-stat-row">
@@ -235,5 +239,31 @@ export function renderUserStats() {
         saveSettings();
         saveChatData();
         updateMessageSwipeData();
+    });
+
+    // Add event listener for level editing
+    $('.rpg-level-value.rpg-editable').on('blur', function() {
+        let value = parseInt($(this).text().trim());
+        if (isNaN(value) || value < 1) {
+            value = 1;
+        }
+        // Set reasonable max level
+        value = Math.min(100, value);
+
+        extensionSettings.level = value;
+        saveSettings();
+        saveChatData();
+        updateMessageSwipeData();
+
+        // Re-render to update the display
+        renderUserStats();
+    });
+
+    // Prevent line breaks in level field
+    $('.rpg-level-value.rpg-editable').on('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            $(this).blur();
+        }
     });
 }

@@ -53,6 +53,7 @@ export let extensionSettings = {
             assets: "None"
         }
     },
+    level: 1, // User's character level
     classicStats: {
         str: 10,
         dex: 10,

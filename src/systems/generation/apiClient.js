@@ -18,7 +18,38 @@ import { saveChatData } from '../../core/persistence.js';
 import { generateSeparateUpdatePrompt } from './promptBuilder.js';
 import { parseResponse, parseUserStats } from './parser.js';
 
+// Store the original preset name to restore after tracker generation
+let originalPresetName = null;
+
 /**
+ * Gets the current preset name using the /preset command
+ * @returns {Promise<string|null>} Current preset name or null if unavailable
+ */
+async function getCurrentPresetName() {
+    try {
+        // Use /preset without arguments to get the current preset name
+        const result = await executeSlashCommandsOnChatInput('/preset', { quiet: true });
+
+        // console.log('[RPG Companion] /preset result:', result);
+
+        // The result should be an object with a 'pipe' property containing the preset name
+        if (result && typeof result === 'object' && result.pipe) {
+            const presetName = String(result.pipe).trim();
+            // console.log('[RPG Companion] Extracted preset name:', presetName);
+            return presetName || null;
+        }
+
+        // Fallback if result is a string
+        if (typeof result === 'string') {
+            return result.trim() || null;
+        }
+
+        return null;
+    } catch (error) {
+        console.error('[RPG Companion] Error getting current preset:', error);
+        return null;
+    }
+}/**
  * Switches to a specific preset by name using the /preset slash command
  * @param {string} presetName - Name of the preset to switch to
  * @returns {Promise<boolean>} True if switching succeeded, false otherwise
@@ -71,11 +102,18 @@ export async function updateRPGData(renderUserStats, renderInfoBox, renderThough
         const originalHtml = $updateBtn.html();
         $updateBtn.html('<i class="fa-solid fa-spinner fa-spin"></i> Updating...').prop('disabled', true);
 
+        // Save current preset name before switching (if we're going to switch)
+        if (extensionSettings.useSeparatePreset) {
+            originalPresetName = await getCurrentPresetName();
+            console.log(`[RPG Companion] Saved original preset: "${originalPresetName}"`);
+        }
+
         // Switch to separate preset if enabled
         if (extensionSettings.useSeparatePreset) {
             const switched = await switchToPreset('RPG Companion Trackers');
             if (!switched) {
                 console.warn('[RPG Companion] Failed to switch to RPG Companion Trackers preset. Using current preset.');
+                originalPresetName = null; // Don't try to restore if we didn't switch
             }
         }
 
@@ -172,6 +210,13 @@ export async function updateRPGData(renderUserStats, renderInfoBox, renderThough
     } catch (error) {
         console.error('[RPG Companion] Error updating RPG data:', error);
     } finally {
+        // Restore original preset if we switched to a separate one
+        if (originalPresetName && extensionSettings.useSeparatePreset) {
+            console.log(`[RPG Companion] Restoring original preset: "${originalPresetName}"`);
+            await switchToPreset(originalPresetName);
+            originalPresetName = null; // Clear after restoring
+        }
+
         setIsGenerating(false);
 
         // Restore button to original state

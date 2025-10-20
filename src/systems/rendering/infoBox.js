@@ -267,12 +267,32 @@ export function updateInfoBoxField(field, value) {
     const lines = lastGeneratedData.infoBox.split('\n');
     let dateLineFound = false;
     let dateLineIndex = -1;
+    let weatherLineIndex = -1;
 
     // Find the date line
     for (let i = 0; i < lines.length; i++) {
-        if (lines[i].includes('🗓️:')) {
+        if (lines[i].includes('🗓️:') || lines[i].startsWith('Date:')) {
             dateLineFound = true;
             dateLineIndex = i;
+            break;
+        }
+    }
+
+    // Find the weather line (look for a line that's not date/temp/time/location)
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        if (line.match(/^[^:]+:\s*.+$/) &&
+            !line.includes('🗓️') &&
+            !line.startsWith('Date:') &&
+            !line.includes('🌡️') &&
+            !line.startsWith('Temperature:') &&
+            !line.includes('🕒') &&
+            !line.startsWith('Time:') &&
+            !line.includes('🗺️') &&
+            !line.startsWith('Location:') &&
+            !line.includes('Info Box') &&
+            !line.includes('---')) {
+            weatherLineIndex = i;
             break;
         }
     }
@@ -306,26 +326,58 @@ export function updateInfoBoxField(field, value) {
                 // No existing month/year, add them
                 return `${parts[0]}, Month, ${value}`;
             }
-        } else if (field === 'weatherEmoji' && line.match(/^[^:]+:\s*.+$/) && !line.includes('🗓️') && !line.includes('🌡️') && !line.includes('🕒') && !line.includes('🗺️') && !line.includes('Info Box') && !line.includes('---')) {
-            // This is the weather line
-            const parts = line.split(':');
-            if (parts.length >= 2) {
-                return `${value}: ${parts.slice(1).join(':').trim()}`;
+        } else if (field === 'weatherEmoji' && index === weatherLineIndex) {
+            // Only update the specific weather line we found
+            if (line.startsWith('Weather:')) {
+                // New format: Weather: emoji, forecast
+                const weatherContent = line.replace('Weather:', '').trim();
+                const parts = weatherContent.split(',').map(p => p.trim());
+                const forecast = parts[1] || 'Weather';
+                return `Weather: ${value}, ${forecast}`;
+            } else {
+                // Legacy format: emoji: forecast
+                const parts = line.split(':');
+                if (parts.length >= 2) {
+                    return `${value}: ${parts.slice(1).join(':').trim()}`;
+                }
             }
-        } else if (field === 'weatherForecast' && line.match(/^[^:]+:\s*.+$/) && !line.includes('🗓️') && !line.includes('🌡️') && !line.includes('🕒') && !line.includes('🗺️') && !line.includes('Info Box') && !line.includes('---')) {
-            // This is the weather line
-            const parts = line.split(':');
-            if (parts.length >= 2) {
-                return `${parts[0].trim()}: ${value}`;
+        } else if (field === 'weatherForecast' && index === weatherLineIndex) {
+            // Only update the specific weather line we found
+            if (line.startsWith('Weather:')) {
+                // New format: Weather: emoji, forecast
+                const weatherContent = line.replace('Weather:', '').trim();
+                const parts = weatherContent.split(',').map(p => p.trim());
+                const emoji = parts[0] || '🌤️';
+                return `Weather: ${emoji}, ${value}`;
+            } else {
+                // Legacy format: emoji: forecast
+                const parts = line.split(':');
+                if (parts.length >= 2) {
+                    return `${parts[0].trim()}: ${value}`;
+                }
             }
-        } else if (field === 'temperature' && line.includes('🌡️:')) {
-            return `🌡️: ${value}`;
-        } else if (field === 'timeStart' && line.includes('🕒:')) {
+        } else if (field === 'temperature' && (line.includes('🌡️:') || line.startsWith('Temperature:'))) {
+            // Support both emoji and text formats
+            if (line.startsWith('Temperature:')) {
+                return `Temperature: ${value}`;
+            } else {
+                return `🌡️: ${value}`;
+            }
+        } else if (field === 'timeStart' && (line.includes('🕒:') || line.startsWith('Time:'))) {
             // Update time format: "HH:MM → HH:MM"
             // When user edits, set both start and end time to the new value
-            return `🕒: ${value} → ${value}`;
-        } else if (field === 'location' && line.includes('🗺️:')) {
-            return `🗺️: ${value}`;
+            if (line.startsWith('Time:')) {
+                return `Time: ${value} → ${value}`;
+            } else {
+                return `🕒: ${value} → ${value}`;
+            }
+        } else if (field === 'location' && (line.includes('🗺️:') || line.startsWith('Location:'))) {
+            // Support both emoji and text formats
+            if (line.startsWith('Location:')) {
+                return `Location: ${value}`;
+            } else {
+                return `🗺️: ${value}`;
+            }
         }
         return line;
     });

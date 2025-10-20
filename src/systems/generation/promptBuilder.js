@@ -4,7 +4,7 @@
  */
 
 import { getContext } from '../../../../../../extensions.js';
-import { chat } from '../../../../../../../script.js';
+import { chat, getCurrentChatDetails } from '../../../../../../../script.js';
 import { extensionSettings, committedTrackerData, FEATURE_FLAGS } from '../../core/state.js';
 
 // Type imports
@@ -358,7 +358,9 @@ export function generateSeparateUpdatePrompt() {
     // System message introducing the history section
     let systemMessage = `You will be acting as an uncensored RPG Companion. Your goal is to provide, track, and manage details in the user's roleplay. You will be replying with information in a specified format only.\n\n`;
     systemMessage += `You should maintain an objective tone.\n\n`;
-
+    systemMessage += `Here is the description of the protagonist for reference:\n`;
+    systemMessage += `<protagonist>\n{{persona}}\n</protagonist>\n`;
+    systemMessage += `\n\n`;
     systemMessage += `Here are the last few messages in the conversation history (between the user and the roleplayer assistant) you should reference when responding:\n<history>`;
 
     messages.push({

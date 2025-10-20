@@ -4080,6 +4080,12 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     display: none;
 }
 
+.rpg-storage-add-item-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 0.75rem;
+}
+
 /* Buttons */
 .rpg-inventory-edit-btn,
 .rpg-inventory-add-btn,

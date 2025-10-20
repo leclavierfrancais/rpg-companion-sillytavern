@@ -7,6 +7,7 @@ import { getContext } from '../../../../../../extensions.js';
 import {
     extensionSettings,
     lastGeneratedData,
+    committedTrackerData,
     $infoBoxContainer
 } from '../../core/state.js';
 import { saveChatData } from '../../core/persistence.js';
@@ -428,6 +429,10 @@ export function updateInfoBoxField(field, value) {
     }
 
     lastGeneratedData.infoBox = updatedLines.join('\n');
+
+    // Update BOTH lastGeneratedData AND committedTrackerData
+    // This makes manual edits immediately visible to AI
+    committedTrackerData.infoBox = updatedLines.join('\n');
 
     // Update the message's swipe data
     const chat = getContext().chat;

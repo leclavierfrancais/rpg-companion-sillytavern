@@ -3,11 +3,12 @@
  * Handles all user interactions with the inventory v2 system
  */
 
-import { extensionSettings, lastGeneratedData } from '../../core/state.js';
+import { extensionSettings, lastGeneratedData, committedTrackerData } from '../../core/state.js';
 import { saveSettings, saveChatData, updateMessageSwipeData } from '../../core/persistence.js';
 import { buildInventorySummary } from '../generation/promptBuilder.js';
 import { renderInventory, getLocationId } from '../rendering/inventory.js';
 import { parseItems, serializeItems } from '../../utils/itemParser.js';
+import { sanitizeLocationName, sanitizeItemName } from '../../utils/security.js';
 
 // Type imports
 /** @typedef {import('../../types/inventory.js').InventoryV2} InventoryV2 */
@@ -25,15 +26,27 @@ let currentActiveSubTab = 'onPerson';
 let collapsedLocations = [];
 
 /**
- * Updates lastGeneratedData.userStats to include current inventory in text format.
- * This ensures the AI context stays synced with manual edits.
+ * Tracks which inline forms are currently open
+ * @type {Object}
+ */
+let openForms = {
+    addLocation: false,
+    addItemOnPerson: false,
+    addItemStored: {}, // { [locationName]: true/false }
+    addItemAssets: false
+};
+
+/**
+ * Updates lastGeneratedData.userStats AND committedTrackerData.userStats to include
+ * current inventory in text format.
+ * This ensures manual edits are immediately visible to AI in next generation.
  */
 function updateLastGeneratedDataInventory() {
     const stats = extensionSettings.userStats;
     const inventorySummary = buildInventorySummary(stats.inventory);
 
-    // Rebuild the lastGeneratedData.userStats text format
-    lastGeneratedData.userStats =
+    // Rebuild the userStats text format
+    const statsText =
         `Health: ${stats.health}%\n` +
         `Satiety: ${stats.satiety}%\n` +
         `Energy: ${stats.energy}%\n` +
@@ -41,6 +54,11 @@ function updateLastGeneratedDataInventory() {
         `Arousal: ${stats.arousal}%\n` +
         `${stats.mood}: ${stats.conditions}\n` +
         `${inventorySummary}`;
+
+    // Update BOTH lastGeneratedData AND committedTrackerData
+    // This makes manual edits immediately visible to AI
+    lastGeneratedData.userStats = statsText;
+    committedTrackerData.userStats = statsText;
 }
 
 /**
@@ -56,9 +74,18 @@ export function showAddItemForm(field, location) {
         const locationId = getLocationId(location);
         formId = `rpg-add-item-form-stored-${locationId}`;
         inputId = `.rpg-location-item-input[data-location="${location}"]`;
+        // Track in state
+        if (!openForms.addItemStored) openForms.addItemStored = {};
+        openForms.addItemStored[location] = true;
     } else {
         formId = `rpg-add-item-form-${field}`;
         inputId = `#rpg-new-item-${field}`;
+        // Track in state
+        if (field === 'onPerson') {
+            openForms.addItemOnPerson = true;
+        } else if (field === 'assets') {
+            openForms.addItemAssets = true;
+        }
     }
 
     const form = $(`#${formId}`);
@@ -81,9 +108,19 @@ export function hideAddItemForm(field, location) {
         const locationId = getLocationId(location);
         formId = `rpg-add-item-form-stored-${locationId}`;
         inputId = `.rpg-location-item-input[data-location="${location}"]`;
+        // Clear from state
+        if (openForms.addItemStored && openForms.addItemStored[location]) {
+            delete openForms.addItemStored[location];
+        }
     } else {
         formId = `rpg-add-item-form-${field}`;
         inputId = `#rpg-new-item-${field}`;
+        // Clear from state
+        if (field === 'onPerson') {
+            openForms.addItemOnPerson = false;
+        } else if (field === 'assets') {
+            openForms.addItemAssets = false;
+        }
     }
 
     const form = $(`#${formId}`);
@@ -109,9 +146,17 @@ export function saveAddItem(field, location) {
     }
 
     const input = $(inputId);
-    const itemName = input.val().trim();
+    const rawItemName = input.val().trim();
 
+    if (!rawItemName) {
+        hideAddItemForm(field, location);
+        return;
+    }
+
+    // Security: Validate and sanitize item name
+    const itemName = sanitizeItemName(rawItemName);
     if (!itemName) {
+        alert('Invalid item name.');
         hideAddItemForm(field, location);
         return;
     }
@@ -198,6 +243,9 @@ export function showAddLocationForm() {
     const form = $('#rpg-add-location-form');
     const input = $('#rpg-new-location-name');
 
+    // Track in state
+    openForms.addLocation = true;
+
     form.show();
     input.val('').focus();
 }
@@ -209,6 +257,9 @@ export function hideAddLocationForm() {
     const form = $('#rpg-add-location-form');
     const input = $('#rpg-new-location-name');
 
+    // Clear from state
+    openForms.addLocation = false;
+
     form.hide();
     input.val('');
 }
@@ -219,9 +270,17 @@ export function hideAddLocationForm() {
 export function saveAddLocation() {
     const inventory = extensionSettings.userStats.inventory;
     const input = $('#rpg-new-location-name');
-    const locationName = input.val().trim();
+    const rawLocationName = input.val().trim();
 
+    if (!rawLocationName) {
+        hideAddLocationForm();
+        return;
+    }
+
+    // Security: Validate and sanitize location name
+    const locationName = sanitizeLocationName(rawLocationName);
     if (!locationName) {
+        alert('Invalid location name. Avoid special names like "__proto__" or "constructor".');
         hideAddLocationForm();
         return;
     }
@@ -499,4 +558,68 @@ export function getInventoryRenderOptions() {
         activeSubTab: currentActiveSubTab,
         collapsedLocations
     };
+}
+
+/**
+ * Restores the state of inline forms after re-rendering.
+ * This ensures forms that were open before re-render are shown again.
+ * Also cleans up orphaned form states for deleted locations (Bug #3 fix).
+ */
+export function restoreFormStates() {
+    // Restore add location form
+    if (openForms.addLocation) {
+        const form = $('#rpg-add-location-form');
+        const input = $('#rpg-new-location-name');
+        if (form.length > 0) {
+            form.show();
+            // Don't refocus to avoid disrupting user interaction
+        }
+    }
+
+    // Restore add item on person form
+    if (openForms.addItemOnPerson) {
+        const form = $('#rpg-add-item-form-onPerson');
+        const input = $('#rpg-new-item-onPerson');
+        if (form.length > 0) {
+            form.show();
+        }
+    }
+
+    // Restore add item assets form
+    if (openForms.addItemAssets) {
+        const form = $('#rpg-add-item-form-assets');
+        const input = $('#rpg-new-item-assets');
+        if (form.length > 0) {
+            form.show();
+        }
+    }
+
+    // Restore add item stored forms (for each location)
+    // Clean up orphaned states for deleted locations (Bug #3 fix)
+    if (openForms.addItemStored && typeof openForms.addItemStored === 'object') {
+        const inventory = extensionSettings.userStats.inventory;
+        const locationsToDelete = [];
+
+        for (const location in openForms.addItemStored) {
+            if (openForms.addItemStored[location]) {
+                // Check if location still exists in inventory
+                if (inventory?.stored && inventory.stored.hasOwnProperty(location)) {
+                    // Location exists, restore form
+                    const locationId = location.replace(/\s+/g, '-');
+                    const form = $(`#rpg-add-item-form-stored-${locationId}`);
+                    if (form.length > 0) {
+                        form.show();
+                    }
+                } else {
+                    // Location was deleted, mark for cleanup
+                    locationsToDelete.push(location);
+                }
+            }
+        }
+
+        // Clean up orphaned form states
+        for (const location of locationsToDelete) {
+            delete openForms.addItemStored[location];
+        }
+    }
 }

@@ -577,7 +577,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 
 .rpg-user-portrait {
     width: clamp(1.7vw, 1.8vw, 1.9vw);
-    height: clamp(24px, 4vh, 32px);
+    height: clamp(1.7vw, 1.8vw, 1.9vw);
     border-radius: 50%;
     border: 2px solid var(--rpg-highlight);
     box-shadow: 0 0 8px var(--rpg-highlight);

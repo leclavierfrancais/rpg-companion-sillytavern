@@ -17,49 +17,26 @@ import {
 import { saveChatData } from '../../core/persistence.js';
 import { generateSeparateUpdatePrompt } from './promptBuilder.js';
 import { parseResponse, parseUserStats } from './parser.js';
-import { getCurrentPresetName } from '../../../../../regex/engine.js';
 
 /**
  * Switches to a specific preset by name using the /preset slash command
  * @param {string} presetName - Name of the preset to switch to
- * @returns {Promise<string|null>} The previous preset name, or null if switching failed
+ * @returns {Promise<boolean>} True if switching succeeded, false otherwise
  */
 async function switchToPreset(presetName) {
     try {
-        // Get the current preset before switching using SillyTavern's built-in API
-        const previousPreset = getCurrentPresetName();
-
         // Use the /preset slash command to switch presets
         // This is the proper way to change presets in SillyTavern
         await executeSlashCommandsOnChatInput(`/preset ${presetName}`, { quiet: true });
 
-        // console.log(`[RPG Companion] Switched from preset "${previousPreset || 'none'}" to "${presetName}"`);
-        return previousPreset;
+        // console.log(`[RPG Companion] Switched to preset "${presetName}"`);
+        return true;
     } catch (error) {
         console.error('[RPG Companion] Error switching preset:', error);
-        return null;
+        return false;
     }
 }
 
-/**
- * Restores a previously saved preset using the /preset slash command
- * @param {string} presetName - Name of the preset to restore
- */
-async function restorePreset(presetName) {
-    try {
-        if (!presetName) {
-            console.warn('[RPG Companion] No preset name to restore');
-            return;
-        }
-
-        // Use the /preset slash command to restore the preset
-        await executeSlashCommandsOnChatInput(`/preset ${presetName}`, { quiet: true });
-
-        // console.log(`[RPG Companion] Restored preset to "${presetName}"`);
-    } catch (error) {
-        console.error('[RPG Companion] Error restoring preset:', error);
-    }
-}
 
 /**
  * Updates RPG tracker data using separate API call (separate mode only).
@@ -86,8 +63,6 @@ export async function updateRPGData(renderUserStats, renderInfoBox, renderThough
         return;
     }
 
-    let previousPreset = null;
-
     try {
         setIsGenerating(true);
 
@@ -98,8 +73,8 @@ export async function updateRPGData(renderUserStats, renderInfoBox, renderThough
 
         // Switch to separate preset if enabled
         if (extensionSettings.useSeparatePreset) {
-            previousPreset = await switchToPreset('RPG Companion Trackers');
-            if (!previousPreset) {
+            const switched = await switchToPreset('RPG Companion Trackers');
+            if (!switched) {
                 console.warn('[RPG Companion] Failed to switch to RPG Companion Trackers preset. Using current preset.');
             }
         }
@@ -196,18 +171,8 @@ export async function updateRPGData(renderUserStats, renderInfoBox, renderThough
 
     } catch (error) {
         console.error('[RPG Companion] Error updating RPG data:', error);
-
-        // Restore preset on error if we switched it
-        if (extensionSettings.useSeparatePreset && previousPreset) {
-            await restorePreset(previousPreset);
-        }
     } finally {
         setIsGenerating(false);
-
-        // Restore preset after successful generation
-        if (extensionSettings.useSeparatePreset && previousPreset) {
-            await restorePreset(previousPreset);
-        }
 
         // Restore button to original state
         const $updateBtn = $('#rpg-manual-update');

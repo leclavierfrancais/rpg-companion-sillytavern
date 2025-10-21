@@ -97,10 +97,15 @@ export async function updateRPGData(renderUserStats, renderInfoBox, renderThough
     try {
         setIsGenerating(true);
 
-        // Update button to show "Updating..." state
+        // Update desktop button to show "Updating..." state
         const $updateBtn = $('#rpg-manual-update');
         const originalHtml = $updateBtn.html();
         $updateBtn.html('<i class="fa-solid fa-spinner fa-spin"></i> Updating...').prop('disabled', true);
+
+        // Update mobile FAB to show spinner (icon only)
+        const $updateBtnMobile = $('#rpg-manual-update-mobile');
+        const originalHtmlMobile = $updateBtnMobile.html();
+        $updateBtnMobile.html('<i class="fa-solid fa-spinner fa-spin"></i>').prop('disabled', true);
 
         // Save current preset name before switching (if we're going to switch)
         if (extensionSettings.useSeparatePreset) {
@@ -219,9 +224,13 @@ export async function updateRPGData(renderUserStats, renderInfoBox, renderThough
 
         setIsGenerating(false);
 
-        // Restore button to original state
+        // Restore desktop button to original state
         const $updateBtn = $('#rpg-manual-update');
         $updateBtn.html('<i class="fa-solid fa-sync"></i> Refresh RPG Info').prop('disabled', false);
+
+        // Restore mobile FAB to original state (icon only)
+        const $updateBtnMobile = $('#rpg-manual-update-mobile');
+        $updateBtnMobile.html('<i class="fa-solid fa-sync"></i>').prop('disabled', false);
 
         // Reset the flag after tracker generation completes
         // This ensures the flag persists through both main generation AND tracker generation

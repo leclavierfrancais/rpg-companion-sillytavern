@@ -2670,7 +2670,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 }
 
 /* ============================================
-   MANUAL UPDATE BUTTON
+   MANUAL UPDATE BUTTON (Desktop)
    ============================================ */
 .rpg-manual-update-btn {
     width: 100%;
@@ -2705,6 +2705,42 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 .rpg-manual-update-btn:active {
     transform: translateY(0);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* ============================================
+   REFRESH ICON BUTTON (Mobile)
+   ============================================ */
+.rpg-refresh-icon-btn {
+    display: none; /* Hidden by default, shown on mobile */
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    margin-left: auto; /* Push to right side */
+    background: var(--rpg-highlight);
+    border: 2px solid var(--rpg-highlight);
+    border-radius: 50%;
+    color: var(--rpg-text);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    flex-shrink: 0;
+}
+
+.rpg-refresh-icon-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px var(--rpg-highlight);
+    background: var(--rpg-accent);
+}
+
+.rpg-refresh-icon-btn:active {
+    transform: scale(0.95);
+}
+
+.rpg-refresh-icon-btn i {
+    pointer-events: none;
 }
 
 /* ============================================
@@ -3292,6 +3328,17 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 
 /* Mobile-specific panel behavior - matches SillyTavern's 1000px breakpoint */
 /* CACHE BUST v2025-01-16 */
+/* Mobile: Show icon button, hide desktop button */
+@media (max-width: 1000px) {
+    .rpg-refresh-icon-btn {
+        display: flex !important; /* Show mobile icon button */
+    }
+
+    .rpg-manual-update-btn {
+        display: none !important; /* Hide desktop button */
+    }
+}
+
 @media (max-width: 1000px) {
     /* ========================================
        MOBILE PANEL FOUNDATION

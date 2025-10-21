@@ -297,7 +297,8 @@ async function initUI() {
         toggleAnimations();
     });
 
-    $('#rpg-manual-update').on('click', async function() {
+    // Bind to both desktop and mobile refresh buttons
+    $('#rpg-manual-update, #rpg-manual-update-mobile').on('click', async function() {
         if (!extensionSettings.enabled) {
             // console.log('[RPG Companion] Extension is disabled. Please enable it in the Extensions tab.');
             return;

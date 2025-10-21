@@ -98,7 +98,8 @@ import {
     setupMobileTabs,
     removeMobileTabs,
     setupMobileKeyboardHandling,
-    setupContentEditableScrolling
+    setupContentEditableScrolling,
+    setupRefreshButtonDrag
 } from './src/systems/ui/mobile.js';
 import {
     setupDesktopTabs,
@@ -209,6 +210,14 @@ async function initUI() {
     `;
     $('body').append(mobileToggleHtml);
 
+    // Add mobile refresh button (same pattern as toggle button)
+    const mobileRefreshHtml = `
+        <button id="rpg-manual-update-mobile" class="rpg-mobile-refresh" title="Refresh RPG Info">
+            <i class="fa-solid fa-sync"></i>
+        </button>
+    `;
+    $('body').append(mobileRefreshHtml);
+
     // Cache UI elements using state setters
     setPanelContainer($('#rpg-companion-panel'));
     setUserStatsContainer($('#rpg-user-stats'));
@@ -297,12 +306,34 @@ async function initUI() {
         toggleAnimations();
     });
 
-    $('#rpg-manual-update').on('click', async function() {
+    // Bind to both desktop and mobile refresh buttons
+    $('#rpg-manual-update, #rpg-manual-update-mobile').on('click', async function() {
+        // Get mobile button reference
+        const $mobileBtn = $('#rpg-manual-update-mobile');
+
+        // Skip if we just finished dragging the mobile button
+        if ($mobileBtn.data('just-dragged')) {
+            console.log('[RPG Companion] Click blocked - just finished dragging refresh button');
+            return;
+        }
+
         if (!extensionSettings.enabled) {
             // console.log('[RPG Companion] Extension is disabled. Please enable it in the Extensions tab.');
             return;
         }
-        await updateRPGData(renderUserStats, renderInfoBox, renderThoughts, renderInventory);
+
+        // Remove focus to prevent sticky black state on mobile
+        $(this).blur();
+
+        // Add spinning animation to mobile button
+        $mobileBtn.addClass('spinning');
+
+        try {
+            await updateRPGData(renderUserStats, renderInfoBox, renderThoughts, renderInventory);
+        } finally {
+            // Remove spinning animation when done
+            $mobileBtn.removeClass('spinning');
+        }
     });
 
     $('#rpg-stat-bar-color-low').on('change', function() {
@@ -422,6 +453,7 @@ async function initUI() {
     setupPlotButtons(sendPlotProgression);
     setupMobileKeyboardHandling();
     setupContentEditableScrolling();
+    setupRefreshButtonDrag();
     initInventoryEventListeners();
 }
 

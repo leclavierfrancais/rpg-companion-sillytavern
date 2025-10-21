@@ -2728,7 +2728,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     align-items: center;
     justify-content: center;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-    z-index: 99; /* Below mobile FAB (100) but above content */
+    z-index: 1001; /* Above panel (1000) but below mobile FAB (10002) */
 
     /* Fix sticky tap highlight */
     -webkit-tap-highlight-color: transparent;

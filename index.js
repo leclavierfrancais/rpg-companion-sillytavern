@@ -98,7 +98,8 @@ import {
     setupMobileTabs,
     removeMobileTabs,
     setupMobileKeyboardHandling,
-    setupContentEditableScrolling
+    setupContentEditableScrolling,
+    setupRefreshButtonDrag
 } from './src/systems/ui/mobile.js';
 import {
     setupDesktopTabs,
@@ -299,6 +300,15 @@ async function initUI() {
 
     // Bind to both desktop and mobile refresh buttons
     $('#rpg-manual-update, #rpg-manual-update-mobile').on('click', async function() {
+        // Get mobile button reference
+        const $mobileBtn = $('#rpg-manual-update-mobile');
+
+        // Skip if we just finished dragging the mobile button
+        if ($mobileBtn.data('just-dragged')) {
+            console.log('[RPG Companion] Click blocked - just finished dragging refresh button');
+            return;
+        }
+
         if (!extensionSettings.enabled) {
             // console.log('[RPG Companion] Extension is disabled. Please enable it in the Extensions tab.');
             return;
@@ -308,7 +318,6 @@ async function initUI() {
         $(this).blur();
 
         // Add spinning animation to mobile button
-        const $mobileBtn = $('#rpg-manual-update-mobile');
         $mobileBtn.addClass('spinning');
 
         try {
@@ -436,6 +445,7 @@ async function initUI() {
     setupPlotButtons(sendPlotProgression);
     setupMobileKeyboardHandling();
     setupContentEditableScrolling();
+    setupRefreshButtonDrag();
     initInventoryEventListeners();
 }
 

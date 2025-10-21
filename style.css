@@ -3699,6 +3699,9 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 
     .rpg-calendar-day {
         font-size: clamp(11px, 2.9vw, 14px) !important;
+        min-height: 3em !important; /* Ensure enough height for content to center */
+        padding: 0.75em 0.5em !important; /* More vertical padding on mobile */
+        line-height: 1.2 !important; /* Tighter line height */
     }
 
     .rpg-calendar-year {

@@ -177,6 +177,9 @@ export function renderThoughts() {
     // Build HTML
     let html = '';
 
+    debugLog('[RPG Thoughts] ==================== BUILDING HTML ====================');
+    debugLog('[RPG Thoughts] Starting HTML generation for', presentCharacters.length + ' characters');
+
     // If no characters parsed, show a placeholder editable card
     if (presentCharacters.length === 0) {
         debugLog('[RPG Thoughts] ⚠ No characters parsed - showing placeholder card');
@@ -214,70 +217,106 @@ export function renderThoughts() {
         html += '</div>';
     } else {
         html += '<div class="rpg-thoughts-content">';
+
+        let characterIndex = 0;
         for (const char of presentCharacters) {
-            // Find character portrait
-            // Use a base64-encoded SVG placeholder as fallback to avoid 400 errors
-            let characterPortrait = FALLBACK_AVATAR_DATA_URI;
+            characterIndex++;
 
-            // console.log('[RPG Companion] Looking for avatar for:', char.name);
+            try {
+                debugLog(`[RPG Thoughts] Building HTML for character ${characterIndex}/${presentCharacters.length}:`, char.name);
 
-            // For group chats, search through group members first
-            if (selected_group) {
-                const groupMembers = getGroupMembers(selected_group);
-                const matchingMember = groupMembers.find(member =>
-                    member && member.name && namesMatch(member.name, char.name)
-                );
+                // Find character portrait
+                // Use a base64-encoded SVG placeholder as fallback to avoid 400 errors
+                let characterPortrait = FALLBACK_AVATAR_DATA_URI;
 
-                if (matchingMember && matchingMember.avatar && matchingMember.avatar !== 'none') {
-                    const thumbnailUrl = getSafeThumbnailUrl('avatar', matchingMember.avatar);
-                    if (thumbnailUrl) {
-                        characterPortrait = thumbnailUrl;
+                debugLog(`[RPG Thoughts] Looking up avatar for: ${char.name}`);
+
+                // For group chats, search through group members first
+                if (selected_group) {
+                    debugLog('[RPG Thoughts] In group chat, checking group members...');
+
+                    try {
+                        const groupMembers = getGroupMembers(selected_group);
+                        debugLog('[RPG Thoughts] Group members count:', groupMembers ? groupMembers.length : 0);
+
+                        if (groupMembers && groupMembers.length > 0) {
+                            const matchingMember = groupMembers.find(member =>
+                                member && member.name && namesMatch(member.name, char.name)
+                            );
+
+                            if (matchingMember && matchingMember.avatar && matchingMember.avatar !== 'none') {
+                                const thumbnailUrl = getSafeThumbnailUrl('avatar', matchingMember.avatar);
+                                if (thumbnailUrl) {
+                                    characterPortrait = thumbnailUrl;
+                                    debugLog('[RPG Thoughts] Found avatar in group members');
+                                }
+                            }
+                        }
+                    } catch (groupError) {
+                        debugLog('[RPG Thoughts] Error checking group members:', groupError.message);
                     }
                 }
-            }
 
-            // For regular chats or if not found in group, search all characters
-            if (characterPortrait === FALLBACK_AVATAR_DATA_URI && characters && characters.length > 0) {
-                const matchingCharacter = characters.find(c =>
-                    c && c.name && namesMatch(c.name, char.name)
-                );
+                // For regular chats or if not found in group, search all characters
+                if (characterPortrait === FALLBACK_AVATAR_DATA_URI && characters && characters.length > 0) {
+                    debugLog('[RPG Thoughts] Searching all characters...');
 
-                if (matchingCharacter && matchingCharacter.avatar && matchingCharacter.avatar !== 'none') {
-                    const thumbnailUrl = getSafeThumbnailUrl('avatar', matchingCharacter.avatar);
-                    if (thumbnailUrl) {
-                        characterPortrait = thumbnailUrl;
+                    const matchingCharacter = characters.find(c =>
+                        c && c.name && namesMatch(c.name, char.name)
+                    );
+
+                    if (matchingCharacter && matchingCharacter.avatar && matchingCharacter.avatar !== 'none') {
+                        const thumbnailUrl = getSafeThumbnailUrl('avatar', matchingCharacter.avatar);
+                        if (thumbnailUrl) {
+                            characterPortrait = thumbnailUrl;
+                            debugLog('[RPG Thoughts] Found avatar in all characters');
+                        }
                     }
                 }
-            }
 
-            // If this is the current character in a 1-on-1 chat, use their portrait
-            if (this_chid !== undefined && characters[this_chid] &&
-                characters[this_chid].name && namesMatch(characters[this_chid].name, char.name)) {
-                const thumbnailUrl = getSafeThumbnailUrl('avatar', characters[this_chid].avatar);
-                if (thumbnailUrl) {
-                    characterPortrait = thumbnailUrl;
+                // If this is the current character in a 1-on-1 chat, use their portrait
+                if (this_chid !== undefined && characters[this_chid] &&
+                    characters[this_chid].name && namesMatch(characters[this_chid].name, char.name)) {
+                    const thumbnailUrl = getSafeThumbnailUrl('avatar', characters[this_chid].avatar);
+                    if (thumbnailUrl) {
+                        characterPortrait = thumbnailUrl;
+                        debugLog('[RPG Thoughts] Found avatar from current character');
+                    }
                 }
-            }
 
-            // Get relationship emoji
-            const relationshipEmoji = relationshipEmojis[char.relationship] || '⚖️';
+                debugLog(`[RPG Thoughts] Final avatar for ${char.name}:`, characterPortrait.substring(0, 50) + '...');
 
-            html += `
-                <div class="rpg-character-card" data-character-name="${char.name}">
-                    <div class="rpg-character-avatar">
-                        <img src="${characterPortrait}" alt="${char.name}" onerror="this.style.opacity='0.5';this.onerror=null;" />
-                        <div class="rpg-relationship-badge rpg-editable" contenteditable="true" data-character="${char.name}" data-field="relationship" title="Click to edit (use emoji: ⚔️ ⚖️ ⭐ ❤️)">${relationshipEmoji}</div>
-                    </div>
-                    <div class="rpg-character-info">
-                        <div class="rpg-character-header">
-                            <span class="rpg-character-emoji rpg-editable" contenteditable="true" data-character="${char.name}" data-field="emoji" title="Click to edit emoji">${char.emoji}</span>
-                            <span class="rpg-character-name rpg-editable" contenteditable="true" data-character="${char.name}" data-field="name" title="Click to edit name">${char.name}</span>
+                // Get relationship emoji
+                const relationshipEmoji = relationshipEmojis[char.relationship] || '⚖️';
+
+                debugLog(`[RPG Thoughts] Building HTML card for ${char.name}...`);
+
+                html += `
+                    <div class="rpg-character-card" data-character-name="${char.name}">
+                        <div class="rpg-character-avatar">
+                            <img src="${characterPortrait}" alt="${char.name}" onerror="this.style.opacity='0.5';this.onerror=null;" />
+                            <div class="rpg-relationship-badge rpg-editable" contenteditable="true" data-character="${char.name}" data-field="relationship" title="Click to edit (use emoji: ⚔️ ⚖️ ⭐ ❤️)">${relationshipEmoji}</div>
                         </div>
-                        <div class="rpg-character-traits rpg-editable" contenteditable="true" data-character="${char.name}" data-field="traits" title="Click to edit traits">${char.traits}</div>
+                        <div class="rpg-character-info">
+                            <div class="rpg-character-header">
+                                <span class="rpg-character-emoji rpg-editable" contenteditable="true" data-character="${char.name}" data-field="emoji" title="Click to edit emoji">${char.emoji}</span>
+                                <span class="rpg-character-name rpg-editable" contenteditable="true" data-character="${char.name}" data-field="name" title="Click to edit name">${char.name}</span>
+                            </div>
+                            <div class="rpg-character-traits rpg-editable" contenteditable="true" data-character="${char.name}" data-field="traits" title="Click to edit traits">${char.traits}</div>
+                        </div>
                     </div>
-                </div>
-            `;
+                `;
+
+                debugLog(`[RPG Thoughts] ✓ Successfully built HTML for ${char.name}`);
+
+            } catch (charError) {
+                debugLog(`[RPG Thoughts] ✗ ERROR building HTML for ${char.name}:`, charError.message);
+                debugLog('[RPG Thoughts] Error stack:', charError.stack);
+                // Continue with next character instead of crashing
+            }
         }
+
+        debugLog('[RPG Thoughts] Finished building all character cards');
         html += '</div>';
     }
 

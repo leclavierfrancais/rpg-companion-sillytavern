@@ -63,7 +63,10 @@ function setupDebugEventHandlers() {
     });
 
     // Close button
-    $('#rpg-debug-close').on('click', function() {
+    $('#rpg-debug-close').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('[RPG Debug] Close button clicked');
         $('#rpg-debug-panel').removeClass('rpg-debug-open');
     });
 

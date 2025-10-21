@@ -4884,6 +4884,10 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     transform: scale(0.95);
 }
 
+.rpg-debug-actions button i {
+    pointer-events: none; /* Prevent icon from blocking clicks */
+}
+
 .rpg-debug-logs {
     flex: 1;
     overflow-y: auto;

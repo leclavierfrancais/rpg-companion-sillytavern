@@ -99,7 +99,8 @@ import {
     removeMobileTabs,
     setupMobileKeyboardHandling,
     setupContentEditableScrolling,
-    setupRefreshButtonDrag
+    setupRefreshButtonDrag,
+    setupDebugButtonDrag
 } from './src/systems/ui/mobile.js';
 import {
     setupDesktopTabs,
@@ -220,6 +221,14 @@ async function initUI() {
         </button>
     `;
     $('body').append(mobileRefreshHtml);
+
+    // Add debug toggle FAB button (same pattern as other mobile FABs)
+    const debugToggleHtml = `
+        <button id="rpg-debug-toggle" class="rpg-debug-toggle" title="Toggle Debug Logs">
+            <i class="fa-solid fa-bug"></i>
+        </button>
+    `;
+    $('body').append(debugToggleHtml);
 
     // Cache UI elements using state setters
     setPanelContainer($('#rpg-companion-panel'));
@@ -464,6 +473,7 @@ async function initUI() {
     setupMobileKeyboardHandling();
     setupContentEditableScrolling();
     setupRefreshButtonDrag();
+    setupDebugButtonDrag();
     initInventoryEventListeners();
 
     // Initialize debug UI if debug mode is enabled

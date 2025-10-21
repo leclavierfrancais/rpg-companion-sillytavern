@@ -7,11 +7,11 @@ import { extensionSettings, getDebugLogs, clearDebugLogs } from '../../core/stat
 
 /**
  * Creates and injects the debug panel into the page
+ * Note: Debug toggle button is created in index.js, not here
  */
 export function createDebugPanel() {
     // Remove existing debug panel if any
     $('#rpg-debug-panel').remove();
-    $('#rpg-debug-toggle').remove();
 
     // Create debug panel HTML
     const debugPanelHtml = `
@@ -34,16 +34,8 @@ export function createDebugPanel() {
         </div>
     `;
 
-    // Create debug toggle button (FAB-style)
-    const debugToggleHtml = `
-        <button id="rpg-debug-toggle" class="rpg-debug-toggle" title="Toggle Debug Logs">
-            <i class="fa-solid fa-bug"></i>
-        </button>
-    `;
-
     // Append to body
     $('body').append(debugPanelHtml);
-    $('body').append(debugToggleHtml);
 
     // Set up event handlers
     setupDebugEventHandlers();
@@ -53,25 +45,85 @@ export function createDebugPanel() {
 }
 
 /**
- * Sets up event handlers for debug panel
+ * Closes the debug panel with proper animation (mobile or desktop)
+ */
+function closeDebugPanel() {
+    const $panel = $('#rpg-debug-panel');
+    const isMobile = window.innerWidth <= 1000;
+
+    if (isMobile) {
+        // Mobile: animate slide-out to right
+        $panel.removeClass('rpg-mobile-open').addClass('rpg-mobile-closing');
+
+        // Wait for animation to complete before hiding
+        $panel.one('animationend', function() {
+            $panel.removeClass('rpg-mobile-closing');
+            $('.rpg-mobile-overlay').remove();
+        });
+    } else {
+        // Desktop: simple slide-down
+        $panel.removeClass('rpg-debug-open');
+    }
+}
+
+/**
+ * Sets up event handlers for debug panel using event delegation for mobile compatibility
  */
 function setupDebugEventHandlers() {
+    // Use event delegation for better mobile compatibility and reliability with dynamic elements
+    // Remove any existing handlers first to prevent duplicates
+    $(document).off('click.rpgDebug');
+
     // Toggle button
-    $('#rpg-debug-toggle').on('click', function() {
-        $('#rpg-debug-panel').toggleClass('rpg-debug-open');
-        renderDebugLogs(); // Refresh logs when opening
+    $(document).on('click.rpgDebug', '#rpg-debug-toggle', function() {
+        const $debugToggle = $(this);
+
+        // Skip if we just finished dragging
+        if ($debugToggle.data('just-dragged')) {
+            console.log('[RPG Debug] Click blocked - just finished dragging');
+            return;
+        }
+
+        const $panel = $('#rpg-debug-panel');
+        const isMobile = window.innerWidth <= 1000;
+
+        if (isMobile) {
+            // Mobile: use rpg-mobile-open class with slide-from-right animation
+            const isOpen = $panel.hasClass('rpg-mobile-open');
+
+            if (isOpen) {
+                // Close with animation
+                closeDebugPanel();
+            } else {
+                // Open with animation
+                $panel.addClass('rpg-mobile-open');
+                renderDebugLogs();
+
+                // Create overlay for mobile
+                const $overlay = $('<div class="rpg-mobile-overlay"></div>');
+                $('body').append($overlay);
+
+                // Close when clicking overlay
+                $overlay.on('click', function() {
+                    closeDebugPanel();
+                });
+            }
+        } else {
+            // Desktop: use rpg-debug-open class with slide-from-bottom animation
+            $panel.toggleClass('rpg-debug-open');
+            renderDebugLogs();
+        }
     });
 
     // Close button
-    $('#rpg-debug-close').on('click', function(e) {
+    $(document).on('click.rpgDebug', '#rpg-debug-close', function(e) {
         e.preventDefault();
         e.stopPropagation();
-        console.log('[RPG Debug] Close button clicked');
-        $('#rpg-debug-panel').removeClass('rpg-debug-open');
+        closeDebugPanel();
     });
 
     // Copy button
-    $('#rpg-debug-copy').on('click', function() {
+    $(document).on('click.rpgDebug', '#rpg-debug-copy', function() {
         const logs = getDebugLogs();
         const logsText = logs.map(log => {
             let text = `[${log.timestamp}] ${log.message}`;
@@ -96,7 +148,7 @@ function setupDebugEventHandlers() {
     });
 
     // Clear button
-    $('#rpg-debug-clear').on('click', function() {
+    $(document).on('click.rpgDebug', '#rpg-debug-clear', function() {
         if (confirm('Clear all debug logs?')) {
             clearDebugLogs();
             renderDebugLogs();
@@ -145,15 +197,24 @@ function escapeHtml(text) {
 
 /**
  * Shows or hides debug UI based on debug mode setting
+ * Note: Debug toggle button always exists in DOM (created in index.js)
  */
 export function updateDebugUIVisibility() {
+    const $debugToggle = $('#rpg-debug-toggle');
+
     if (extensionSettings.debugMode) {
+        // Show debug toggle button
+        $debugToggle.css('display', 'flex');
+
+        // Create debug panel if it doesn't exist
         if ($('#rpg-debug-panel').length === 0) {
             createDebugPanel();
         }
-        $('#rpg-debug-toggle').show();
     } else {
-        $('#rpg-debug-toggle').hide();
+        // Hide debug toggle button
+        $debugToggle.css('display', 'none');
+
+        // Remove debug panel
         $('#rpg-debug-panel').remove();
     }
 }

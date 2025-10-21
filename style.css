@@ -4784,40 +4784,44 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
    Debug Panel Styles - Mobile-Friendly Debug Log Viewer
    =================================================================== */
 
-/* Debug toggle button (FAB-style) */
+/* ============================================
+   DEBUG TOGGLE FAB BUTTON (Same pattern as mobile FABs)
+   ============================================ */
 .rpg-debug-toggle {
     display: none; /* Hidden by default, shown when debugMode is enabled */
     align-items: center;
     justify-content: center;
     position: fixed;
-    bottom: 20px;
-    left: 20px;
-    width: 50px;
-    height: 50px;
+    /* Position set by JavaScript based on saved settings */
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
-    background: #ff6b6b;
-    border: 2px solid #c92a2a;
-    color: white;
-    font-size: 1.5rem;
-    cursor: pointer;
-    z-index: 10003; /* Above everything else */
-    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.5);
-    transition: all 0.3s ease;
+    background: var(--SmartThemeBlurTintColor);
+    border: 2px solid var(--SmartThemeBorderColor);
+    color: var(--rpg-text, #ecf0f1);
+    font-size: 1.85vw;
+    cursor: grab;
+    z-index: 1000; /* Below refresh (1001) and mobile toggle (10002) */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: opacity 0.3s ease, transform 0.2s ease, top 0.3s ease, left 0.3s ease, right 0.3s ease, bottom 0.3s ease;
+    user-select: none;
+    -webkit-user-select: none;
+    will-change: top, left;
+}
+
+/* Disable transitions while actively dragging */
+.rpg-debug-toggle.dragging {
+    transition: none;
+    cursor: grabbing;
 }
 
 .rpg-debug-toggle:hover {
     transform: scale(1.1);
-    box-shadow: 0 6px 16px rgba(255, 107, 107, 0.7);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
 }
 
 .rpg-debug-toggle:active {
     transform: scale(0.95);
-}
-
-@media (max-width: 1000px) {
-    .rpg-debug-toggle {
-        display: flex; /* Show on mobile when debugMode is enabled */
-    }
 }
 
 /* Debug panel */
@@ -4937,6 +4941,67 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     word-break: break-word;
 }
 
+/* Mobile view - slide from right like main panel */
+@media (max-width: 1000px) {
+    .rpg-debug-panel {
+        /* Reset bottom slide positioning */
+        transform: none;
+        transition: none;
+        bottom: auto;
+
+        /* Mobile panel - slide from right */
+        position: fixed !important;
+        top: var(--topBarBlockSize) !important;
+        right: 0 !important;
+        left: auto !important;
+
+        /* Mobile sizing using dynamic viewport units */
+        width: 85dvw !important;
+        max-width: 400px !important;
+        height: calc(100dvh - var(--topBarBlockSize)) !important;
+
+        /* Hidden by default */
+        display: none !important;
+
+        /* Mobile scrolling */
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+
+        /* Styling */
+        border-radius: 20px 0 0 0;
+        border-left: 1px solid var(--SmartThemeBorderColor);
+        border-top: 1px solid var(--SmartThemeBorderColor);
+        border-bottom: none;
+        backdrop-filter: blur(calc(var(--SmartThemeBlurStrength) * 2));
+        box-shadow: -5px 0 20px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Show panel when opened with slide-in animation */
+    .rpg-debug-panel.rpg-mobile-open {
+        display: flex !important;
+        z-index: 10002;
+        animation: rpgSlideInFromRight 0.3s ease-in-out;
+    }
+
+    /* Closing animation - slide out to right */
+    .rpg-debug-panel.rpg-mobile-closing {
+        display: flex !important;
+        z-index: 10002;
+        animation: rpgSlideOutToRight 0.3s ease-in-out;
+    }
+
+    /* Debug logs container needs to stay scrollable */
+    .rpg-debug-logs {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Debug toggle button on mobile */
+    .rpg-debug-toggle {
+        font-size: clamp(20px, 5.1vw, 26px) !important;
+    }
+}
+
 /* Desktop view - smaller panel in bottom right */
 @media (min-width: 1001px) {
     .rpg-debug-panel {
@@ -4948,9 +5013,5 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
         height: 400px;
         border-radius: 12px;
         border: 2px solid var(--SmartThemeBorderColor, #333);
-    }
-
-    .rpg-debug-toggle {
-        display: flex; /* Show on desktop too when debugMode enabled */
     }
 }

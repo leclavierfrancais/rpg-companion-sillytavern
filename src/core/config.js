@@ -53,6 +53,10 @@ export const defaultSettings = {
         bottom: '80px',
         right: '20px'
     }, // Saved position for mobile refresh button
+    debugFabPosition: {
+        bottom: '140px',
+        left: '20px'
+    }, // Saved position for debug FAB button
     userStats: {
         health: 100,
         satiety: 100,

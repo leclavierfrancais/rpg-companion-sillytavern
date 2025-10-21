@@ -49,6 +49,10 @@ export const defaultSettings = {
         top: 'calc(var(--topBarBlockSize) + 60px)',
         right: '12px'
     }, // Saved position for mobile FAB button
+    mobileRefreshPosition: {
+        bottom: '80px',
+        right: '20px'
+    }, // Saved position for mobile refresh button
     userStats: {
         health: 100,
         satiety: 100,

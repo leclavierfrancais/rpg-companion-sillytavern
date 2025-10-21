@@ -261,7 +261,8 @@ export function renderInfoBox() {
     `;
 
     // Time widget - always show (editable even if empty)
-    const timeDisplay = data.timeStart || '12:00';
+    // Display the end time (second time in range) if available, otherwise start time
+    const timeDisplay = data.timeEnd || data.timeStart || '12:00';
     // Parse time for clock hands
     const timeMatch = timeDisplay.match(/(\d+):(\d+)/);
     let hourAngle = 0;

@@ -284,6 +284,10 @@ async function initUI() {
         extensionSettings.showCharacterThoughts = $(this).prop('checked');
         saveSettings();
         updateSectionVisibility();
+        // Refresh the content when toggling on/off
+        if (extensionSettings.showCharacterThoughts) {
+            renderThoughts();
+        }
     });
 
     $('#rpg-toggle-inventory').on('change', function() {

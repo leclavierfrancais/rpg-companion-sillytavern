@@ -193,13 +193,6 @@ function addExtensionSettings() {
             updateChatThoughts(); // This will re-create the thought bubble if data exists
         }
     });
-
-    // Set up the debug mode toggle
-    $('#rpg-debug-mode').prop('checked', extensionSettings.debugMode).on('change', function() {
-        extensionSettings.debugMode = $(this).prop('checked');
-        saveSettings();
-        updateDebugUIVisibility();
-    });
 }
 
 /**
@@ -308,6 +301,12 @@ async function initUI() {
         // console.log('[RPG Companion] Toggle enablePlotButtons changed to:', extensionSettings.enablePlotButtons);
         saveSettings();
         togglePlotButtons();
+    });
+
+    $('#rpg-toggle-debug-mode').on('change', function() {
+        extensionSettings.debugMode = $(this).prop('checked');
+        saveSettings();
+        updateDebugUIVisibility();
     });
 
     $('#rpg-toggle-animations').on('change', function() {
@@ -421,6 +420,7 @@ async function initUI() {
     $('#rpg-toggle-thoughts-in-chat').prop('checked', extensionSettings.showThoughtsInChat);
     $('#rpg-toggle-html-prompt').prop('checked', extensionSettings.enableHtmlPrompt);
     $('#rpg-toggle-plot-buttons').prop('checked', extensionSettings.enablePlotButtons);
+    $('#rpg-toggle-debug-mode').prop('checked', extensionSettings.debugMode);
     $('#rpg-toggle-animations').prop('checked', extensionSettings.enableAnimations);
     $('#rpg-stat-bar-color-low').val(extensionSettings.statBarColorLow);
     $('#rpg-stat-bar-color-high').val(extensionSettings.statBarColorHigh);

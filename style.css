@@ -576,8 +576,8 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 }
 
 .rpg-user-portrait {
-    width: clamp(24px, 4vh, 32px);
-    height: clamp(24px, 4vh, 32px);
+    width: clamp(1.7vw, 1.8vw, 1.9vw);
+    height: clamp(1.7vw, 1.8vw, 1.9vw);
     border-radius: 50%;
     border: 2px solid var(--rpg-highlight);
     box-shadow: 0 0 8px var(--rpg-highlight);
@@ -726,7 +726,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 /* User name and level - inline with portrait */
 .rpg-user-name {
     font-weight: 600;
-    font-size: 1em;
+    font-size: 0.7vw;
     color: var(--rpg-text-color);
     white-space: nowrap;
     overflow: hidden;
@@ -734,14 +734,14 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 }
 
 .rpg-level-label {
-    font-size: 1em;
+    font-size: 0.7vw;
     font-weight: 600;
     color: var(--rpg-text-color);
     opacity: 0.7;
 }
 
 .rpg-level-value {
-    font-size: 1em;
+    font-size: 0.7vw;
     font-weight: 700;
     color: var(--rpg-highlight-color);
     padding: clamp(1px, 0.2vh, 2px) 0.375em;

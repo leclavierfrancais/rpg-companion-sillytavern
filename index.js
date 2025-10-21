@@ -358,6 +358,37 @@ async function initUI() {
         }
     });
 
+    // Reset FAB positions button
+    $('#rpg-reset-fab-positions').on('click', function() {
+        console.log('[RPG Companion] Resetting FAB positions to defaults');
+
+        // Reset to defaults (top-left stacked)
+        extensionSettings.mobileFabPosition = {
+            top: 'calc(var(--topBarBlockSize) + 20px)',
+            left: '12px'
+        };
+        extensionSettings.mobileRefreshPosition = {
+            top: 'calc(var(--topBarBlockSize) + 80px)',
+            left: '12px'
+        };
+        extensionSettings.debugFabPosition = {
+            top: 'calc(var(--topBarBlockSize) + 140px)',
+            left: '12px'
+        };
+
+        // Save settings
+        saveSettings();
+
+        // Apply positions immediately to visible buttons
+        $('#rpg-mobile-toggle').css(extensionSettings.mobileFabPosition);
+        $('#rpg-manual-update-mobile').css(extensionSettings.mobileRefreshPosition);
+        $('#rpg-debug-toggle').css(extensionSettings.debugFabPosition);
+
+        // Show success feedback
+        toastr.success('Button positions reset to defaults', 'RPG Companion');
+        console.log('[RPG Companion] FAB positions reset successfully');
+    });
+
     $('#rpg-stat-bar-color-low').on('change', function() {
         extensionSettings.statBarColorLow = String($(this).val());
         saveSettings();

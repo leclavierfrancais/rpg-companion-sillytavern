@@ -744,7 +744,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     font-size: 1em;
     font-weight: 700;
     color: var(--rpg-highlight-color);
-    padding: clamp(1px, 0.2vh, 2px) 0.375em;
+    padding: 0 0.375em;
     background: var(--rpg-accent-color);
     border-radius: clamp(2px, 0.3vh, 3px);
     border: 1px solid var(--rpg-highlight-color);
@@ -4137,6 +4137,13 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     .rpg-editable {
         padding: 0.5em;
         min-height: 2.75rem;
+    }
+
+    /* Exception: Level value should stay compact */
+    .rpg-level-value.rpg-editable {
+        padding: 0 0.375em;
+        min-height: auto;
+        line-height: 1.2;
     }
 
     /* Larger close buttons */

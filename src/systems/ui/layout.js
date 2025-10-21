@@ -273,12 +273,12 @@ export function applyPanelPosition() {
  */
 export function updateGenerationModeUI() {
     if (extensionSettings.generationMode === 'together') {
-        // In "together" mode, both update buttons are hidden
+        // In "together" mode, hide both update buttons
         $('#rpg-manual-update').hide();
         $('#rpg-manual-update-mobile').hide();
     } else {
-        // In "separate" mode, both update buttons are visible
-        // (CSS media queries will control which one is displayed)
+        // In "separate" mode, show both buttons
+        // (CSS media queries control which one is visible based on viewport)
         $('#rpg-manual-update').show();
         $('#rpg-manual-update-mobile').show();
     }

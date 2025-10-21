@@ -440,32 +440,41 @@ export function setupMobileToggle() {
  * Constrains the mobile FAB button to viewport bounds with top-bar awareness.
  * Only runs when button is in user-controlled state (mobileFabPosition exists).
  * Ensures button never goes behind the top bar or outside viewport edges.
+ * @param {jQuery} $button - Optional button element (defaults to mobile toggle)
  */
-export function constrainFabToViewport() {
+export function constrainFabToViewport($button = null) {
+    // Default to mobile toggle if no button specified
+    if (!$button) {
+        $button = $('#rpg-mobile-toggle');
+    }
+
+    if ($button.length === 0) return;
+
+    // Determine which position setting to check based on button ID
+    const isRefreshButton = $button.attr('id') === 'rpg-manual-update-mobile';
+    const positionSetting = isRefreshButton ? 'mobileRefreshPosition' : 'mobileFabPosition';
+
     // Only constrain if user has set a custom position
-    if (!extensionSettings.mobileFabPosition) {
+    if (!extensionSettings[positionSetting]) {
         console.log('[RPG Mobile] Skipping viewport constraint - using CSS defaults');
         return;
     }
 
-    const $mobileToggle = $('#rpg-mobile-toggle');
-    if ($mobileToggle.length === 0) return;
-
     // Skip if button is not visible
-    if (!$mobileToggle.is(':visible')) {
+    if (!$button.is(':visible')) {
         console.log('[RPG Mobile] Skipping viewport constraint - button not visible');
         return;
     }
 
     // Get current position
-    const offset = $mobileToggle.offset();
+    const offset = $button.offset();
     if (!offset) return;
 
     let currentX = offset.left;
     let currentY = offset.top;
 
-    const buttonWidth = $mobileToggle.outerWidth();
-    const buttonHeight = $mobileToggle.outerHeight();
+    const buttonWidth = $button.outerWidth();
+    const buttonHeight = $button.outerHeight();
 
     // Get top bar height from CSS variable (fallback to 50px if not set)
     const topBarHeight = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--topBarBlockSize')) || 50;
@@ -491,15 +500,15 @@ export function constrainFabToViewport() {
         });
 
         // Apply new position
-        $mobileToggle.css({
+        $button.css({
             left: newX + 'px',
             top: newY + 'px',
             right: 'auto',
             bottom: 'auto'
         });
 
-        // Save corrected position
-        extensionSettings.mobileFabPosition = {
+        // Save corrected position to appropriate setting
+        extensionSettings[positionSetting] = {
             left: newX + 'px',
             top: newY + 'px'
         };
@@ -725,42 +734,33 @@ export function setupContentEditableScrolling() {
 
 /**
  * Sets up the mobile refresh button with drag functionality.
- * Button is only visible when panel is open, and can be dragged to reposition.
+ * Same pattern as mobile toggle button.
  * Tap = refresh, drag = reposition
  */
 export function setupRefreshButtonDrag() {
     const $refreshBtn = $('#rpg-manual-update-mobile');
-    const $panel = $('#rpg-companion-panel');
 
     if ($refreshBtn.length === 0) {
         console.warn('[RPG Mobile] Refresh button not found in DOM');
         return;
     }
 
+    console.log('[RPG Mobile] setupRefreshButtonDrag called');
+
     // Load and apply saved position
     if (extensionSettings.mobileRefreshPosition) {
         const pos = extensionSettings.mobileRefreshPosition;
-        if (pos.left) $refreshBtn.css('left', pos.left);
+        console.log('[RPG Mobile] Loading saved refresh button position:', pos);
+
+        // Apply saved position
         if (pos.top) $refreshBtn.css('top', pos.top);
         if (pos.right) $refreshBtn.css('right', pos.right);
         if (pos.bottom) $refreshBtn.css('bottom', pos.bottom);
+        if (pos.left) $refreshBtn.css('left', pos.left);
+
+        // Constrain to viewport after position is applied
+        requestAnimationFrame(() => constrainFabToViewport($refreshBtn));
     }
-
-    // Show/hide button based on panel state
-    const updateButtonVisibility = () => {
-        if ($panel.hasClass('rpg-mobile-open')) {
-            $refreshBtn.show();
-        } else {
-            $refreshBtn.hide();
-        }
-    };
-
-    // Initial visibility check
-    updateButtonVisibility();
-
-    // Listen for panel state changes (attach to panel toggle events)
-    // This will be triggered by setupMobileToggle
-    $(document).on('rpg-panel-toggled', updateButtonVisibility);
 
     // Touch/drag state
     let isDragging = false;

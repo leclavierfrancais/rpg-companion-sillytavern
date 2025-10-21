@@ -2708,62 +2708,51 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 }
 
 /* ============================================
-   REFRESH ICON BUTTON (Mobile - Floating & Draggable)
+   MOBILE REFRESH BUTTON (FAB - Same pattern as toggle)
    ============================================ */
-.rpg-refresh-icon-btn {
-    display: none; /* Hidden by default, shown on mobile when panel open */
-    position: fixed; /* Fixed for dragging anywhere on viewport */
-    bottom: 80px; /* Above FAB toggle, below screen edge */
-    right: 20px;
-    width: 44px; /* Touch-friendly size */
-    height: 44px;
-    padding: 0;
-    background: var(--rpg-highlight);
-    border: 2px solid var(--rpg-highlight);
-    border-radius: 50%;
-    color: var(--rpg-text);
-    font-size: 1rem;
-    cursor: grab;
-    transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
+.rpg-mobile-refresh {
+    display: none;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-    z-index: 1001; /* Above panel (1000) but below mobile FAB (10002) */
-
-    /* Fix sticky tap highlight */
-    -webkit-tap-highlight-color: transparent;
-    -webkit-touch-callout: none;
+    position: fixed;
+    /* Position set by JavaScript based on saved settings */
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--SmartThemeBlurTintColor);
+    border: 2px solid var(--SmartThemeBorderColor);
+    color: var(--rpg-text, #ecf0f1);
+    font-size: 1.85vw;
+    cursor: grab;
+    z-index: 1001; /* Above panel (1000) but below mobile toggle (10002) */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: opacity 0.3s ease, transform 0.2s ease, top 0.3s ease, left 0.3s ease, right 0.3s ease, bottom 0.3s ease;
     user-select: none;
     -webkit-user-select: none;
-    touch-action: none;
-}
-
-/* Remove focus outline (prevents black state) */
-.rpg-refresh-icon-btn:focus {
-    outline: none;
+    will-change: top, left;
 }
 
 /* Disable transitions while actively dragging */
-.rpg-refresh-icon-btn.dragging {
+.rpg-mobile-refresh.dragging {
     transition: none;
     cursor: grabbing;
 }
 
-.rpg-refresh-icon-btn:hover {
+.rpg-mobile-refresh:hover {
     transform: scale(1.1);
-    box-shadow: 0 4px 12px var(--rpg-highlight);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
 }
 
-.rpg-refresh-icon-btn:active {
+.rpg-mobile-refresh:active {
     transform: scale(0.95);
 }
 
 /* Spinning animation when refreshing */
-.rpg-refresh-icon-btn.spinning i {
+.rpg-mobile-refresh.spinning i {
     animation: rpg-spin 0.8s linear infinite;
 }
 
-.rpg-refresh-icon-btn i {
+.rpg-mobile-refresh i {
     pointer-events: none;
 }
 
@@ -3361,14 +3350,28 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 
 /* Mobile-specific panel behavior - matches SillyTavern's 1000px breakpoint */
 /* CACHE BUST v2025-01-16 */
-/* Mobile: Show icon button, hide desktop button */
+/* Mobile refresh button visibility - opposite of toggle */
 @media (max-width: 1000px) {
-    .rpg-refresh-icon-btn {
-        display: flex !important; /* Show mobile icon button */
+    /* Show mobile refresh button */
+    .rpg-mobile-refresh {
+        display: flex;
     }
 
+    /* Hide desktop refresh button */
     .rpg-manual-update-btn {
-        display: none !important; /* Hide desktop button */
+        display: none !important;
+    }
+
+    /* Show refresh button when panel is open (opposite of toggle) */
+    body:has(.rpg-panel.rpg-mobile-open) .rpg-mobile-refresh {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    /* Hide refresh button when panel is closed */
+    .rpg-mobile-refresh {
+        opacity: 0;
+        pointer-events: none;
     }
 }
 
@@ -4037,6 +4040,11 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 
     /* Larger mobile toggle dice icon (button size is fine) */
     .rpg-mobile-toggle {
+        font-size: clamp(20px, 5.1vw, 26px) !important;
+    }
+
+    /* Larger mobile refresh icon (same as toggle) */
+    .rpg-mobile-refresh {
         font-size: clamp(20px, 5.1vw, 26px) !important;
     }
 

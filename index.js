@@ -210,6 +210,14 @@ async function initUI() {
     `;
     $('body').append(mobileToggleHtml);
 
+    // Add mobile refresh button (same pattern as toggle button)
+    const mobileRefreshHtml = `
+        <button id="rpg-manual-update-mobile" class="rpg-mobile-refresh" title="Refresh RPG Info">
+            <i class="fa-solid fa-sync"></i>
+        </button>
+    `;
+    $('body').append(mobileRefreshHtml);
+
     // Cache UI elements using state setters
     setPanelContainer($('#rpg-companion-panel'));
     setUserStatsContainer($('#rpg-user-stats'));

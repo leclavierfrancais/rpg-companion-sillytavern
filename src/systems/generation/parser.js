@@ -3,9 +3,19 @@
  * Handles parsing of AI responses to extract tracker data
  */
 
-import { extensionSettings, FEATURE_FLAGS } from '../../core/state.js';
+import { extensionSettings, FEATURE_FLAGS, addDebugLog } from '../../core/state.js';
 import { saveSettings } from '../../core/persistence.js';
 import { extractInventory } from './inventoryParser.js';
+
+/**
+ * Helper to log to both console and debug logs array
+ */
+function debugLog(message, data = null) {
+    console.log(message, data || '');
+    if (extensionSettings.debugMode) {
+        addDebugLog(message, data);
+    }
+}
 
 /**
  * Parses the model response to extract the different data sections.
@@ -22,22 +32,22 @@ export function parseResponse(responseText) {
     };
 
     // DEBUG: Log full response for troubleshooting
-    console.log('[RPG Parser] ==================== PARSING AI RESPONSE ====================');
-    console.log('[RPG Parser] Response length:', responseText.length, 'chars');
-    console.log('[RPG Parser] First 500 chars:', responseText.substring(0, 500));
+    debugLog('[RPG Parser] ==================== PARSING AI RESPONSE ====================');
+    debugLog('[RPG Parser] Response length:', responseText.length + ' chars');
+    debugLog('[RPG Parser] First 500 chars:', responseText.substring(0, 500));
 
     // Extract code blocks
     const codeBlockRegex = /```([^`]+)```/g;
     const matches = [...responseText.matchAll(codeBlockRegex)];
 
-    console.log('[RPG Parser] Found', matches.length, 'code blocks');
+    debugLog('[RPG Parser] Found', matches.length + ' code blocks');
 
     for (let i = 0; i < matches.length; i++) {
         const match = matches[i];
         const content = match[1].trim();
 
-        console.log(`[RPG Parser] --- Code Block ${i + 1} ---`);
-        console.log('[RPG Parser] First 300 chars:', content.substring(0, 300));
+        debugLog(`[RPG Parser] --- Code Block ${i + 1} ---`);
+        debugLog('[RPG Parser] First 300 chars:', content.substring(0, 300));
 
         // Match Stats section - flexible patterns
         const isStats =
@@ -65,30 +75,30 @@ export function parseResponse(responseText) {
 
         if (isStats) {
             result.userStats = content;
-            console.log('[RPG Parser] ✓ Matched: Stats section');
+            debugLog('[RPG Parser] ✓ Matched: Stats section');
         } else if (isInfoBox) {
             result.infoBox = content;
-            console.log('[RPG Parser] ✓ Matched: Info Box section');
+            debugLog('[RPG Parser] ✓ Matched: Info Box section');
         } else if (isCharacters) {
             result.characterThoughts = content;
-            console.log('[RPG Parser] ✓ Matched: Present Characters section');
-            console.log('[RPG Parser] Full content:', content);
+            debugLog('[RPG Parser] ✓ Matched: Present Characters section');
+            debugLog('[RPG Parser] Full content:', content);
         } else {
-            console.log('[RPG Parser] ✗ No match - checking patterns:');
-            console.log('[RPG Parser]   - Has "Stats\\n---"?', !!content.match(/Stats\s*\n\s*---/i));
-            console.log('[RPG Parser]   - Has stat keywords?', !!(content.match(/Health:\s*\d+%/i) && content.match(/Energy:\s*\d+%/i)));
-            console.log('[RPG Parser]   - Has "Info Box\\n---"?', !!content.match(/Info Box\s*\n\s*---/i));
-            console.log('[RPG Parser]   - Has info keywords?', !!(content.match(/Date:/i) && content.match(/Location:/i)));
-            console.log('[RPG Parser]   - Has "Present Characters\\n---"?', !!content.match(/Present Characters\s*\n\s*---/i));
-            console.log('[RPG Parser]   - Has " | " + thoughts?', !!(content.includes(" | ") && (content.includes("Thoughts") || content.includes("💭"))));
+            debugLog('[RPG Parser] ✗ No match - checking patterns:');
+            debugLog('[RPG Parser]   - Has "Stats\\n---"?', !!content.match(/Stats\s*\n\s*---/i));
+            debugLog('[RPG Parser]   - Has stat keywords?', !!(content.match(/Health:\s*\d+%/i) && content.match(/Energy:\s*\d+%/i)));
+            debugLog('[RPG Parser]   - Has "Info Box\\n---"?', !!content.match(/Info Box\s*\n\s*---/i));
+            debugLog('[RPG Parser]   - Has info keywords?', !!(content.match(/Date:/i) && content.match(/Location:/i)));
+            debugLog('[RPG Parser]   - Has "Present Characters\\n---"?', !!content.match(/Present Characters\s*\n\s*---/i));
+            debugLog('[RPG Parser]   - Has " | " + thoughts?', !!(content.includes(" | ") && (content.includes("Thoughts") || content.includes("💭"))));
         }
     }
 
-    console.log('[RPG Parser] ==================== PARSE RESULTS ====================');
-    console.log('[RPG Parser] Found Stats:', !!result.userStats);
-    console.log('[RPG Parser] Found Info Box:', !!result.infoBox);
-    console.log('[RPG Parser] Found Characters:', !!result.characterThoughts);
-    console.log('[RPG Parser] =======================================================');
+    debugLog('[RPG Parser] ==================== PARSE RESULTS ====================');
+    debugLog('[RPG Parser] Found Stats:', !!result.userStats);
+    debugLog('[RPG Parser] Found Info Box:', !!result.infoBox);
+    debugLog('[RPG Parser] Found Characters:', !!result.characterThoughts);
+    debugLog('[RPG Parser] =======================================================');
 
     return result;
 }
@@ -100,9 +110,9 @@ export function parseResponse(responseText) {
  * @param {string} statsText - The raw stats text from AI response
  */
 export function parseUserStats(statsText) {
-    console.log('[RPG Parser] ==================== PARSING USER STATS ====================');
-    console.log('[RPG Parser] Stats text length:', statsText.length, 'chars');
-    console.log('[RPG Parser] Stats text preview:', statsText.substring(0, 200));
+    debugLog('[RPG Parser] ==================== PARSING USER STATS ====================');
+    debugLog('[RPG Parser] Stats text length:', statsText.length + ' chars');
+    debugLog('[RPG Parser] Stats text preview:', statsText.substring(0, 200));
 
     try {
         // Extract percentages and mood/conditions
@@ -112,7 +122,7 @@ export function parseUserStats(statsText) {
         const hygieneMatch = statsText.match(/Hygiene:\s*(\d+)%/);
         const arousalMatch = statsText.match(/Arousal:\s*(\d+)%/);
 
-        console.log('[RPG Parser] Stat matches:', {
+        debugLog('[RPG Parser] Stat matches:', {
             health: healthMatch ? healthMatch[1] : 'NOT FOUND',
             satiety: satietyMatch ? satietyMatch[1] : 'NOT FOUND',
             energy: energyMatch ? energyMatch[1] : 'NOT FOUND',
@@ -164,7 +174,7 @@ export function parseUserStats(statsText) {
             }
         }
 
-        console.log('[RPG Parser] Mood/Status match:', {
+        debugLog('[RPG Parser] Mood/Status match:', {
             found: !!moodMatch,
             emoji: moodMatch ? moodMatch[1] : 'NOT FOUND',
             conditions: moodMatch ? moodMatch[2] : 'NOT FOUND'
@@ -175,18 +185,18 @@ export function parseUserStats(statsText) {
             const inventoryData = extractInventory(statsText);
             if (inventoryData) {
                 extensionSettings.userStats.inventory = inventoryData;
-                console.log('[RPG Parser] Inventory v2 extracted:', inventoryData);
+                debugLog('[RPG Parser] Inventory v2 extracted:', inventoryData);
             } else {
-                console.log('[RPG Parser] Inventory v2 extraction failed');
+                debugLog('[RPG Parser] Inventory v2 extraction failed');
             }
         } else {
             // Legacy v1 parsing for backward compatibility
             const inventoryMatch = statsText.match(/Inventory:\s*(.+)/i);
             if (inventoryMatch) {
                 extensionSettings.userStats.inventory = inventoryMatch[1].trim();
-                console.log('[RPG Parser] Inventory v1 extracted:', inventoryMatch[1].trim());
+                debugLog('[RPG Parser] Inventory v1 extracted:', inventoryMatch[1].trim());
             } else {
-                console.log('[RPG Parser] Inventory v1 not found');
+                debugLog('[RPG Parser] Inventory v1 not found');
             }
         }
 
@@ -201,7 +211,7 @@ export function parseUserStats(statsText) {
             extensionSettings.userStats.conditions = moodMatch[2].trim(); // Conditions
         }
 
-        console.log('[RPG Parser] Final userStats after parsing:', {
+        debugLog('[RPG Parser] Final userStats after parsing:', {
             health: extensionSettings.userStats.health,
             satiety: extensionSettings.userStats.satiety,
             energy: extensionSettings.userStats.energy,
@@ -213,11 +223,13 @@ export function parseUserStats(statsText) {
         });
 
         saveSettings();
-        console.log('[RPG Parser] Settings saved successfully');
-        console.log('[RPG Parser] =======================================================');
+        debugLog('[RPG Parser] Settings saved successfully');
+        debugLog('[RPG Parser] =======================================================');
     } catch (error) {
         console.error('[RPG Companion] Error parsing user stats:', error);
         console.error('[RPG Companion] Stack trace:', error.stack);
+        debugLog('[RPG Parser] ERROR:', error.message);
+        debugLog('[RPG Parser] Stack:', error.stack);
     }
 }
 

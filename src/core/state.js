@@ -124,6 +124,12 @@ export const FEATURE_FLAGS = {
 };
 
 /**
+ * Debug logs storage for mobile-friendly debugging
+ * Stores parser logs that can be viewed in UI
+ */
+export let debugLogs = [];
+
+/**
  * Fallback avatar image (base64-encoded SVG with "?" icon)
  * Using base64 to avoid quote-encoding issues in HTML attributes
  */
@@ -203,4 +209,27 @@ export function setThoughtsContainer($element) {
 
 export function setInventoryContainer($element) {
     $inventoryContainer = $element;
+}
+
+export function addDebugLog(message, data = null) {
+    const timestamp = new Date().toISOString().split('T')[1].split('.')[0]; // HH:MM:SS
+    const logEntry = {
+        timestamp,
+        message,
+        data: data ? JSON.stringify(data, null, 2) : null
+    };
+    debugLogs.push(logEntry);
+
+    // Keep only last 100 entries to avoid memory issues
+    if (debugLogs.length > 100) {
+        debugLogs.shift();
+    }
+}
+
+export function clearDebugLogs() {
+    debugLogs = [];
+}
+
+export function getDebugLogs() {
+    return debugLogs;
 }

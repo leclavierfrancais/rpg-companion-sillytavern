@@ -105,6 +105,9 @@ import {
     setupDesktopTabs,
     removeDesktopTabs
 } from './src/systems/ui/desktop.js';
+import {
+    updateDebugUIVisibility
+} from './src/systems/ui/debug.js';
 
 // Feature modules
 import { setupPlotButtons, sendPlotProgression } from './src/systems/features/plotProgression.js';
@@ -189,6 +192,13 @@ function addExtensionSettings() {
             // Re-create thought bubbles when re-enabled
             updateChatThoughts(); // This will re-create the thought bubble if data exists
         }
+    });
+
+    // Set up the debug mode toggle
+    $('#rpg-debug-mode').prop('checked', extensionSettings.debugMode).on('change', function() {
+        extensionSettings.debugMode = $(this).prop('checked');
+        saveSettings();
+        updateDebugUIVisibility();
     });
 }
 
@@ -455,6 +465,9 @@ async function initUI() {
     setupContentEditableScrolling();
     setupRefreshButtonDrag();
     initInventoryEventListeners();
+
+    // Initialize debug UI if debug mode is enabled
+    updateDebugUIVisibility();
 }
 
 

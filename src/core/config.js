@@ -78,5 +78,6 @@ export const defaultSettings = {
         cha: 10
     },
     lastDiceRoll: null, // Store last dice roll result
-    collapsedInventoryLocations: [] // Array of collapsed storage location names
+    collapsedInventoryLocations: [], // Array of collapsed storage location names
+    debugMode: false // Enable debug logging visible in UI (for mobile debugging)
 };

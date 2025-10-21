@@ -278,9 +278,6 @@ export function setupMobileToggle() {
                 $('body').append($overlay);
                 $mobileToggle.addClass('active');
 
-                // Trigger event for other components (like refresh button)
-                $(document).trigger('rpg-panel-toggled', { isOpen: true });
-
                 // Close when clicking overlay
                 $overlay.on('click', function() {
                     closeMobilePanelWithAnimation();
@@ -312,9 +309,6 @@ export function setupMobileToggle() {
             $panel.addClass('rpg-mobile-open');
             $('body').append($overlay);
             $mobileToggle.addClass('active');
-
-            // Trigger event for other components (like refresh button)
-            $(document).trigger('rpg-panel-toggled', { isOpen: true });
 
             $overlay.on('click', function() {
                 console.log('[RPG Mobile] Overlay clicked - closing panel');
@@ -440,41 +434,32 @@ export function setupMobileToggle() {
  * Constrains the mobile FAB button to viewport bounds with top-bar awareness.
  * Only runs when button is in user-controlled state (mobileFabPosition exists).
  * Ensures button never goes behind the top bar or outside viewport edges.
- * @param {jQuery} $button - Optional button element (defaults to mobile toggle)
  */
-export function constrainFabToViewport($button = null) {
-    // Default to mobile toggle if no button specified
-    if (!$button) {
-        $button = $('#rpg-mobile-toggle');
-    }
-
-    if ($button.length === 0) return;
-
-    // Determine which position setting to check based on button ID
-    const isRefreshButton = $button.attr('id') === 'rpg-manual-update-mobile';
-    const positionSetting = isRefreshButton ? 'mobileRefreshPosition' : 'mobileFabPosition';
-
+export function constrainFabToViewport() {
     // Only constrain if user has set a custom position
-    if (!extensionSettings[positionSetting]) {
+    if (!extensionSettings.mobileFabPosition) {
         console.log('[RPG Mobile] Skipping viewport constraint - using CSS defaults');
         return;
     }
 
+    const $mobileToggle = $('#rpg-mobile-toggle');
+    if ($mobileToggle.length === 0) return;
+
     // Skip if button is not visible
-    if (!$button.is(':visible')) {
+    if (!$mobileToggle.is(':visible')) {
         console.log('[RPG Mobile] Skipping viewport constraint - button not visible');
         return;
     }
 
     // Get current position
-    const offset = $button.offset();
+    const offset = $mobileToggle.offset();
     if (!offset) return;
 
     let currentX = offset.left;
     let currentY = offset.top;
 
-    const buttonWidth = $button.outerWidth();
-    const buttonHeight = $button.outerHeight();
+    const buttonWidth = $mobileToggle.outerWidth();
+    const buttonHeight = $mobileToggle.outerHeight();
 
     // Get top bar height from CSS variable (fallback to 50px if not set)
     const topBarHeight = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--topBarBlockSize')) || 50;
@@ -500,15 +485,15 @@ export function constrainFabToViewport($button = null) {
         });
 
         // Apply new position
-        $button.css({
+        $mobileToggle.css({
             left: newX + 'px',
             top: newY + 'px',
             right: 'auto',
             bottom: 'auto'
         });
 
-        // Save corrected position to appropriate setting
-        extensionSettings[positionSetting] = {
+        // Save corrected position
+        extensionSettings.mobileFabPosition = {
             left: newX + 'px',
             top: newY + 'px'
         };

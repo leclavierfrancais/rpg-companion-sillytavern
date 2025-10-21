@@ -576,8 +576,8 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 }
 
 .rpg-user-portrait {
-    width: clamp(24px, 4vh, 32px);
-    height: clamp(24px, 4vh, 32px);
+    width: clamp(1.7vw, 1.8vw, 1.9vw);
+    height: clamp(1.7vw, 1.8vw, 1.9vw);
     border-radius: 50%;
     border: 2px solid var(--rpg-highlight);
     box-shadow: 0 0 8px var(--rpg-highlight);
@@ -726,7 +726,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 /* User name and level - inline with portrait */
 .rpg-user-name {
     font-weight: 600;
-    font-size: 1em;
+    font-size: 0.7vw;
     color: var(--rpg-text-color);
     white-space: nowrap;
     overflow: hidden;
@@ -734,17 +734,17 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 }
 
 .rpg-level-label {
-    font-size: 1em;
+    font-size: 0.7vw;
     font-weight: 600;
     color: var(--rpg-text-color);
     opacity: 0.7;
 }
 
 .rpg-level-value {
-    font-size: 1em;
+    font-size: 0.7vw;
     font-weight: 700;
     color: var(--rpg-highlight-color);
-    padding: 0 0.375em;
+    padding: clamp(1px, 0.2vh, 2px) 0.375em;
     background: var(--rpg-accent-color);
     border-radius: clamp(2px, 0.3vh, 3px);
     border: 1px solid var(--rpg-highlight-color);
@@ -2698,7 +2698,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 }
 
 /* ============================================
-   MANUAL UPDATE BUTTON (Desktop)
+   MANUAL UPDATE BUTTON
    ============================================ */
 .rpg-manual-update-btn {
     width: 100%;
@@ -2733,64 +2733,6 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 .rpg-manual-update-btn:active {
     transform: translateY(0);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-}
-
-/* ============================================
-   MOBILE REFRESH BUTTON (FAB - Same pattern as toggle)
-   ============================================ */
-.rpg-mobile-refresh {
-    display: none;
-    align-items: center;
-    justify-content: center;
-    position: fixed;
-    /* Position set by JavaScript based on saved settings */
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: var(--SmartThemeBlurTintColor);
-    border: 2px solid var(--SmartThemeBorderColor);
-    color: var(--rpg-text, #ecf0f1);
-    font-size: 1.85vw;
-    cursor: grab;
-    z-index: 1001; /* Above panel (1000) but below mobile toggle (10002) */
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    transition: opacity 0.3s ease, transform 0.2s ease, top 0.3s ease, left 0.3s ease, right 0.3s ease, bottom 0.3s ease;
-    user-select: none;
-    -webkit-user-select: none;
-    will-change: top, left;
-}
-
-/* Disable transitions while actively dragging */
-.rpg-mobile-refresh.dragging {
-    transition: none;
-    cursor: grabbing;
-}
-
-.rpg-mobile-refresh:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
-}
-
-.rpg-mobile-refresh:active {
-    transform: scale(0.95);
-}
-
-/* Spinning animation when refreshing */
-.rpg-mobile-refresh.spinning i {
-    animation: rpg-spin 0.8s linear infinite;
-}
-
-.rpg-mobile-refresh i {
-    pointer-events: none;
-}
-
-@keyframes rpg-spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
 }
 
 /* ============================================
@@ -3378,31 +3320,6 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 
 /* Mobile-specific panel behavior - matches SillyTavern's 1000px breakpoint */
 /* CACHE BUST v2025-01-16 */
-/* Mobile refresh button visibility - opposite of toggle */
-@media (max-width: 1000px) {
-    /* Show mobile refresh button */
-    .rpg-mobile-refresh {
-        display: flex;
-    }
-
-    /* Hide desktop refresh button */
-    .rpg-manual-update-btn {
-        display: none !important;
-    }
-
-    /* Show refresh button when panel is open (opposite of toggle) */
-    body:has(.rpg-panel.rpg-mobile-open) .rpg-mobile-refresh {
-        opacity: 1;
-        pointer-events: auto;
-    }
-
-    /* Hide refresh button when panel is closed */
-    .rpg-mobile-refresh {
-        opacity: 0;
-        pointer-events: none;
-    }
-}
-
 @media (max-width: 1000px) {
     /* ========================================
        MOBILE PANEL FOUNDATION
@@ -3727,9 +3644,6 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 
     .rpg-calendar-day {
         font-size: clamp(11px, 2.9vw, 14px) !important;
-        min-height: 3em !important; /* Ensure enough height for content to center */
-        padding: 0.75em 0.5em !important; /* More vertical padding on mobile */
-        line-height: 1.2 !important; /* Tighter line height */
     }
 
     .rpg-calendar-year {
@@ -3867,20 +3781,14 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
         grid-row: 3;
         display: flex;
         flex-direction: column;
-        gap: 3px !important; /* Reduced from 6px for more compact display */
+        gap: 6px;
         min-width: 0;
-        padding: 4px 0.375em !important; /* Reduced vertical padding */
     }
 
     /* Make mood text readable on mobile */
     .rpg-mood-conditions {
         font-size: clamp(11px, 2.8vw, 14px);
-        line-height: 1.2 !important; /* Tighter line height */
-    }
-
-    /* Smaller emoji on mobile */
-    .rpg-mood-emoji {
-        font-size: clamp(14px, 3.5vw, 18px) !important; /* Slightly smaller */
+        line-height: 1.3;
     }
 
     /* Attributes - right side, rows 4-6 aligned with mood */
@@ -4080,11 +3988,6 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
         font-size: clamp(20px, 5.1vw, 26px) !important;
     }
 
-    /* Larger mobile refresh icon (same as toggle) */
-    .rpg-mobile-refresh {
-        font-size: clamp(20px, 5.1vw, 26px) !important;
-    }
-
     /* ========================================
        MOBILE SETTINGS POPUP
        ======================================== */
@@ -4186,13 +4089,6 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     .rpg-editable {
         padding: 0.5em;
         min-height: 2.75rem;
-    }
-
-    /* Exception: Level value should stay compact */
-    .rpg-level-value.rpg-editable {
-        padding: 0 0.375em;
-        min-height: auto;
-        line-height: 1.2;
     }
 
     /* Larger close buttons */

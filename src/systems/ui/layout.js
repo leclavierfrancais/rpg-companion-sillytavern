@@ -34,9 +34,6 @@ export function closeMobilePanelWithAnimation() {
     $panel.removeClass('rpg-mobile-open').addClass('rpg-mobile-closing');
     $mobileToggle.removeClass('active');
 
-    // Trigger event for other components (like refresh button)
-    $(document).trigger('rpg-panel-toggled', { isOpen: false });
-
     // Wait for animation to complete before hiding
     $panel.one('animationend', function() {
         $panel.removeClass('rpg-mobile-closing');
@@ -129,9 +126,6 @@ export function setupCollapseToggle() {
                 $panel.addClass('rpg-mobile-open');
                 const $overlay = $('<div class="rpg-mobile-overlay"></div>');
                 $('body').append($overlay);
-
-                // Trigger event for other components (like refresh button)
-                $(document).trigger('rpg-panel-toggled', { isOpen: true });
 
                 // Debug: Check state after animation should complete
                 setTimeout(() => {
@@ -273,13 +267,10 @@ export function applyPanelPosition() {
  */
 export function updateGenerationModeUI() {
     if (extensionSettings.generationMode === 'together') {
-        // In "together" mode, hide both update buttons
+        // In "together" mode, manual update button is hidden
         $('#rpg-manual-update').hide();
-        $('#rpg-manual-update-mobile').hide();
     } else {
-        // In "separate" mode, show both buttons
-        // (CSS media queries control which one is visible based on viewport)
+        // In "separate" mode, manual update button is visible
         $('#rpg-manual-update').show();
-        $('#rpg-manual-update-mobile').show();
     }
 }

@@ -51,7 +51,9 @@ function namesMatch(cardName, aiName) {
     if (cardCore === aiCore) return true;
 
     // 3. Check if card name appears as complete word in AI name
-    const wordBoundary = new RegExp(`\\b${cardCore}\\b`);
+    // Escape special regex characters to prevent "Invalid regular expression" errors
+    const escapedCardCore = cardCore.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const wordBoundary = new RegExp(`\\b${escapedCardCore}\\b`);
     return wordBoundary.test(aiCore);
 }
 

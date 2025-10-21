@@ -61,9 +61,6 @@ export function renderUserStats() {
                     <span style="opacity: 0.5;">|</span>
                     <span class="rpg-level-label">LVL</span>
                     <span class="rpg-level-value rpg-editable" contenteditable="true" data-field="level" title="Click to edit level">${extensionSettings.level}</span>
-                    <button id="rpg-manual-update-mobile" class="rpg-refresh-icon-btn" title="Refresh RPG Info">
-                        <i class="fa-solid fa-sync"></i>
-                    </button>
                 </div>
                 <div class="rpg-stats-grid">
                     <div class="rpg-stat-row">

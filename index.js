@@ -303,7 +303,20 @@ async function initUI() {
             // console.log('[RPG Companion] Extension is disabled. Please enable it in the Extensions tab.');
             return;
         }
-        await updateRPGData(renderUserStats, renderInfoBox, renderThoughts, renderInventory);
+
+        // Remove focus to prevent sticky black state on mobile
+        $(this).blur();
+
+        // Add spinning animation to mobile button
+        const $mobileBtn = $('#rpg-manual-update-mobile');
+        $mobileBtn.addClass('spinning');
+
+        try {
+            await updateRPGData(renderUserStats, renderInfoBox, renderThoughts, renderInventory);
+        } finally {
+            // Remove spinning animation when done
+            $mobileBtn.removeClass('spinning');
+        }
     });
 
     $('#rpg-stat-bar-color-low').on('change', function() {

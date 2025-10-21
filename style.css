@@ -2708,39 +2708,59 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 }
 
 /* ============================================
-   REFRESH ICON BUTTON (Mobile)
+   REFRESH ICON BUTTON (Mobile - Floating)
    ============================================ */
 .rpg-refresh-icon-btn {
     display: none; /* Hidden by default, shown on mobile */
-    width: 36px;
-    height: 36px;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 44px; /* Touch-friendly size */
+    height: 44px;
     padding: 0;
-    margin-left: auto; /* Push to right side */
     background: var(--rpg-highlight);
     border: 2px solid var(--rpg-highlight);
     border-radius: 50%;
     color: var(--rpg-text);
-    font-size: 0.875rem;
+    font-size: 1rem;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    z-index: 100; /* Float above content */
+}
+
+/* Remove focus outline (prevents black state) */
+.rpg-refresh-icon-btn:focus {
+    outline: none;
 }
 
 .rpg-refresh-icon-btn:hover {
     transform: scale(1.1);
     box-shadow: 0 4px 12px var(--rpg-highlight);
-    background: var(--rpg-accent);
 }
 
 .rpg-refresh-icon-btn:active {
     transform: scale(0.95);
 }
 
+/* Spinning animation when refreshing */
+.rpg-refresh-icon-btn.spinning i {
+    animation: rpg-spin 0.8s linear infinite;
+}
+
 .rpg-refresh-icon-btn i {
     pointer-events: none;
+}
+
+@keyframes rpg-spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* ============================================

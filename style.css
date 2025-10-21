@@ -3305,6 +3305,45 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     transform: rotate(180deg);
 }
 
+/* ============================================
+   MOBILE REFRESH FAB BUTTON (Same pattern as mobile toggle)
+   ============================================ */
+.rpg-mobile-refresh {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    /* Position set by JavaScript based on saved settings */
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--SmartThemeBlurTintColor);
+    border: 2px solid var(--SmartThemeBorderColor);
+    color: var(--SmartThemeBodyColor);
+    font-size: 1.125rem;
+    cursor: grab;
+    z-index: 1001; /* Below mobile toggle (10002), above debug (1000) */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: opacity 0.3s ease, transform 0.2s ease, top 0.3s ease, left 0.3s ease, right 0.3s ease, bottom 0.3s ease;
+    user-select: none;
+    -webkit-user-select: none;
+    will-change: top, left;
+}
+
+.rpg-mobile-refresh.dragging {
+    transition: none;
+    cursor: grabbing;
+}
+
+.rpg-mobile-refresh:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.rpg-mobile-refresh:active {
+    transform: scale(0.95);
+}
+
 /* Mobile overlay backdrop */
 .rpg-mobile-overlay {
     display: none;
@@ -3328,6 +3367,16 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     /* Show the mobile FAB toggle button */
     .rpg-mobile-toggle {
         display: flex;
+    }
+
+    /* Show the mobile FAB refresh button */
+    .rpg-mobile-refresh {
+        display: flex;
+    }
+
+    /* Hide desktop refresh button on mobile */
+    #rpg-manual-update {
+        display: none !important;
     }
 
     /* Hide FAB when panel is open */
@@ -3985,6 +4034,11 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
 
     /* Larger mobile toggle dice icon (button size is fine) */
     .rpg-mobile-toggle {
+        font-size: clamp(20px, 5.1vw, 26px) !important;
+    }
+
+    /* Larger mobile refresh icon */
+    .rpg-mobile-refresh {
         font-size: clamp(20px, 5.1vw, 26px) !important;
     }
 

@@ -278,9 +278,6 @@ export function setupMobileToggle() {
                 $('body').append($overlay);
                 $mobileToggle.addClass('active');
 
-                // Trigger event for other components (like refresh button)
-                $(document).trigger('rpg-panel-toggled', { isOpen: true });
-
                 // Close when clicking overlay
                 $overlay.on('click', function() {
                     closeMobilePanelWithAnimation();
@@ -312,9 +309,6 @@ export function setupMobileToggle() {
             $panel.addClass('rpg-mobile-open');
             $('body').append($overlay);
             $mobileToggle.addClass('active');
-
-            // Trigger event for other components (like refresh button)
-            $(document).trigger('rpg-panel-toggled', { isOpen: true });
 
             $overlay.on('click', function() {
                 console.log('[RPG Mobile] Overlay clicked - closing panel');
@@ -440,41 +434,32 @@ export function setupMobileToggle() {
  * Constrains the mobile FAB button to viewport bounds with top-bar awareness.
  * Only runs when button is in user-controlled state (mobileFabPosition exists).
  * Ensures button never goes behind the top bar or outside viewport edges.
- * @param {jQuery} $button - Optional button element (defaults to mobile toggle)
  */
-export function constrainFabToViewport($button = null) {
-    // Default to mobile toggle if no button specified
-    if (!$button) {
-        $button = $('#rpg-mobile-toggle');
-    }
-
-    if ($button.length === 0) return;
-
-    // Determine which position setting to check based on button ID
-    const isRefreshButton = $button.attr('id') === 'rpg-manual-update-mobile';
-    const positionSetting = isRefreshButton ? 'mobileRefreshPosition' : 'mobileFabPosition';
-
+export function constrainFabToViewport() {
     // Only constrain if user has set a custom position
-    if (!extensionSettings[positionSetting]) {
+    if (!extensionSettings.mobileFabPosition) {
         console.log('[RPG Mobile] Skipping viewport constraint - using CSS defaults');
         return;
     }
 
+    const $mobileToggle = $('#rpg-mobile-toggle');
+    if ($mobileToggle.length === 0) return;
+
     // Skip if button is not visible
-    if (!$button.is(':visible')) {
+    if (!$mobileToggle.is(':visible')) {
         console.log('[RPG Mobile] Skipping viewport constraint - button not visible');
         return;
     }
 
     // Get current position
-    const offset = $button.offset();
+    const offset = $mobileToggle.offset();
     if (!offset) return;
 
     let currentX = offset.left;
     let currentY = offset.top;
 
-    const buttonWidth = $button.outerWidth();
-    const buttonHeight = $button.outerHeight();
+    const buttonWidth = $mobileToggle.outerWidth();
+    const buttonHeight = $mobileToggle.outerHeight();
 
     // Get top bar height from CSS variable (fallback to 50px if not set)
     const topBarHeight = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--topBarBlockSize')) || 50;
@@ -500,15 +485,15 @@ export function constrainFabToViewport($button = null) {
         });
 
         // Apply new position
-        $button.css({
+        $mobileToggle.css({
             left: newX + 'px',
             top: newY + 'px',
             right: 'auto',
             bottom: 'auto'
         });
 
-        // Save corrected position to appropriate setting
-        extensionSettings[positionSetting] = {
+        // Save corrected position
+        extensionSettings.mobileFabPosition = {
             left: newX + 'px',
             top: newY + 'px'
         };
@@ -729,221 +714,5 @@ export function setupContentEditableScrolling() {
                 inline: 'nearest'
             });
         }, 300);
-    });
-}
-
-/**
- * Sets up the mobile refresh button with drag functionality.
- * Same pattern as mobile toggle button.
- * Tap = refresh, drag = reposition
- */
-export function setupRefreshButtonDrag() {
-    const $refreshBtn = $('#rpg-manual-update-mobile');
-
-    if ($refreshBtn.length === 0) {
-        console.warn('[RPG Mobile] Refresh button not found in DOM');
-        return;
-    }
-
-    console.log('[RPG Mobile] setupRefreshButtonDrag called');
-
-    // Load and apply saved position
-    if (extensionSettings.mobileRefreshPosition) {
-        const pos = extensionSettings.mobileRefreshPosition;
-        console.log('[RPG Mobile] Loading saved refresh button position:', pos);
-
-        // Apply saved position
-        if (pos.top) $refreshBtn.css('top', pos.top);
-        if (pos.right) $refreshBtn.css('right', pos.right);
-        if (pos.bottom) $refreshBtn.css('bottom', pos.bottom);
-        if (pos.left) $refreshBtn.css('left', pos.left);
-
-        // Constrain to viewport after position is applied
-        requestAnimationFrame(() => constrainFabToViewport($refreshBtn));
-    }
-
-    // Touch/drag state
-    let isDragging = false;
-    let touchStartTime = 0;
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let buttonStartX = 0;
-    let buttonStartY = 0;
-    const LONG_PRESS_DURATION = 200;
-    const MOVE_THRESHOLD = 10;
-    let rafId = null;
-    let pendingX = null;
-    let pendingY = null;
-
-    // Update position using requestAnimationFrame
-    function updatePosition() {
-        if (pendingX !== null && pendingY !== null) {
-            $refreshBtn.css({
-                left: pendingX + 'px',
-                top: pendingY + 'px',
-                right: 'auto',
-                bottom: 'auto'
-            });
-            pendingX = null;
-            pendingY = null;
-        }
-        rafId = null;
-    }
-
-    // Touch start
-    $refreshBtn.on('touchstart', function(e) {
-        const touch = e.originalEvent.touches[0];
-        touchStartTime = Date.now();
-        touchStartX = touch.clientX;
-        touchStartY = touch.clientY;
-
-        const offset = $refreshBtn.offset();
-        buttonStartX = offset.left;
-        buttonStartY = offset.top;
-
-        isDragging = false;
-    });
-
-    // Touch move
-    $refreshBtn.on('touchmove', function(e) {
-        const touch = e.originalEvent.touches[0];
-        const deltaX = touch.clientX - touchStartX;
-        const deltaY = touch.clientY - touchStartY;
-        const timeSinceStart = Date.now() - touchStartTime;
-        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-
-        if (!isDragging && (timeSinceStart > LONG_PRESS_DURATION || distance > MOVE_THRESHOLD)) {
-            isDragging = true;
-            $refreshBtn.addClass('dragging');
-        }
-
-        if (isDragging) {
-            e.preventDefault();
-
-            let newX = buttonStartX + deltaX;
-            let newY = buttonStartY + deltaY;
-
-            const buttonWidth = $refreshBtn.outerWidth();
-            const buttonHeight = $refreshBtn.outerHeight();
-
-            const minX = 10;
-            const maxX = window.innerWidth - buttonWidth - 10;
-            const minY = 10;
-            const maxY = window.innerHeight - buttonHeight - 10;
-
-            newX = Math.max(minX, Math.min(maxX, newX));
-            newY = Math.max(minY, Math.min(maxY, newY));
-
-            pendingX = newX;
-            pendingY = newY;
-            if (!rafId) {
-                rafId = requestAnimationFrame(updatePosition);
-            }
-        }
-    });
-
-    // Touch end
-    $refreshBtn.on('touchend', function(e) {
-        if (isDragging) {
-            // Save new position
-            const offset = $refreshBtn.offset();
-            const newPosition = {
-                left: offset.left + 'px',
-                top: offset.top + 'px'
-            };
-
-            extensionSettings.mobileRefreshPosition = newPosition;
-            saveSettings();
-
-            setTimeout(() => {
-                $refreshBtn.removeClass('dragging');
-            }, 50);
-
-            // Set flag to prevent click handler from firing
-            $refreshBtn.data('just-dragged', true);
-            setTimeout(() => {
-                $refreshBtn.data('just-dragged', false);
-            }, 100);
-
-            isDragging = false;
-        }
-    });
-
-    // Mouse support for desktop
-    let mouseDown = false;
-
-    $refreshBtn.on('mousedown', function(e) {
-        e.preventDefault();
-        touchStartTime = Date.now();
-        touchStartX = e.clientX;
-        touchStartY = e.clientY;
-
-        const offset = $refreshBtn.offset();
-        buttonStartX = offset.left;
-        buttonStartY = offset.top;
-
-        mouseDown = true;
-        isDragging = false;
-    });
-
-    $(document).on('mousemove', function(e) {
-        if (!mouseDown) return;
-
-        const deltaX = e.clientX - touchStartX;
-        const deltaY = e.clientY - touchStartY;
-        const timeSinceStart = Date.now() - touchStartTime;
-        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-
-        if (!isDragging && (timeSinceStart > LONG_PRESS_DURATION || distance > MOVE_THRESHOLD)) {
-            isDragging = true;
-            $refreshBtn.addClass('dragging');
-        }
-
-        if (isDragging) {
-            let newX = buttonStartX + deltaX;
-            let newY = buttonStartY + deltaY;
-
-            const buttonWidth = $refreshBtn.outerWidth();
-            const buttonHeight = $refreshBtn.outerHeight();
-
-            const minX = 10;
-            const maxX = window.innerWidth - buttonWidth - 10;
-            const minY = 10;
-            const maxY = window.innerHeight - buttonHeight - 10;
-
-            newX = Math.max(minX, Math.min(maxX, newX));
-            newY = Math.max(minY, Math.min(maxY, newY));
-
-            pendingX = newX;
-            pendingY = newY;
-            if (!rafId) {
-                rafId = requestAnimationFrame(updatePosition);
-            }
-        }
-    });
-
-    $(document).on('mouseup', function(e) {
-        if (mouseDown && isDragging) {
-            const offset = $refreshBtn.offset();
-            const newPosition = {
-                left: offset.left + 'px',
-                top: offset.top + 'px'
-            };
-
-            extensionSettings.mobileRefreshPosition = newPosition;
-            saveSettings();
-
-            setTimeout(() => {
-                $refreshBtn.removeClass('dragging');
-            }, 50);
-
-            $refreshBtn.data('just-dragged', true);
-            setTimeout(() => {
-                $refreshBtn.data('just-dragged', false);
-            }, 100);
-        }
-
-        mouseDown = false;
-        isDragging = false;
     });
 }

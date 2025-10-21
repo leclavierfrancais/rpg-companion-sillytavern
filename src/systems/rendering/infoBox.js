@@ -385,23 +385,27 @@ export function updateInfoBoxField(field, value) {
     }
 
     const updatedLines = lines.map((line, index) => {
-        if (field === 'month' && line.includes('🗓️:')) {
+        if (field === 'month' && (line.includes('🗓️:') || line.startsWith('Date:'))) {
             const parts = line.split(',');
             if (parts.length >= 2) {
-                // parts[0] = "🗓️: Weekday", parts[1] = " Month", parts[2] = " Year"
+                // parts[0] = "Date: Weekday" or "🗓️: Weekday", parts[1] = " Month", parts[2] = " Year"
                 parts[1] = ' ' + value;
                 return parts.join(',');
             } else if (parts.length === 1) {
                 // No existing month/year, add them
                 return `${parts[0]}, ${value}, YEAR`;
             }
-        } else if (field === 'weekday' && line.includes('🗓️:')) {
+        } else if (field === 'weekday' && (line.includes('🗓️:') || line.startsWith('Date:'))) {
             const parts = line.split(',');
-            // Keep the emoji, just update the weekday
+            // Keep the format (text or emoji), just update the weekday
             const month = parts[1] ? parts[1].trim() : 'Month';
             const year = parts[2] ? parts[2].trim() : 'YEAR';
-            return `🗓️: ${value}, ${month}, ${year}`;
-        } else if (field === 'year' && line.includes('🗓️:')) {
+            if (line.startsWith('Date:')) {
+                return `Date: ${value}, ${month}, ${year}`;
+            } else {
+                return `🗓️: ${value}, ${month}, ${year}`;
+            }
+        } else if (field === 'year' && (line.includes('🗓️:') || line.startsWith('Date:'))) {
             const parts = line.split(',');
             if (parts.length >= 3) {
                 parts[2] = ' ' + value;
@@ -474,14 +478,14 @@ export function updateInfoBoxField(field, value) {
         // Find the divider line
         const dividerIndex = updatedLines.findIndex(line => line.includes('---'));
         if (dividerIndex >= 0) {
-            // Create initial date line with the edited field
+            // Create initial date line with the edited field (use text format to match current standard)
             let newDateLine = '';
             if (field === 'weekday') {
-                newDateLine = `🗓️: ${value}, Month, YEAR`;
+                newDateLine = `Date: ${value}, Month, YEAR`;
             } else if (field === 'month') {
-                newDateLine = `🗓️: Weekday, ${value}, YEAR`;
+                newDateLine = `Date: Weekday, ${value}, YEAR`;
             } else if (field === 'year') {
-                newDateLine = `🗓️: Weekday, Month, ${value}`;
+                newDateLine = `Date: Weekday, Month, ${value}`;
             }
             // Insert after the divider
             updatedLines.splice(dividerIndex + 1, 0, newDateLine);
@@ -493,7 +497,7 @@ export function updateInfoBoxField(field, value) {
         let weatherLineFound = false;
         for (const line of updatedLines) {
             // Check if this is a weather line (has emoji and forecast, not one of the special fields)
-            if (line.match(/^[^:]+:\s*.+$/) && !line.includes('🗓️') && !line.includes('🌡️') && !line.includes('🕒') && !line.includes('🗺️') && !line.includes('Info Box') && !line.includes('---')) {
+            if (line.match(/^[^:]+:\s*.+$/) && !line.includes('🗓️') && !line.startsWith('Date:') && !line.includes('🌡️') && !line.startsWith('Temperature:') && !line.includes('🕒') && !line.startsWith('Time:') && !line.includes('🗺️') && !line.startsWith('Location:') && !line.includes('Info Box') && !line.includes('---')) {
                 weatherLineFound = true;
                 break;
             }
@@ -504,12 +508,12 @@ export function updateInfoBoxField(field, value) {
             if (dividerIndex >= 0) {
                 let newWeatherLine = '';
                 if (field === 'weatherEmoji') {
-                    newWeatherLine = `${value}: Weather`;
+                    newWeatherLine = `Weather: ${value}, Weather`;
                 } else if (field === 'weatherForecast') {
-                    newWeatherLine = `🌤️: ${value}`;
+                    newWeatherLine = `Weather: 🌤️, ${value}`;
                 }
                 // Insert after date line if it exists, otherwise after divider
-                const dateIndex = updatedLines.findIndex(line => line.includes('🗓️:'));
+                const dateIndex = updatedLines.findIndex(line => line.includes('🗓️:') || line.startsWith('Date:'));
                 const insertIndex = dateIndex >= 0 ? dateIndex + 1 : dividerIndex + 1;
                 updatedLines.splice(insertIndex, 0, newWeatherLine);
             }
@@ -518,15 +522,15 @@ export function updateInfoBoxField(field, value) {
 
     // If editing temperature but no temperature line exists, create one
     if (field === 'temperature') {
-        const tempLineFound = updatedLines.some(line => line.includes('🌡️:'));
+        const tempLineFound = updatedLines.some(line => line.includes('🌡️:') || line.startsWith('Temperature:'));
         if (!tempLineFound) {
             const dividerIndex = updatedLines.findIndex(line => line.includes('---'));
             if (dividerIndex >= 0) {
-                const newTempLine = `🌡️: ${value}`;
+                const newTempLine = `Temperature: ${value}`;
                 // Find last non-empty line before creating position
                 let insertIndex = dividerIndex + 1;
                 for (let i = 0; i < updatedLines.length; i++) {
-                    if (updatedLines[i].includes('🗓️:') || updatedLines[i].match(/^[^:]+:\s*.+$/)) {
+                    if (updatedLines[i].includes('🗓️:') || updatedLines[i].startsWith('Date:') || updatedLines[i].match(/^[^:]+:\s*.+$/)) {
                         insertIndex = i + 1;
                     }
                 }
@@ -537,15 +541,15 @@ export function updateInfoBoxField(field, value) {
 
     // If editing time but no time line exists, create one
     if (field === 'timeStart') {
-        const timeLineFound = updatedLines.some(line => line.includes('🕒:'));
+        const timeLineFound = updatedLines.some(line => line.includes('🕒:') || line.startsWith('Time:'));
         if (!timeLineFound) {
             const dividerIndex = updatedLines.findIndex(line => line.includes('---'));
             if (dividerIndex >= 0) {
-                const newTimeLine = `🕒: ${value} → ${value}`;
+                const newTimeLine = `Time: ${value} → ${value}`;
                 // Find last non-empty line before creating position
                 let insertIndex = dividerIndex + 1;
                 for (let i = 0; i < updatedLines.length; i++) {
-                    if (updatedLines[i].includes('🗓️:') || updatedLines[i].includes('🌡️:') || updatedLines[i].match(/^[^:]+:\s*.+$/)) {
+                    if (updatedLines[i].includes('🗓️:') || updatedLines[i].startsWith('Date:') || updatedLines[i].includes('🌡️:') || updatedLines[i].startsWith('Temperature:') || updatedLines[i].match(/^[^:]+:\s*.+$/)) {
                         insertIndex = i + 1;
                     }
                 }
@@ -556,11 +560,11 @@ export function updateInfoBoxField(field, value) {
 
     // If editing location but no location line exists, create one
     if (field === 'location') {
-        const locationLineFound = updatedLines.some(line => line.includes('🗺️:'));
+        const locationLineFound = updatedLines.some(line => line.includes('🗺️:') || line.startsWith('Location:'));
         if (!locationLineFound) {
             const dividerIndex = updatedLines.findIndex(line => line.includes('---'));
             if (dividerIndex >= 0) {
-                const newLocationLine = `🗺️: ${value}`;
+                const newLocationLine = `Location: ${value}`;
                 // Insert at the end (before any empty lines)
                 let insertIndex = updatedLines.length;
                 for (let i = updatedLines.length - 1; i >= 0; i--) {

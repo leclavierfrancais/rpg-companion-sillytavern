@@ -3328,6 +3328,9 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     user-select: none;
     -webkit-user-select: none;
     will-change: top, left;
+    /* Hidden by default - shown when panel open AND separate mode */
+    opacity: 0;
+    pointer-events: none;
 }
 
 .rpg-mobile-refresh.dragging {
@@ -3387,9 +3390,15 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
         display: flex;
     }
 
-    /* Show the mobile FAB refresh button */
+    /* Show the mobile FAB refresh button (but hidden by opacity) */
     .rpg-mobile-refresh {
         display: flex;
+    }
+
+    /* Show refresh button when panel is open AND not hidden by generation mode */
+    body:has(.rpg-panel.rpg-mobile-open) .rpg-mobile-refresh:not(.rpg-hidden-mode) {
+        opacity: 1;
+        pointer-events: auto;
     }
 
     /* Hide desktop refresh button on mobile */
@@ -3397,7 +3406,7 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
         display: none !important;
     }
 
-    /* Hide FAB when panel is open */
+    /* Hide toggle FAB when panel is open */
     body:has(.rpg-panel.rpg-mobile-open) .rpg-mobile-toggle {
         opacity: 0;
         pointer-events: none;

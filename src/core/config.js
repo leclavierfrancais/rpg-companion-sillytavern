@@ -46,9 +46,17 @@ export const defaultSettings = {
     statBarColorHigh: '#33cc66', // Color for high stat values (green)
     enableAnimations: true, // Enable smooth animations for stats and content updates
     mobileFabPosition: {
-        top: 'calc(var(--topBarBlockSize) + 60px)',
-        right: '12px'
-    }, // Saved position for mobile FAB button
+        top: 'calc(var(--topBarBlockSize) + 20px)',
+        left: '12px'
+    }, // Saved position for mobile FAB button (top-left, stacked vertically)
+    mobileRefreshPosition: {
+        top: 'calc(var(--topBarBlockSize) + 80px)',
+        left: '12px'
+    }, // Saved position for mobile refresh button (below toggle button)
+    debugFabPosition: {
+        top: 'calc(var(--topBarBlockSize) + 140px)',
+        left: '12px'
+    }, // Saved position for debug FAB button (below refresh button)
     userStats: {
         health: 100,
         satiety: 100,
@@ -74,5 +82,6 @@ export const defaultSettings = {
         cha: 10
     },
     lastDiceRoll: null, // Store last dice roll result
-    collapsedInventoryLocations: [] // Array of collapsed storage location names
+    collapsedInventoryLocations: [], // Array of collapsed storage location names
+    debugMode: false // Enable debug logging visible in UI (for mobile debugging)
 };

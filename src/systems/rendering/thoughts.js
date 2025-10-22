@@ -11,10 +11,21 @@ import {
     lastGeneratedData,
     committedTrackerData,
     $thoughtsContainer,
-    FALLBACK_AVATAR_DATA_URI
+    FALLBACK_AVATAR_DATA_URI,
+    addDebugLog
 } from '../../core/state.js';
 import { saveChatData } from '../../core/persistence.js';
 import { getSafeThumbnailUrl } from '../../utils/avatars.js';
+
+/**
+ * Helper to log to both console and debug logs array
+ */
+function debugLog(message, data = null) {
+    console.log(message, data || '');
+    if (extensionSettings.debugMode) {
+        addDebugLog(message, data);
+    }
+}
 
 /**
  * Fuzzy name matching that handles:
@@ -40,7 +51,9 @@ function namesMatch(cardName, aiName) {
     if (cardCore === aiCore) return true;
 
     // 3. Check if card name appears as complete word in AI name
-    const wordBoundary = new RegExp(`\\b${cardCore}\\b`);
+    // Escape special regex characters to prevent "Invalid regular expression" errors
+    const escapedCardCore = cardCore.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const wordBoundary = new RegExp(`\\b${escapedCardCore}\\b`);
     return wordBoundary.test(aiCore);
 }
 
@@ -54,6 +67,10 @@ export function renderThoughts() {
         return;
     }
 
+    debugLog('[RPG Thoughts] ==================== RENDERING PRESENT CHARACTERS ====================');
+    debugLog('[RPG Thoughts] showCharacterThoughts setting:', extensionSettings.showCharacterThoughts);
+    debugLog('[RPG Thoughts] Container exists:', !!$thoughtsContainer);
+
     // Add updating class for animation
     if (extensionSettings.enableAnimations) {
         $thoughtsContainer.addClass('rpg-content-updating');
@@ -64,25 +81,36 @@ export function renderThoughts() {
         lastGeneratedData.characterThoughts = '';
     }
 
+    debugLog('[RPG Thoughts] Raw characterThoughts data:', lastGeneratedData.characterThoughts);
+    debugLog('[RPG Thoughts] Data length:', lastGeneratedData.characterThoughts.length + ' chars');
+
     const lines = lastGeneratedData.characterThoughts.split('\n');
     const presentCharacters = [];
 
-    // console.log('[RPG Companion] Raw Present Characters:', lastGeneratedData.characterThoughts);
-    // console.log('[RPG Companion] Split into lines:', lines);
+    debugLog('[RPG Thoughts] Split into lines count:', lines.length);
+    debugLog('[RPG Thoughts] Lines:', lines);
 
     // Parse format: [Emoji]: [Name, Status, Demeanor] | [Relationship] | [Thoughts]
     // Also supports 4-part format: [Emoji]: [Name, Status] | [Demeanor] | [Relationship] | [Thoughts]
+    let lineNumber = 0;
     for (const line of lines) {
+        lineNumber++;
+
         // Skip empty lines, headers, dividers, and code fences
         if (line.trim() &&
             !line.includes('Present Characters') &&
             !line.includes('---') &&
             !line.trim().startsWith('```')) {
 
+            debugLog(`[RPG Thoughts] Processing line ${lineNumber}:`, line);
+
             // Match the new format with pipes
             const parts = line.split('|').map(p => p.trim());
+            debugLog(`[RPG Thoughts] Split into ${parts.length} parts:`, parts);
 
-            if (parts.length >= 2) {
+            // Require at least 3 parts (Emoji:Name | Relationship | Thoughts)
+            // This matches updateChatThoughts() and the current prompt format
+            if (parts.length >= 3) {
                 // First part: [Emoji]: [Name, Status, Demeanor]
                 const firstPart = parts[0].trim();
                 const emojiMatch = firstPart.match(/^(.+?):\s*(.+)$/);
@@ -90,6 +118,8 @@ export function renderThoughts() {
                 if (emojiMatch) {
                     const emoji = emojiMatch[1].trim();
                     const info = emojiMatch[2].trim();
+
+                    debugLog(`[RPG Thoughts] Emoji match found - emoji: "${emoji}", info: "${info}"`);
 
                     // Handle both 3-part and 4-part formats
                     let relationship, thoughts, traits;
@@ -100,7 +130,8 @@ export function renderThoughts() {
                         thoughts = parts[2].trim();
                         const infoParts = info.split(',').map(p => p.trim());
                         traits = infoParts.slice(1).join(', ');
-                    } else if (parts.length >= 4) {
+                        debugLog('[RPG Thoughts] Parsed as 3-part format');
+                    } else {
                         // 4-part format: Emoji:Name,traits | Demeanor | Relationship | Thoughts
                         // Add the demeanor to traits and use last two parts for relationship/thoughts
                         const demeanor = parts[1].trim();
@@ -109,23 +140,26 @@ export function renderThoughts() {
                         const infoParts = info.split(',').map(p => p.trim());
                         const baseTraits = infoParts.slice(1).join(', ');
                         traits = baseTraits ? `${baseTraits}, ${demeanor}` : demeanor;
-                    } else {
-                        // Fallback for 2-part format
-                        relationship = parts[1].trim();
-                        thoughts = '';
-                        const infoParts = info.split(',').map(p => p.trim());
-                        traits = infoParts.slice(1).join(', ');
+                        debugLog('[RPG Thoughts] Parsed as 4-part format');
                     }
 
                     // Parse name from info (first part before comma)
                     const infoParts = info.split(',').map(p => p.trim());
                     const name = infoParts[0] || '';
 
+                    debugLog(`[RPG Thoughts] Extracted - name: "${name}", traits: "${traits}", relationship: "${relationship}", thoughts: "${thoughts}"`);
+
                     if (name && name.toLowerCase() !== 'unavailable') {
                         presentCharacters.push({ emoji, name, traits, relationship, thoughts });
-                        // console.log('[RPG Companion] Parsed character:', { name, relationship, thoughts });
+                        debugLog(`[RPG Thoughts] ✓ Added character: ${name}`);
+                    } else {
+                        debugLog(`[RPG Thoughts] ✗ Rejected character - name: "${name}" (unavailable or empty)`);
                     }
+                } else {
+                    debugLog('[RPG Thoughts] ✗ No emoji match found in first part');
                 }
+            } else {
+                debugLog(`[RPG Thoughts] ✗ Not enough parts (${parts.length} < 3, need at least Emoji:Name | Relationship | Thoughts)`);
             }
         }
     }
@@ -138,14 +172,19 @@ export function renderThoughts() {
         'Lover': '❤️'
     };
 
+    debugLog('[RPG Thoughts] ==================== PARSING COMPLETE ====================');
+    debugLog('[RPG Thoughts] Total characters parsed:', presentCharacters.length);
+    debugLog('[RPG Thoughts] Characters array:', presentCharacters);
+
     // Build HTML
     let html = '';
 
-    // console.log('[RPG Companion] Total characters parsed:', presentCharacters.length);
-    // console.log('[RPG Companion] Characters array:', presentCharacters);
+    debugLog('[RPG Thoughts] ==================== BUILDING HTML ====================');
+    debugLog('[RPG Thoughts] Starting HTML generation for', presentCharacters.length + ' characters');
 
     // If no characters parsed, show a placeholder editable card
     if (presentCharacters.length === 0) {
+        debugLog('[RPG Thoughts] ⚠ No characters parsed - showing placeholder card');
         // Get default character portrait (try to use the current character if in 1-on-1 chat)
         // Use a base64-encoded SVG placeholder as fallback to avoid 400 errors
         let defaultPortrait = FALLBACK_AVATAR_DATA_URI;
@@ -180,74 +219,113 @@ export function renderThoughts() {
         html += '</div>';
     } else {
         html += '<div class="rpg-thoughts-content">';
+
+        let characterIndex = 0;
         for (const char of presentCharacters) {
-            // Find character portrait
-            // Use a base64-encoded SVG placeholder as fallback to avoid 400 errors
-            let characterPortrait = FALLBACK_AVATAR_DATA_URI;
+            characterIndex++;
 
-            // console.log('[RPG Companion] Looking for avatar for:', char.name);
+            try {
+                debugLog(`[RPG Thoughts] Building HTML for character ${characterIndex}/${presentCharacters.length}:`, char.name);
 
-            // For group chats, search through group members first
-            if (selected_group) {
-                const groupMembers = getGroupMembers(selected_group);
-                const matchingMember = groupMembers.find(member =>
-                    member && member.name && namesMatch(member.name, char.name)
-                );
+                // Find character portrait
+                // Use a base64-encoded SVG placeholder as fallback to avoid 400 errors
+                let characterPortrait = FALLBACK_AVATAR_DATA_URI;
 
-                if (matchingMember && matchingMember.avatar && matchingMember.avatar !== 'none') {
-                    const thumbnailUrl = getSafeThumbnailUrl('avatar', matchingMember.avatar);
-                    if (thumbnailUrl) {
-                        characterPortrait = thumbnailUrl;
+                debugLog(`[RPG Thoughts] Looking up avatar for: ${char.name}`);
+
+                // For group chats, search through group members first
+                if (selected_group) {
+                    debugLog('[RPG Thoughts] In group chat, checking group members...');
+
+                    try {
+                        const groupMembers = getGroupMembers(selected_group);
+                        debugLog('[RPG Thoughts] Group members count:', groupMembers ? groupMembers.length : 0);
+
+                        if (groupMembers && groupMembers.length > 0) {
+                            const matchingMember = groupMembers.find(member =>
+                                member && member.name && namesMatch(member.name, char.name)
+                            );
+
+                            if (matchingMember && matchingMember.avatar && matchingMember.avatar !== 'none') {
+                                const thumbnailUrl = getSafeThumbnailUrl('avatar', matchingMember.avatar);
+                                if (thumbnailUrl) {
+                                    characterPortrait = thumbnailUrl;
+                                    debugLog('[RPG Thoughts] Found avatar in group members');
+                                }
+                            }
+                        }
+                    } catch (groupError) {
+                        debugLog('[RPG Thoughts] Error checking group members:', groupError.message);
                     }
                 }
-            }
 
-            // For regular chats or if not found in group, search all characters
-            if (characterPortrait === FALLBACK_AVATAR_DATA_URI && characters && characters.length > 0) {
-                const matchingCharacter = characters.find(c =>
-                    c && c.name && namesMatch(c.name, char.name)
-                );
+                // For regular chats or if not found in group, search all characters
+                if (characterPortrait === FALLBACK_AVATAR_DATA_URI && characters && characters.length > 0) {
+                    debugLog('[RPG Thoughts] Searching all characters...');
 
-                if (matchingCharacter && matchingCharacter.avatar && matchingCharacter.avatar !== 'none') {
-                    const thumbnailUrl = getSafeThumbnailUrl('avatar', matchingCharacter.avatar);
-                    if (thumbnailUrl) {
-                        characterPortrait = thumbnailUrl;
+                    const matchingCharacter = characters.find(c =>
+                        c && c.name && namesMatch(c.name, char.name)
+                    );
+
+                    if (matchingCharacter && matchingCharacter.avatar && matchingCharacter.avatar !== 'none') {
+                        const thumbnailUrl = getSafeThumbnailUrl('avatar', matchingCharacter.avatar);
+                        if (thumbnailUrl) {
+                            characterPortrait = thumbnailUrl;
+                            debugLog('[RPG Thoughts] Found avatar in all characters');
+                        }
                     }
                 }
-            }
 
-            // If this is the current character in a 1-on-1 chat, use their portrait
-            if (this_chid !== undefined && characters[this_chid] &&
-                characters[this_chid].name && namesMatch(characters[this_chid].name, char.name)) {
-                const thumbnailUrl = getSafeThumbnailUrl('avatar', characters[this_chid].avatar);
-                if (thumbnailUrl) {
-                    characterPortrait = thumbnailUrl;
+                // If this is the current character in a 1-on-1 chat, use their portrait
+                if (this_chid !== undefined && characters[this_chid] &&
+                    characters[this_chid].name && namesMatch(characters[this_chid].name, char.name)) {
+                    const thumbnailUrl = getSafeThumbnailUrl('avatar', characters[this_chid].avatar);
+                    if (thumbnailUrl) {
+                        characterPortrait = thumbnailUrl;
+                        debugLog('[RPG Thoughts] Found avatar from current character');
+                    }
                 }
-            }
 
-            // Get relationship emoji
-            const relationshipEmoji = relationshipEmojis[char.relationship] || '⚖️';
+                debugLog(`[RPG Thoughts] Final avatar for ${char.name}:`, characterPortrait.substring(0, 50) + '...');
 
-            html += `
-                <div class="rpg-character-card" data-character-name="${char.name}">
-                    <div class="rpg-character-avatar">
-                        <img src="${characterPortrait}" alt="${char.name}" onerror="this.style.opacity='0.5';this.onerror=null;" />
-                        <div class="rpg-relationship-badge rpg-editable" contenteditable="true" data-character="${char.name}" data-field="relationship" title="Click to edit (use emoji: ⚔️ ⚖️ ⭐ ❤️)">${relationshipEmoji}</div>
-                    </div>
-                    <div class="rpg-character-info">
-                        <div class="rpg-character-header">
-                            <span class="rpg-character-emoji rpg-editable" contenteditable="true" data-character="${char.name}" data-field="emoji" title="Click to edit emoji">${char.emoji}</span>
-                            <span class="rpg-character-name rpg-editable" contenteditable="true" data-character="${char.name}" data-field="name" title="Click to edit name">${char.name}</span>
+                // Get relationship emoji
+                const relationshipEmoji = relationshipEmojis[char.relationship] || '⚖️';
+
+                debugLog(`[RPG Thoughts] Building HTML card for ${char.name}...`);
+
+                html += `
+                    <div class="rpg-character-card" data-character-name="${char.name}">
+                        <div class="rpg-character-avatar">
+                            <img src="${characterPortrait}" alt="${char.name}" onerror="this.style.opacity='0.5';this.onerror=null;" />
+                            <div class="rpg-relationship-badge rpg-editable" contenteditable="true" data-character="${char.name}" data-field="relationship" title="Click to edit (use emoji: ⚔️ ⚖️ ⭐ ❤️)">${relationshipEmoji}</div>
                         </div>
-                        <div class="rpg-character-traits rpg-editable" contenteditable="true" data-character="${char.name}" data-field="traits" title="Click to edit traits">${char.traits}</div>
+                        <div class="rpg-character-info">
+                            <div class="rpg-character-header">
+                                <span class="rpg-character-emoji rpg-editable" contenteditable="true" data-character="${char.name}" data-field="emoji" title="Click to edit emoji">${char.emoji}</span>
+                                <span class="rpg-character-name rpg-editable" contenteditable="true" data-character="${char.name}" data-field="name" title="Click to edit name">${char.name}</span>
+                            </div>
+                            <div class="rpg-character-traits rpg-editable" contenteditable="true" data-character="${char.name}" data-field="traits" title="Click to edit traits">${char.traits}</div>
+                        </div>
                     </div>
-                </div>
-            `;
+                `;
+
+                debugLog(`[RPG Thoughts] ✓ Successfully built HTML for ${char.name}`);
+
+            } catch (charError) {
+                debugLog(`[RPG Thoughts] ✗ ERROR building HTML for ${char.name}:`, charError.message);
+                debugLog('[RPG Thoughts] Error stack:', charError.stack);
+                // Continue with next character instead of crashing
+            }
         }
+
+        debugLog('[RPG Thoughts] Finished building all character cards');
         html += '</div>';
     }
 
     $thoughtsContainer.html(html);
+
+    debugLog('[RPG Thoughts] ✓ HTML rendered to container');
+    debugLog('[RPG Thoughts] =======================================================');
 
     // Add event handlers for editable character fields
     $thoughtsContainer.find('.rpg-editable').on('blur', function() {

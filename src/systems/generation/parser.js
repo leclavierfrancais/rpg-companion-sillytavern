@@ -10,6 +10,7 @@ import { extractInventory } from './inventoryParser.js';
 /**
  * Parses the model response to extract the different data sections.
  * Extracts tracker data from markdown code blocks in the AI response.
+ * Handles both separate code blocks and combined code blocks gracefully.
  *
  * @param {string} responseText - The raw AI response text
  * @returns {{userStats: string|null, infoBox: string|null, characterThoughts: string|null}} Parsed tracker data
@@ -32,22 +33,55 @@ export function parseResponse(responseText) {
 
         // console.log('[RPG Companion] Checking code block (first 200 chars):', content.substring(0, 200));
 
-        // Match Stats section
-        if (content.match(/Stats\s*\n\s*---/i)) {
-            result.userStats = content;
-            // console.log('[RPG Companion] ✓ Found Stats section');
-        }
-        // Match Info Box section
-        else if (content.match(/Info Box\s*\n\s*---/i)) {
-            result.infoBox = content;
-            // console.log('[RPG Companion] ✓ Found Info Box section');
-        }
-        // Match Present Characters section - flexible matching
-        else if (content.match(/Present Characters\s*\n\s*---/i) || content.includes(" | ")) {
-            result.characterThoughts = content;
-            // console.log('[RPG Companion] ✓ Found Present Characters section:', content);
+        // Check if this is a combined code block with multiple sections
+        const hasMultipleSections = (
+            content.match(/Stats\s*\n\s*---/i) &&
+            (content.match(/Info Box\s*\n\s*---/i) || content.match(/Present Characters\s*\n\s*---/i))
+        );
+
+        if (hasMultipleSections) {
+            // Split the combined code block into individual sections
+            // console.log('[RPG Companion] ✓ Found combined code block with multiple sections');
+
+            // Extract User Stats section
+            const statsMatch = content.match(/(User )?Stats\s*\n\s*---[\s\S]*?(?=\n\s*\n\s*(Info Box|Present Characters)|$)/i);
+            if (statsMatch && !result.userStats) {
+                result.userStats = statsMatch[0].trim();
+                // console.log('[RPG Companion] ✓ Extracted Stats from combined block');
+            }
+
+            // Extract Info Box section
+            const infoBoxMatch = content.match(/Info Box\s*\n\s*---[\s\S]*?(?=\n\s*\n\s*Present Characters|$)/i);
+            if (infoBoxMatch && !result.infoBox) {
+                result.infoBox = infoBoxMatch[0].trim();
+                // console.log('[RPG Companion] ✓ Extracted Info Box from combined block');
+            }
+
+            // Extract Present Characters section
+            const charactersMatch = content.match(/Present Characters\s*\n\s*---[\s\S]*$/i);
+            if (charactersMatch && !result.characterThoughts) {
+                result.characterThoughts = charactersMatch[0].trim();
+                // console.log('[RPG Companion] ✓ Extracted Present Characters from combined block');
+            }
         } else {
-            // console.log('[RPG Companion] ✗ Code block did not match any section');
+            // Handle separate code blocks (original behavior)
+            // Match Stats section
+            if (content.match(/Stats\s*\n\s*---/i) && !result.userStats) {
+                result.userStats = content;
+                // console.log('[RPG Companion] ✓ Found Stats section');
+            }
+            // Match Info Box section
+            else if (content.match(/Info Box\s*\n\s*---/i) && !result.infoBox) {
+                result.infoBox = content;
+                // console.log('[RPG Companion] ✓ Found Info Box section');
+            }
+            // Match Present Characters section - flexible matching
+            else if ((content.match(/Present Characters\s*\n\s*---/i) || content.includes(" | ")) && !result.characterThoughts) {
+                result.characterThoughts = content;
+                // console.log('[RPG Companion] ✓ Found Present Characters section:', content);
+            } else {
+                // console.log('[RPG Companion] ✗ Code block did not match any section');
+            }
         }
     }
 

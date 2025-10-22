@@ -195,6 +195,14 @@
                 <small style="display: block; margin-left: 24px; margin-top: -8px; color: #888; font-size: 11px;">
                     Display buttons above chat input for plot progression prompts
                 </small>
+
+                <label class="checkbox_label">
+                    <input type="checkbox" id="rpg-toggle-debug-mode" />
+                    <span>Enable Debug Mode</span>
+                </label>
+                <small style="display: block; margin-left: 24px; margin-top: -8px; color: #888; font-size: 11px;">
+                    Shows parser logs in a mobile-friendly UI panel. Useful for troubleshooting. Look for the red bug button.
+                </small>
             </div>
 
             <div class="rpg-settings-group">
@@ -228,6 +236,16 @@
                     <button id="rpg-clear-cache" class="rpg-btn-clear-cache">
                         <i class="fa-solid fa-trash" aria-hidden="true"></i> Clear Extension Cache
                     </button>
+                </div>
+
+                <!-- Reset FAB Positions Button -->
+                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--rpg-border);">
+                    <button id="rpg-reset-fab-positions" class="rpg-btn-reset-fab">
+                        <i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i> Reset Button Positions
+                    </button>
+                    <small style="display: block; margin-top: 8px; color: #888; font-size: 11px;">
+                        Resets all floating action buttons (toggle, refresh, debug) to default top-left positions. Useful if buttons are off-screen.
+                    </small>
                 </div>
             </div>
         </div>

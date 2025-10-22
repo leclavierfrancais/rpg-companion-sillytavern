@@ -716,3 +716,434 @@ export function setupContentEditableScrolling() {
         }, 300);
     });
 }
+
+/**
+ * Sets up the mobile refresh button with drag functionality.
+ * Same pattern as mobile toggle button.
+ * Tap = refresh, drag = reposition
+ */
+export function setupRefreshButtonDrag() {
+    const $refreshBtn = $('#rpg-manual-update-mobile');
+
+    if ($refreshBtn.length === 0) {
+        console.warn('[RPG Mobile] Refresh button not found in DOM');
+        return;
+    }
+
+    console.log('[RPG Mobile] setupRefreshButtonDrag called');
+
+    // Load and apply saved position
+    if (extensionSettings.mobileRefreshPosition) {
+        const pos = extensionSettings.mobileRefreshPosition;
+        console.log('[RPG Mobile] Loading saved refresh button position:', pos);
+
+        // Apply saved position
+        if (pos.top) $refreshBtn.css('top', pos.top);
+        if (pos.right) $refreshBtn.css('right', pos.right);
+        if (pos.bottom) $refreshBtn.css('bottom', pos.bottom);
+        if (pos.left) $refreshBtn.css('left', pos.left);
+
+        // Constrain to viewport after position is applied
+        requestAnimationFrame(() => constrainFabToViewport($refreshBtn));
+    }
+
+    // Touch/drag state
+    let isDragging = false;
+    let touchStartTime = 0;
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let buttonStartX = 0;
+    let buttonStartY = 0;
+    const LONG_PRESS_DURATION = 200;
+    const MOVE_THRESHOLD = 10;
+    let rafId = null;
+    let pendingX = null;
+    let pendingY = null;
+
+    // Update position using requestAnimationFrame
+    function updatePosition() {
+        if (pendingX !== null && pendingY !== null) {
+            $refreshBtn.css({
+                left: pendingX + 'px',
+                top: pendingY + 'px',
+                right: 'auto',
+                bottom: 'auto'
+            });
+            pendingX = null;
+            pendingY = null;
+        }
+        rafId = null;
+    }
+
+    // Touch start
+    $refreshBtn.on('touchstart', function(e) {
+        const touch = e.originalEvent.touches[0];
+        touchStartTime = Date.now();
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
+
+        const offset = $refreshBtn.offset();
+        buttonStartX = offset.left;
+        buttonStartY = offset.top;
+
+        isDragging = false;
+    });
+
+    // Touch move
+    $refreshBtn.on('touchmove', function(e) {
+        const touch = e.originalEvent.touches[0];
+        const deltaX = touch.clientX - touchStartX;
+        const deltaY = touch.clientY - touchStartY;
+        const timeSinceStart = Date.now() - touchStartTime;
+        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+        if (!isDragging && (timeSinceStart > LONG_PRESS_DURATION || distance > MOVE_THRESHOLD)) {
+            isDragging = true;
+            $refreshBtn.addClass('dragging');
+        }
+
+        if (isDragging) {
+            e.preventDefault();
+
+            let newX = buttonStartX + deltaX;
+            let newY = buttonStartY + deltaY;
+
+            const buttonWidth = $refreshBtn.outerWidth();
+            const buttonHeight = $refreshBtn.outerHeight();
+
+            const minX = 10;
+            const maxX = window.innerWidth - buttonWidth - 10;
+            const minY = 10;
+            const maxY = window.innerHeight - buttonHeight - 10;
+
+            newX = Math.max(minX, Math.min(maxX, newX));
+            newY = Math.max(minY, Math.min(maxY, newY));
+
+            pendingX = newX;
+            pendingY = newY;
+            if (!rafId) {
+                rafId = requestAnimationFrame(updatePosition);
+            }
+        }
+    });
+
+    // Touch end
+    $refreshBtn.on('touchend', function(e) {
+        if (isDragging) {
+            // Save new position
+            const offset = $refreshBtn.offset();
+            const newPosition = {
+                left: offset.left + 'px',
+                top: offset.top + 'px'
+            };
+
+            extensionSettings.mobileRefreshPosition = newPosition;
+            saveSettings();
+
+            setTimeout(() => {
+                $refreshBtn.removeClass('dragging');
+            }, 50);
+
+            // Set flag to prevent click handler from firing
+            $refreshBtn.data('just-dragged', true);
+            setTimeout(() => {
+                $refreshBtn.data('just-dragged', false);
+            }, 100);
+
+            isDragging = false;
+        }
+    });
+
+    // Mouse support for desktop
+    let mouseDown = false;
+
+    $refreshBtn.on('mousedown', function(e) {
+        e.preventDefault();
+        touchStartTime = Date.now();
+        touchStartX = e.clientX;
+        touchStartY = e.clientY;
+
+        const offset = $refreshBtn.offset();
+        buttonStartX = offset.left;
+        buttonStartY = offset.top;
+
+        mouseDown = true;
+        isDragging = false;
+    });
+
+    $(document).on('mousemove', function(e) {
+        if (!mouseDown) return;
+
+        const deltaX = e.clientX - touchStartX;
+        const deltaY = e.clientY - touchStartY;
+        const timeSinceStart = Date.now() - touchStartTime;
+        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+        if (!isDragging && (timeSinceStart > LONG_PRESS_DURATION || distance > MOVE_THRESHOLD)) {
+            isDragging = true;
+            $refreshBtn.addClass('dragging');
+        }
+
+        if (isDragging) {
+            let newX = buttonStartX + deltaX;
+            let newY = buttonStartY + deltaY;
+
+            const buttonWidth = $refreshBtn.outerWidth();
+            const buttonHeight = $refreshBtn.outerHeight();
+
+            const minX = 10;
+            const maxX = window.innerWidth - buttonWidth - 10;
+            const minY = 10;
+            const maxY = window.innerHeight - buttonHeight - 10;
+
+            newX = Math.max(minX, Math.min(maxX, newX));
+            newY = Math.max(minY, Math.min(maxY, newY));
+
+            pendingX = newX;
+            pendingY = newY;
+            if (!rafId) {
+                rafId = requestAnimationFrame(updatePosition);
+            }
+        }
+    });
+
+    $(document).on('mouseup', function(e) {
+        if (mouseDown && isDragging) {
+            const offset = $refreshBtn.offset();
+            const newPosition = {
+                left: offset.left + 'px',
+                top: offset.top + 'px'
+            };
+
+            extensionSettings.mobileRefreshPosition = newPosition;
+            saveSettings();
+
+            setTimeout(() => {
+                $refreshBtn.removeClass('dragging');
+            }, 50);
+
+            $refreshBtn.data('just-dragged', true);
+            setTimeout(() => {
+                $refreshBtn.data('just-dragged', false);
+            }, 100);
+        }
+
+        mouseDown = false;
+        isDragging = false;
+    });
+}
+
+/**
+ * Sets up drag functionality for the debug toggle FAB button
+ * Same pattern as refresh button drag
+ */
+export function setupDebugButtonDrag() {
+    const $debugBtn = $('#rpg-debug-toggle');
+
+    if ($debugBtn.length === 0) {
+        console.warn('[RPG Mobile] Debug button not found in DOM');
+        return;
+    }
+
+    console.log('[RPG Mobile] setupDebugButtonDrag called');
+
+    // Load and apply saved position
+    if (extensionSettings.debugFabPosition) {
+        const pos = extensionSettings.debugFabPosition;
+        console.log('[RPG Mobile] Loading saved debug button position:', pos);
+
+        // Apply saved position
+        if (pos.top) $debugBtn.css('top', pos.top);
+        if (pos.right) $debugBtn.css('right', pos.right);
+        if (pos.bottom) $debugBtn.css('bottom', pos.bottom);
+        if (pos.left) $debugBtn.css('left', pos.left);
+
+        // Constrain to viewport after position is applied
+        requestAnimationFrame(() => constrainFabToViewport($debugBtn));
+    }
+
+    // Touch/drag state
+    let isDragging = false;
+    let touchStartTime = 0;
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let buttonStartX = 0;
+    let buttonStartY = 0;
+    const LONG_PRESS_DURATION = 200;
+    const MOVE_THRESHOLD = 10;
+    let rafId = null;
+    let pendingX = null;
+    let pendingY = null;
+
+    // Update position using requestAnimationFrame
+    function updatePosition() {
+        if (pendingX !== null && pendingY !== null) {
+            $debugBtn.css({
+                left: pendingX + 'px',
+                top: pendingY + 'px',
+                right: 'auto',
+                bottom: 'auto'
+            });
+            pendingX = null;
+            pendingY = null;
+        }
+        rafId = null;
+    }
+
+    // Touch start
+    $debugBtn.on('touchstart', function(e) {
+        const touch = e.originalEvent.touches[0];
+        touchStartTime = Date.now();
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
+
+        const offset = $debugBtn.offset();
+        buttonStartX = offset.left;
+        buttonStartY = offset.top;
+
+        isDragging = false;
+    });
+
+    // Touch move
+    $debugBtn.on('touchmove', function(e) {
+        const touch = e.originalEvent.touches[0];
+        const deltaX = touch.clientX - touchStartX;
+        const deltaY = touch.clientY - touchStartY;
+        const timeSinceStart = Date.now() - touchStartTime;
+        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+        if (!isDragging && (timeSinceStart > LONG_PRESS_DURATION || distance > MOVE_THRESHOLD)) {
+            isDragging = true;
+            $debugBtn.addClass('dragging');
+        }
+
+        if (isDragging) {
+            e.preventDefault();
+
+            let newX = buttonStartX + deltaX;
+            let newY = buttonStartY + deltaY;
+
+            const buttonWidth = $debugBtn.outerWidth();
+            const buttonHeight = $debugBtn.outerHeight();
+
+            const minX = 10;
+            const maxX = window.innerWidth - buttonWidth - 10;
+            const minY = 10;
+            const maxY = window.innerHeight - buttonHeight - 10;
+
+            newX = Math.max(minX, Math.min(maxX, newX));
+            newY = Math.max(minY, Math.min(maxY, newY));
+
+            pendingX = newX;
+            pendingY = newY;
+            if (!rafId) {
+                rafId = requestAnimationFrame(updatePosition);
+            }
+        }
+    });
+
+    // Touch end
+    $debugBtn.on('touchend', function(e) {
+        if (isDragging) {
+            // Save new position
+            const offset = $debugBtn.offset();
+            const newPosition = {
+                left: offset.left + 'px',
+                top: offset.top + 'px'
+            };
+
+            extensionSettings.debugFabPosition = newPosition;
+            saveSettings();
+
+            setTimeout(() => {
+                $debugBtn.removeClass('dragging');
+            }, 50);
+
+            // Set flag to prevent click handler from firing
+            $debugBtn.data('just-dragged', true);
+            setTimeout(() => {
+                $debugBtn.data('just-dragged', false);
+            }, 100);
+
+            isDragging = false;
+        }
+    });
+
+    // Mouse support for desktop
+    let mouseDown = false;
+
+    $debugBtn.on('mousedown', function(e) {
+        e.preventDefault();
+        touchStartTime = Date.now();
+        touchStartX = e.clientX;
+        touchStartY = e.clientY;
+
+        const offset = $debugBtn.offset();
+        buttonStartX = offset.left;
+        buttonStartY = offset.top;
+
+        mouseDown = true;
+        isDragging = false;
+    });
+
+    $(document).on('mousemove.rpgDebugDrag', function(e) {
+        if (!mouseDown) return;
+
+        const deltaX = e.clientX - touchStartX;
+        const deltaY = e.clientY - touchStartY;
+        const timeSinceStart = Date.now() - touchStartTime;
+        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+        if (!isDragging && (timeSinceStart > LONG_PRESS_DURATION || distance > MOVE_THRESHOLD)) {
+            isDragging = true;
+            $debugBtn.addClass('dragging');
+        }
+
+        if (isDragging) {
+            let newX = buttonStartX + deltaX;
+            let newY = buttonStartY + deltaY;
+
+            const buttonWidth = $debugBtn.outerWidth();
+            const buttonHeight = $debugBtn.outerHeight();
+
+            const minX = 10;
+            const maxX = window.innerWidth - buttonWidth - 10;
+            const minY = 10;
+            const maxY = window.innerHeight - buttonHeight - 10;
+
+            newX = Math.max(minX, Math.min(maxX, newX));
+            newY = Math.max(minY, Math.min(maxY, newY));
+
+            pendingX = newX;
+            pendingY = newY;
+            if (!rafId) {
+                rafId = requestAnimationFrame(updatePosition);
+            }
+        }
+    });
+
+    $(document).on('mouseup.rpgDebugDrag', function(e) {
+        if (mouseDown && isDragging) {
+            const offset = $debugBtn.offset();
+            const newPosition = {
+                left: offset.left + 'px',
+                top: offset.top + 'px'
+            };
+
+            extensionSettings.debugFabPosition = newPosition;
+            saveSettings();
+
+            setTimeout(() => {
+                $debugBtn.removeClass('dragging');
+            }, 50);
+
+            $debugBtn.data('just-dragged', true);
+            setTimeout(() => {
+                $debugBtn.data('just-dragged', false);
+            }, 100);
+        }
+
+        mouseDown = false;
+        isDragging = false;
+    });
+}

@@ -161,9 +161,9 @@ function addExtensionSettings() {
             <div class="inline-drawer-content">
                 <label class="checkbox_label" for="rpg-extension-enabled">
                     <input type="checkbox" id="rpg-extension-enabled" />
-                    <span>Enable RPG Companion</span>
+                    <span>Enable Anamnesis morbi</span>
                 </label>
-                <small class="notes">Toggle to enable/disable the RPG Companion extension. Configure additional settings within the panel itself.</small>
+                <small class="notes">Toggle to enable/disable the Anamnesis morbi extension. Configure additional settings within the panel itself.</small>
 
                 <div style="margin-top: 10px; display: flex; gap: 10px;">
                     <a href="https://discord.com/invite/KdAkTg94ME" target="_blank" class="menu_button" style="flex: 1; text-align: center; text-decoration: none;">
@@ -208,7 +208,7 @@ async function initUI() {
 
     // Add mobile toggle button (FAB - Floating Action Button)
     const mobileToggleHtml = `
-        <button id="rpg-mobile-toggle" class="rpg-mobile-toggle" title="Toggle RPG Panel">
+        <button id="rpg-mobile-toggle" class="rpg-mobile-toggle" title="Toggle Anamnesis morbi">
             <i class="fa-solid fa-dice-d20"></i>
         </button>
     `;
@@ -335,12 +335,12 @@ async function initUI() {
 
         // Skip if we just finished dragging the mobile button
         if ($mobileBtn.data('just-dragged')) {
-            console.log('[RPG Companion] Click blocked - just finished dragging refresh button');
+            console.log('[Anamnesis morbi] Click blocked - just finished dragging refresh button');
             return;
         }
 
         if (!extensionSettings.enabled) {
-            // console.log('[RPG Companion] Extension is disabled. Please enable it in the Extensions tab.');
+            // console.log('[Anamnesis morbi] Extension is disabled. Please enable it in the Extensions tab.');
             return;
         }
 
@@ -360,7 +360,7 @@ async function initUI() {
 
     // Reset FAB positions button
     $('#rpg-reset-fab-positions').on('click', function() {
-        console.log('[RPG Companion] Resetting FAB positions to defaults');
+        console.log('[Anamnesis morbi] Resetting FAB positions to defaults');
 
         // Reset to defaults (top-left stacked)
         extensionSettings.mobileFabPosition = {
@@ -385,8 +385,8 @@ async function initUI() {
         $('#rpg-debug-toggle').css(extensionSettings.debugFabPosition);
 
         // Show success feedback
-        toastr.success('Button positions reset to defaults', 'RPG Companion');
-        console.log('[RPG Companion] FAB positions reset successfully');
+        toastr.success('Button positions reset to defaults', 'Anamnesis morbi');
+        console.log('[Anamnesis morbi] FAB positions reset successfully');
     });
 
     $('#rpg-stat-bar-color-low').on('change', function() {
@@ -533,7 +533,7 @@ async function initUI() {
  */
 async function ensureTrackerPresetExists() {
     try {
-        const presetName = 'RPG Companion Trackers';
+        const presetName = 'Anamnesis morbi Trackers';
 
         // Check if preset already exists by fetching settings
         const checkResponse = await fetch('/api/settings/get', {
@@ -545,20 +545,20 @@ async function ensureTrackerPresetExists() {
             const settings = await checkResponse.json();
             // openai_setting_names is an array of preset names
             if (settings.openai_setting_names && settings.openai_setting_names.includes(presetName)) {
-                console.log(`[RPG Companion] Preset "${presetName}" already exists`);
+                console.log(`[Anamnesis morbi] Preset "${presetName}" already exists`);
                 return;
             }
         }
 
         // Preset doesn't exist - import it from extension folder
-        console.log(`[RPG Companion] Importing preset "${presetName}"...`);
+        console.log(`[Anamnesis morbi] Importing preset "${presetName}"...`);
 
         // Load preset from extension folder
         const extensionPresetPath = `${extensionFolderPath}/${presetName}.json`;
         const presetResponse = await fetch(`/${extensionPresetPath}`);
 
         if (!presetResponse.ok) {
-            console.warn(`[RPG Companion] Could not load preset template from ${extensionPresetPath}`);
+            console.warn(`[Anamnesis morbi] Could not load preset template from ${extensionPresetPath}`);
             return;
         }
 
@@ -576,17 +576,17 @@ async function ensureTrackerPresetExists() {
         });
 
         if (saveResponse.ok) {
-            console.log(`[RPG Companion] ✅ Successfully imported preset "${presetName}"`);
+            console.log(`[Anamnesis morbi] ✅ Successfully imported preset "${presetName}"`);
             toastr.success(
-                `The "RPG Companion Trackers" preset has been imported to your OpenAI Settings.`,
-                'RPG Companion',
+                `The "Anamnesis morbi Trackers" preset has been imported to your OpenAI Settings.`,
+                'Anamnesis morbi',
                 { timeOut: 5000 }
             );
         } else {
-            console.warn(`[RPG Companion] Failed to save preset: ${saveResponse.statusText}`);
+            console.warn(`[Anamnesis morbi] Failed to save preset: ${saveResponse.statusText}`);
         }
     } catch (error) {
-        console.error('[RPG Companion] Error importing tracker preset:', error);
+        console.error('[Anamnesis morbi] Error importing tracker preset:', error);
         // Non-critical - users can manually import if needed
     }
 }
@@ -596,20 +596,20 @@ async function ensureTrackerPresetExists() {
  */
 jQuery(async () => {
     try {
-        console.log('[RPG Companion] Starting initialization...');
+        console.log('[Anamnesis morbi] Starting initialization...');
 
         // Load settings with validation
         try {
             loadSettings();
         } catch (error) {
-            console.error('[RPG Companion] Settings load failed, continuing with defaults:', error);
+            console.error('[Anamnesis morbi] Settings load failed, continuing with defaults:', error);
         }
 
         // Add extension settings to Extensions tab
         try {
             addExtensionSettings();
         } catch (error) {
-            console.error('[RPG Companion] Failed to add extension settings tab:', error);
+            console.error('[Anamnesis morbi] Failed to add extension settings tab:', error);
             // Don't throw - extension can still work without settings tab
         }
 
@@ -617,7 +617,7 @@ jQuery(async () => {
         try {
             await initUI();
         } catch (error) {
-            console.error('[RPG Companion] UI initialization failed:', error);
+            console.error('[Anamnesis morbi] UI initialization failed:', error);
             throw error; // This is critical - can't continue without UI
         }
 
@@ -625,14 +625,14 @@ jQuery(async () => {
         try {
             loadChatData();
         } catch (error) {
-            console.error('[RPG Companion] Chat data load failed, using defaults:', error);
+            console.error('[Anamnesis morbi] Chat data load failed, using defaults:', error);
         }
 
         // Import the HTML cleaning regex if needed
         try {
             await ensureHtmlCleaningRegex(st_extension_settings, saveSettingsDebounced);
         } catch (error) {
-            console.error('[RPG Companion] HTML regex import failed:', error);
+            console.error('[Anamnesis morbi] HTML regex import failed:', error);
             // Non-critical - continue without it
         }
 
@@ -640,7 +640,7 @@ jQuery(async () => {
         try {
             await ensureTrackerPresetExists();
         } catch (error) {
-            console.error('[RPG Companion] Preset import failed:', error);
+            console.error('[Anamnesis morbi] Preset import failed:', error);
             // Non-critical - users can manually import if needed
         }
 
@@ -648,9 +648,9 @@ jQuery(async () => {
         try {
             const conflicts = detectConflictingRegexScripts(st_extension_settings);
             if (conflicts.length > 0) {
-                console.log('[RPG Companion] ⚠️ Detected old manual formatting regex scripts that may conflict:');
+                console.log('[Anamnesis morbi] ⚠️ Detected old manual formatting regex scripts that may conflict:');
                 conflicts.forEach(name => console.log(`  - ${name}`));
-                console.log('[RPG Companion] Consider disabling these regexes as the extension now handles formatting automatically.');
+                console.log('[Anamnesis morbi] Consider disabling these regexes as the extension now handles formatting automatically.');
 
                 // Show user-friendly warning (non-blocking)
                 // toastr.warning(
@@ -660,7 +660,7 @@ jQuery(async () => {
                 // );
             }
         } catch (error) {
-            console.error('[RPG Companion] Conflict detection failed:', error);
+            console.error('[Anamnesis morbi] Conflict detection failed:', error);
             // Non-critical - continue anyway
         }
 
@@ -680,15 +680,15 @@ jQuery(async () => {
             throw error; // This is critical - can't continue without events
         }
 
-        console.log('[RPG Companion] ✅ Extension loaded successfully');
+        console.log('[Anamnesis morbi] ✅ Extension loaded successfully');
     } catch (error) {
-        console.error('[RPG Companion] ❌ Critical initialization failure:', error);
-        console.error('[RPG Companion] Error details:', error.message, error.stack);
+        console.error('[Anamnesis morbi] ❌ Critical initialization failure:', error);
+        console.error('[Anamnesis morbi] Error details:', error.message, error.stack);
 
         // Show user-friendly error message
         toastr.error(
-            'RPG Companion failed to initialize. Check console for details. Please try refreshing the page or resetting extension settings.',
-            'RPG Companion Error',
+            'Anamnesis morbi failed to initialize. Check console for details. Please try refreshing the page or resetting extension settings.',
+            'Anamnesis morbi Error',
             { timeOut: 10000 }
         );
     }

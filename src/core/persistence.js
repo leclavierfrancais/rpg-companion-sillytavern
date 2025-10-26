@@ -19,7 +19,7 @@ import {
 import { migrateInventory } from '../utils/migration.js';
 import { validateStoredInventory, cleanItemString } from '../utils/security.js';
 
-const extensionName = 'third-party/rpg-companion-sillytavern';
+const extensionName = 'third-party/anamnesis-morbi-sillytavern';
 
 /**
  * Validates extension settings structure
@@ -35,7 +35,7 @@ function validateSettings(settings) {
     if (typeof settings.enabled !== 'boolean' ||
         typeof settings.autoUpdate !== 'boolean' ||
         !settings.userStats || typeof settings.userStats !== 'object') {
-        console.warn('[RPG Companion] Settings validation failed: missing required properties');
+        console.warn('[Anamnesis morbi] Settings validation failed: missing required properties');
         return false;
     }
 
@@ -44,7 +44,7 @@ function validateSettings(settings) {
     if (typeof stats.health !== 'number' ||
         typeof stats.satiety !== 'number' ||
         typeof stats.energy !== 'number') {
-        console.warn('[RPG Companion] Settings validation failed: invalid userStats structure');
+        console.warn('[Anamnesis morbi] Settings validation failed: invalid userStats structure');
         return false;
     }
 
@@ -59,7 +59,7 @@ export function loadSettings() {
     try {
         // Validate power_user structure
         if (!power_user || typeof power_user !== 'object') {
-            console.warn('[RPG Companion] power_user is not available, using default settings');
+            console.warn('[Anamnesis morbi] power_user is not available, using default settings');
             return;
         }
 
@@ -73,8 +73,8 @@ export function loadSettings() {
 
             // Validate loaded settings
             if (!validateSettings(savedSettings)) {
-                console.warn('[RPG Companion] Loaded settings failed validation, using defaults');
-                console.warn('[RPG Companion] Invalid settings:', savedSettings);
+                console.warn('[Anamnesis morbi] Loaded settings failed validation, using defaults');
+                console.warn('[Anamnesis morbi] Invalid settings:', savedSettings);
                 // Save valid defaults to replace corrupt data
                 saveSettings();
                 return;
@@ -90,15 +90,15 @@ export function loadSettings() {
         if (FEATURE_FLAGS.useNewInventory) {
             const migrationResult = migrateInventory(extensionSettings.userStats.inventory);
             if (migrationResult.migrated) {
-                console.log(`[RPG Companion] Inventory migrated from ${migrationResult.source} to v2 format`);
+                console.log(`[Anamnesis morbi] Inventory migrated from ${migrationResult.source} to v2 format`);
                 extensionSettings.userStats.inventory = migrationResult.inventory;
                 saveSettings(); // Persist migrated inventory
             }
         }
     } catch (error) {
-        console.error('[RPG Companion] Error loading settings:', error);
-        console.error('[RPG Companion] Error details:', error.message, error.stack);
-        console.warn('[RPG Companion] Using default settings due to load error');
+        console.error('[Anamnesis morbi] Error loading settings:', error);
+        console.error('[Anamnesis morbi] Error details:', error.message, error.stack);
+        console.warn('[Anamnesis morbi] Using default settings due to load error');
         // Settings will remain at defaults from state.js
     }
 
@@ -181,7 +181,7 @@ export function loadChatData() {
         updateExtensionSettings({
             userStats: {
                 health: 100,
-                satiety: 100,
+                sanity: 100,
                 energy: 100,
                 hygiene: 100,
                 arousal: 0,

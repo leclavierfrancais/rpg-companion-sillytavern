@@ -33,6 +33,10 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     font-display: swap;
 }
 
+:root {
+    --rpg-title-font: 'AnamnesisTitle', inherit;
+}
+
 /* Main Panel Container - Fills available margin space */
 .rpg-panel {
     position: fixed;
@@ -418,6 +422,11 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     color: var(--rpg-highlight);
     text-shadow: 0 0 8px var(--rpg-highlight);
     letter-spacing: 0.031em;
+}
+
+/* Apply title font to the inline settings drawer header of our extension */
+.inline-drawer-toggle.inline-drawer-header b {
+    font-family: var(--rpg-title-font, inherit);
 }
 
 .rpg-btn-icon {
